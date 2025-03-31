@@ -158,7 +158,7 @@ We created the experiment such that multiple channels could be modified at once.
 Initially these results did not yield any effect on the trajectory of the agent through the maze at all. This seemed in stark contrast to the results attained by Turntrout et al with the single target maze environment. 
 
 This could mean a number of things: 
-* The model navigates through a different mechanism than the cheese finding model.
+* The model navigates through a different mechanism than the cheese finding model, which only targets a single entity.
 * There are sufficient redundancies in other channels that the modification of that one does not create a noticeable difference.
 * The channels that are responsible for navigating do not rely on the parts of the network that specifically track certain entities.
 * The fact that there are fewer channels in this network compared to the network they were using may mean that compressing more features into fewer channels makes it impossible to cleanly separate it out.
@@ -169,8 +169,84 @@ When we originally made the decision to use a smaller, more compressed and more 
 
 At this point the best action to take seems to be training the decision transformer and training up some probes and trying to do the interventions that way. This seems more exciting than the current direction.
 
+## New results from spatial interventions
+
+It turned out the earlier null results were from a bug! It actually is steerable for different entities using the SAE layers. This is a really cool result. And it proves that SAEs can actually be helpful for this kind of mech interp work. 
+
+I think this result doesn't necessarily teach us that much about SAEs but it is a useful starting point for considering future work on RL agents. We know that at the very least the activations of models are decomposable using SAEs and these decompositions can be reliably identified with regard to specific entities and that we can then steer them in clean ways. The next thing will be to show that this is significantly easier with SAEs than in the base model or that the same approach doesn't work quite as well in the base model.
+
+## Key findings:
+It works when only modifying channel 110 but doesn't work when only modifying channel 115. It does work when modifying 115 and 71 and not 110!
+
+The SAEs basically worked as intended. There are actually channels in both sae_conv3a and sae_conv4a that can be singly manipulated to move the agent around as desired.
+
+When taking the channels that work to manipulate the agent away from the green key, and using them to move the agent when the blue key is present, it ignores them and goes to the blue key instead. This is exactly what we'd expect to happen if the model simply has specific channels for each key.
+
+There does seem to be a channel, channel 67, that is generally very active across different keys in conv3a which indicates some generality across keys.
+
+Channel 6 shows up very strongly in each of these cases. It would suggest that 6 is tracking keys in general. And in the case of the red key, 6 can afford to be only one that activates because _the red key is the only key left._
+
+This might be slightly problematic because we can't strongly guarantee that the model works exactly like this when the SAEs aren't doing their thing. Further investigation on the base model is needed to see what comes up.
+
+It would be cool to show that the steering doesn't work as well on single channels in the base model, thus demonstrating that the SAE is really helpful, but will need to verify if that is actually the case.
+
+## SAE results
+
+### Gem
+#### conv3a
+  1. Channel 22: IOU score = 0.0604
+  2. Channel 89: IOU score = 0.0600
+  3. Channel 14: IOU score = 0.0532
+#### Conv4a
+compressed SAE:
+  1. Channel 0: IOU score = 0.1900
+  2. Channel 6: IOU score = 0.1825
+	  1. Channel 10: IOU score = 0.1753
 
 
+### blue key
+
+#### Conv3a
+![[blue_key_conv3a_iou_scores.png]]
+  1. Channel 67: IOU score = 0.0737
+  2. Channel 71: IOU score = 0.0577
+  3. Channel 61: IOU score = 0.0566
+
+#### Conv4a
+### green key
+
+#### Conv3a
+![[green_key_conv3a_iou_scores.png]]
+  1. Channel 22: IOU score = 0.0731
+  2. Channel 63: IOU score = 0.0697
+  3. Channel 4: IOU score = 0.0663
+
+#### Conv4a
+
+Channel 4 had extremely strong scores for tracking the green key, and the model when given a strong enough stimulus ( activation value of 3) would simply turn rightwards into the wall and refuse to move. However when this was lowered to within the normal activation ranges for channel 4, which ranged between 0 and 0.6, then it would ignore the stimulus and head towards the green key. Only when we set the artificial activation values to 2 would it finally head towards the spot we selected.
+
+### Red key
+
+#### conv3a
+![[red_key_conv3a_iou_scores.png]]
+
+
+#### conv4a
+
+
+Changing channel 4 would 
+
+## Base model interventions
+
+I have finally tested our ability to steer the base model with these synthetic activations and it turns out you can steer with a single channel in layer 6 or 8 in the base model.
+
+What's quite interesting is that in the SAE version, each key develops its own channel dedicated to it, while as you can see from the figures, for conv3a each key is tracked by the same channel, channel 25, and for conv4a each key is tracked by channel 29.
+
+The difference in precision of this tracking between the most tracking channel and the runner up is also much higher in the base model. So you could argue the base model is in a sense more interpretable than the SAE versions in that regard.
+
+The emergence of the unique channels for each key for the SAE is quite interesting though.
+
+I've noticed that depending on how long the SAE has been trained the results seem to vary quite a bit, so I'm going to train them a bunch more until hopefully they settle down.
 
 
 # Interesting papers to follow up on:
