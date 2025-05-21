@@ -1,6 +1,26 @@
 \chapter{Introduction}
 \label{ch:introduction}
 
+% From Paper 1: "Entity Multiplexing Through Activation Strength: An Application of Sparse Autoencoders to Reinforcement Learning"
+Understanding how deep learning models perform their tasks is currently an unsolved problem in the field of AI. This state of affairs ensures that highly reliable, controllable and understandable models remain out of reach. This is particularly the case in the field of reinforcement learning (RL), which has been somewhat neglected by the techniques of mechanistic interpretability (MI) whose focus has largely been on Large Language Models (LLMs). With techniques from RL being applied to frontier models to a greater extent, it is our belief that insights from applying MI techniques to smaller AI systems trained using RL can yield insights that might be generalised to understanding frontier ML models.
+
+This research builds on the work done by \cite{mini_understanding_2023} in which precise control of a maze solving agent was achieved using activation steering. The current contribution begins by extending their work to an environment that involves multiple competing entities that an agent needs to reach in sequence. To this end, we chose the Procgen Heist environment as the target of our research.
+
+Initially, extracting meaningful insights from this model proved challenging because of the high degree of polysemanticity within the network that made it challenging to draw strong conclusions about how it worked. To address this, we train Sparse AutoEncoders (SAEs) on the CNN layers of our network in order to disentangle the functionality of the model.
+
+% From Paper 2: "Discovering Goals in A Deep Reinforcement Learning Model by Studying Steering Vectors"
+As RL techniques become more effective and are deployed more widely, it will become increasingly necessary to provide safety guarantees and explanations behind critical trade-offs that RL policies are making so that we can deploy these systems with confidence that they will work as we expect \citep{shakya2023reinforcement}.
+
+Existing techniques are being used to better understand RL models \citep{atrey_exploratory_2020}, but many techniques developed for mechanistic interpretability elsewhere have not yet seen much application in reinforcement learning (\cite{hilton_understanding_2020} being a notable exception). There is an opportunity to explore novel techniques for interpreting other categories of AI systems with RL, as RL environments usually contain relatively simple goals and easily determined failure modes that allow us to test whether changes we make evoke a behavior we like. For example, the approach of steering Large Language Models (LLMs) using activation steering in \cite{turner_activation_2024} was inspired by the work done to understand and control a maze solving agent in the Procgen Maze environment \cite{mini_understanding_2023}.
+
+Our investigation seeks to build on the work of \cite{mini_understanding_2023}, who found key parts of the model that could be used to control and steer behavior. By exploring how models trained in the Procgen Heist environment \citep{cobbe_leveraging_2020} approach multiobjective maze solving, we aim to understand how neural networks represent and pursue multiple sequential goals.
+
+% Combined Thesis Introduction
+This thesis delves into the mechanistic interpretability of reinforcement learning agents, specifically focusing on how these agents represent and pursue goals in complex, multi-objective environments. Building upon foundational work in activation steering and feature visualization, this research employs and extends these techniques, notably through the application of Sparse Autoencoders, to dissect the decision-making processes within a CNN-based agent trained on the Procgen Heist environment. The primary aim is to uncover the internal mechanisms by which the agent navigates, identifies targets, and prioritizes objectives, with a view to developing more generalizable insights into the workings of deep RL models.
+
+% Outline of the thesis structure (placeholder)
+This thesis is structured as follows: Chapter \ref{ch:literature} provides a review of the relevant literature in reinforcement learning and machine learning interpretability. Chapter \ref{ch:methodology} details the experimental setup, including the environment, model architecture, and the interpretability techniques employed. Chapter \ref{ch:results} presents the findings from our experiments, including feature visualizations, steering results, and ablation studies. Chapter \ref{ch:discussion} discusses the implications of these findings, and Chapter \ref{ch:conclusion} concludes the thesis and suggests avenues for future research.
+
 \section{Background and Motivation}
 \label{sec:background}
 % Provide context for your research topic
