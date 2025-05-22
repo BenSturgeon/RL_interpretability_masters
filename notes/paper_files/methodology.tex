@@ -1,68 +1,112 @@
 \chapter{Methodology}
 \label{ch:methodology}
 
-\section{Research Design}
-\label{sec:research_design}
-% Overview of your research approach
-% Justify the methods chosen
+\section{Environment and Model}
+\label{sec:env_model}
+    \subsection{The Procgen Heist Environment}
+    \label{subsec:heist_env}
+    % Content from Paper 1: "Entity Multiplexing..."
+    The Procgen Heist environment requires the agent to collect up to 3 keys and 3 locks before reaching the final goal, a gem. The order in which the keys need to be collected is always the same (blue, green, red). The environment is procedurally generated and might generate with any combination of no keys, or 1-3 keys. The size of the maze will also change depending on how many objects are included. The environment provides sparse rewards, only giving out a score of 10 if the agent makes it all the way to the final goal and 0 otherwise. The fact that the environment provides a variety of difficulties with some environments only having the gem and others including all 3 keys and locks establishes a natural curriculum for the agent. It also gives the agent a reasonable chance of reaching the end with a random walk before it starts to develop an actual policy.
 
-\section{Theoretical Framework}
-\label{sec:framework}
-% Describe the theoretical basis for your methodology
-% Mathematical models and assumptions
+    Part of the reason an environment from the Procgen suite \citep{cobbe_leveraging_2020} was selected was that Procgen environments naturally force the agent to learn sufficiently general representations of different entities to allow for their potential extraction from the weights. If the policy could simply encode easily memorised heuristics then this might lead to uninterpretable and highly specific rules rather than general representations of entities.
 
-\subsection{Reinforcement Learning Model}
-\label{subsec:rl_model}
-% Details of the RL architecture used
-% Training procedures and hyperparameters
+    % Content from Paper 2: "Discovering Goals..."
+    The Procgen Heist environment presents a maze populated with various entities, where the primary objective is for the agent to reach a gem and collect the associated reward. To achieve this, the agent must unlock a series of colored locks using corresponding keys, with each key and lock pair matching in color. The gem is always present within the maze, but the number of key-lock pairs can vary, with a maximum of three pairs. The agent is required to unlock the blue lock first, followed by the green lock, and finally the red lock, in that specific order.
+    This environment was selected due to the necessity for the agent to pursue multiple objectives within a single episode. This complexity is likely to influence the development of the model's internal mechanisms, such as the formation of generalizable maze-navigation circuits that can be adapted to pursue different objectives based on the current context. It is a sparse learning environment where the agent is only rewarded for reaching the final goal.
+    The maze has some noteworthy features for this investigation. The keys and locks, when present, always arise in the same order, blue, green, and red, followed by the gem. If only the blue and green key are present then they will maintain this order. The environment also samples equally from this distribution, meaning that certain entities are seen more often by the model, such as the gem and blue key and lock, while the red key is seen the least.
 
-\subsection{Interpretability Method}
-\label{subsec:interp_method}
-% Description of your novel interpretability approach
-% Mathematical formulation
+    \subsection{Model Architecture and Training}
+    \label{subsec:model_arch_train}
+    % Content from Paper 1: "Entity Multiplexing..."
+    A compressed version of the Impala model \citep{espeholt_impala_2018} was trained, using 5 convolutional layers instead of 15 as used in the original Impala paper. This architecture comes from \cite{hilton_understanding_2020} where they find that this model was more interpretable with no discernible losses in performance. (Full architecture details are in Appendix~\ref{app:model_architecture} of Paper 1).
+    When training the model, a simple PPO implementation from an open source implementation designed to train Procgen models called Procgen-pfrl was used. The easy distribution of the environment was used due to compute limitations, and the model was trained for around 105 million steps.
 
-\section{Data Collection and Preparation}
-\label{sec:data}
-% Sources of data
-% Preprocessing steps
-% Environment setup for RL agents
+    % Content from Paper 2: "Discovering Goals..."
+    Following recommendations from \cite{hilton_understanding_2020}, a simplified architecture designed for interpretability was used. The model consists of four convolutional blocks followed by fully connected layers, with each convolutional block containing a convolution operation and pooling layer (full architecture details in Appendix D of Paper 2). This simpler design, with fewer convolutional layers and more dense layers than standard architectures like IMPALA, allows for clearer interpretation of the model's decision-making process while maintaining comparable performance.
+    The model was trained using PPO on the Procgen Heist environment until convergence, defined as no statistically significant increase in mean episode reward over a window of 10,000 timesteps. While key findings were validated on an IMPALA-based architecture to ensure generality, all results presented in Paper 2 use the simplified architecture.
 
-\section{Implementation Details}
-\label{sec:implementation}
-% Technical specifications
-% Software libraries and tools used
-% Hardware specifications
 
-\subsection{Algorithm Implementation}
-\label{subsec:algorithm}
-% Pseudocode or formal description of your algorithms
-% Implementation challenges and solutions
+\section{Interpretability Techniques Employed}
+\label{sec:interp_techniques}
+    \subsection{Sparse Autoencoder (SAE) Training}
+    \label{subsec:sae_training}
+    % Content from Paper 1: "Entity Multiplexing..."
+    SAEs were trained on the CNN layers of the Procgen model. For each SAE, recovery of >95\% of the performance within the environment was often achieved within only a few thousand training steps, with variance explained approaching 1 in a similar time frame. Models were trained for 6 million steps (later stated as 15 million steps in Paper 1, clarification may be needed) to allow for convergence.
+    An SAE was also trained on conv4a with a reduced number of channels (20, down from 32) to assess performance under compression.
+    Techniques from \cite{conerly_update_2024} such as scaling the feature activations of the SAE by the norm of their corresponding decoder columns were used. This provides greater flexibility to the SAEs during training while preserving desired sparsity properties, helping to lower loss and reduce dead features.
+    Recent work from \cite{gorton_missing_2024} on training SAEs on CNN layers provided essential groundwork. Similar hyperparameter choices for different layer depths were used, along with their approach of oversampling the strongest activations to avoid wasting computation. As in \cite{gorton_missing_2024}, 1x1 convolutional layers were used, generally applying an expansion factor of 4. To ensure stable training, activation normalisation and a warmup on the L1 coefficient were applied. Table \ref{tab:sae-params} (from Paper 1) summarizes expansion factors and L1 coefficients.
 
-\section{Evaluation Metrics}
-\label{sec:metrics}
-% Criteria for evaluating your interpretability method
-% How you measure success
+    \begin{table}[H] % Consider moving table definition to main.tex preamble or a separate style file
+    \caption{Expansion factors and L1 Coefficients for the different SAEs (from Paper 1)}
+    \label{tab:sae-params-methodology} % Renamed label to avoid conflict
+    \centering
+    \begin{tabular}{@{}lcc@{}}
+    \toprule
+    Layer & Expansion Factor & L1 Coefficient \\
+    \midrule
+    conv1a & 2 & 1e-4 \\
+    conv2a & 4 & 5e-4 \\
+    conv2b & 4 & 5e-4 \\
+    conv3a & 4 & 5e-4 \\
+    conv4a & 4 & 5e-3 \\
+    \bottomrule
+    \end{tabular}
+    \end{table}
 
-\subsection{Quantitative Metrics}
-\label{subsec:quantitative}
-% Numerical measures of performance
-% Statistical tests employed
+    \subsection{Feature Visualization}
+    \label{subsec:feature_viz}
+    % Content from Paper 1: "Entity Multiplexing..."
+    Two main approaches to feature visualization were used: synthetic visualization and finding maximally activating samples.
+    Synthetic visualization involves using gradient descent to iteratively adjust an input image with the optimization target of getting the strongest possible average activation across a channel in a target channel, layer, or single neuron (focus was on whole channels). The strength of activations across the width and height of a given channel was summed, and the mean activation multiplied by -1 was used as the loss to minimize.
+    Techniques from \cite{olah_feature_2017} were used to improve synthetic visualizations, such as applying jitter, rotations, and de-correlating visualizations from within the color spectrum during gradient descent, then re-applying colors using a matrix developed from environment samples.
+    Max activation sampling involves selecting samples from a dataset that produce the highest mean activation score across a given layer. To avoid duplicates, a diversity score (cosine similarity penalty) was applied. This technique focused on specific patches within the image rather than the whole image.
 
-\subsection{Qualitative Evaluation}
-\label{subsec:qualitative}
-% Methods for subjective assessment
-% User studies if applicable
+    \subsection{Steering Vectors and Activation Interventions}
+    \label{subsec:steering_interventions}
+        \subsubsection{Steering Vector Calculation}
+        \label{subsubsec:steering_vector_calc}
+        % Content from Paper 2: "Discovering Goals..."
+        As demonstrated in \cite{mini_understanding_2023}, objective steering vectors are computed. For a given maze \(m\), layer \(l\), and objective \(k\) at position \(x_k\), with all objectives \(\sum_{i} x_{i}\) and agent starting position \(x^{\text{start}}_{\text{agent}}\), the steering vector is:
+        \[ 
+        \text{SteeringVector}_k^{l} (m,  x_{k}) = \text{Activ}^{l}(m, \sum_{i} x_{i}, x^{\text{start}}_{\text{agent}}) - \text{Activ}^{l}(m, (\sum_{i} x_{i}) - x_{k}, x^{\text{start}}_{\text{agent}})
+        \]
+        An intervention involves modifying activations:
+        \[
+        \text{NewActiv} ^{l}(m, \sum_{i} x_{i}, x_{\text{agent}}) = \text{Activ}^{l}(m, \sum_{i} x_{i}, x_{\text{agent}}) + \alpha \cdot \text{SteeringVector}_k^{l}(m,  x_{k})
+        \]
+        where \(\alpha\) is an intervention coefficient. A negative \(\alpha\) steers the model away from objective \(k\).
 
-\section{Experimental Setup}
-\label{sec:experiments}
-% Description of experiments conducted
-% Control variables and experimental conditions
+        \subsubsection{Activation Manipulation and Patching}
+        \label{subsubsec:activation_manipulation}
+        % Content from Paper 1: "Entity Multiplexing..."
+        For scaled-up steering experiments, a specific entity was placed into the environment. The network was intervened upon by setting all its values to 0 and setting a specific region of a channel to a specified value. A parameter sweep over a range of values (typically 0 to 3) was performed. Episode lengths were kept short.
+        This approach was scaled by running a static intervention across every channel in the SAE, measuring deviation to the targeted area. For each entity-channel combination, 100 trials were run with activation value incrementing: activation value = trial number \(\times\) (max range / number of trials).
+        A box maze (see Figure \ref{fig:intervention-experiment} in Paper 1) was used to provide a clear decision point.
 
-\section{Ethical Considerations}
-\label{sec:ethics}
-% Ethical implications of your research
-% Steps taken to address ethical concerns
+        % Content from Paper 2: "Discovering Goals..."
+        For direct model control using activation patching, an activation vector from the environment for a given entity and layer was extracted. A specific channel's activation values were edited to indicate an entity should be in a specific position, and this patched steering vector was added back into the model's activations. Over 1000 activation patching experiments were performed across different channels and layers, with intervention coefficients from -2.0 to 2.0 in increments of 0.1, each with 100 episodes.
+
+    \subsection{Ablation Studies}
+    \label{subsec:ablation_studies}
+    % Content from Paper 1: "Entity Multiplexing..."
+    To systematically assess the role of individual channels, a comprehensive ablation methodology was developed. For each channel in the SAE, episodes were run with only that channel active while ablating all other channels. This allowed measurement of the isolated capability of each channel to support navigation to different entities in the environment. Successful entity collection counts were recorded for each channel across multiple episodes.
+
+\section{Experimental Design and Evaluation Metrics}
+\label{sec:experimental_design_eval}
+    \subsection{General Experimental Approach}
+    \label{subsec:general_exp_approach}
+    The research involved training RL agents and corresponding SAEs, followed by a series of analytical experiments. These experiments included feature visualization to understand learned representations, activation steering and patching to test causal control over agent behavior, and ablation studies to determine the functional importance of individual channels. The primary goal was to dissect how the agent represents and pursues multiple objectives in the Procgen Heist environment and how SAEs might alter or clarify these representations.
+
+    \subsection{Evaluation Metrics}
+    \label{subsec:eval_metrics}
+    Several metrics were used to evaluate the different components of the research:
+    \begin{itemize}
+        \item \textbf{For SAE Training (Paper 1):} Performance was primarily tracked using variance explained (aiming for close to 1) and the reward attained on the maze-solving task after SAE integration (>95\% recovery). Sparsity was monitored by examining the number of dead features, the mean number of activating neurons, and the fraction of active neurons (target ~0.001).
+        \item \textbf{For Steering and Activation Interventions (Paper 1 & 2):} Success was measured by the agent's deviation to the artificially targeted zone or behavior change (e.g., moving away from an objective). For scaled-up experiments (Paper 1), the frequency of successful deviation across channels and activation strengths was recorded. For activation patching (Paper 2), the ability to steer the agent predictably was the primary metric.
+        \item \textbf{For Ablation Studies (Paper 1):} The key metric was the count of successful entity collections per channel when all other channels were ablated, providing a quantitative measure of each channel's specialization and capability.
+        \item \textbf{For Steering Vector Analysis (Paper 2):} The effectiveness of steering vectors was partly assessed by the steerability of different layers (reduction in objective pickups). Channel function was investigated by measuring the frequency with which a channel in an objective steering vector activated most strongly at the location of that particular objective.
+    \end{itemize}
 
 \section{Summary}
-\label{sec:method_summary}
-% Brief recap of the methodology chapter
+\label{sec:method_summary_revised}
+This chapter detailed the methodologies employed to investigate goal representation and control in a deep reinforcement learning agent. It began with a description of the Procgen Heist environment and the model architectures used. Key interpretability techniques were then outlined, including the training of Sparse Autoencoders, feature visualization methods, the calculation and application of steering vectors for activation interventions, and systematic ablation studies. Finally, the experimental design and the quantitative and qualitative metrics used for evaluation were presented, providing a framework for understanding the results discussed in the subsequent chapter.
