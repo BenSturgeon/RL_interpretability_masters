@@ -1,52 +1,131 @@
 \chapter{Results}
 \label{ch:results}
 
-\section{Overview of Experiments}
-\label{sec:exp_overview}
-% Brief reminder of the experiments conducted
-% Structure of the results presentation
+\section{SAE Training and Feature Visualization}
+\label{sec:sae_viz_results}
+    \subsection{SAE Performance}
+    \label{subsec:sae_performance}
+    % Content from Paper 1: "Entity Multiplexing..."
+    For each Sparse Autoencoder (SAE) trained on the CNN layers of the Procgen model, it was found that performance on the original task could be largely recovered. Specifically, the SAEs enabled the model to recover >95\% of its original performance within the Procgen Heist environment (the conclusion of Paper 1 mentions >98\% performance recovery). This level of performance was often achieved within only a few thousand training steps for the SAEs. Concurrently, the variance explained by the SAEs approached 1 (indicating near-perfect reconstruction of the original activations) in a similar timeframe. The SAEs were typically trained for 6 to 15 million steps to ensure convergence.
 
-\section{Performance of Reinforcement Learning Models}
-\label{sec:rl_performance}
-% Results related to the base RL models
-% Training curves, convergence, final performance
+    An experiment was also conducted where an SAE was trained on the `conv4a` layer with a reduced number of channels (20, down from the original 32 for that SAE). This compressed SAE was still able to recover most of the model's performance, although to a lesser extent than the SAEs with higher expansion factors.
 
-\subsection{Baseline Performance}
-\label{subsec:baseline}
-% Standard metrics for your RL tasks
-% Comparison with established benchmarks
+    \subsection{SAE Feature Visualization Results}
+    \label{subsec:sae_viz_outputs}
+    % Content from Paper 1: "Entity Multiplexing..."
+    The application of SAEs provided significantly more clear feature visualizations compared to those derived from the original base model, where visualizations often consisted primarily of noise. 
 
-\subsection{Stability and Reproducibility}
-\label{subsec:stability}
-% Variance across multiple runs
-% Statistical significance of results
+    While creating useful interpretations from synthetic visualizations (e.g., by optimizing input images to maximize channel activation) proved almost impossible, the method of finding maximally activating regions or patches from the dataset provided surprisingly positive and interpretable results (see Figure \ref{fig:max_activating_patches} for an example from Paper 1). This observation confirms similar findings reported by \cite{hilton_understanding_2020}.
 
-\section{Interpretability Results}
-\label{sec:interp_results}
-% Outcomes from applying your interpretability methods
-% Visualization of explanations
+    % Placeholder for Figure from Paper 1
+    % \begin{figure}[H]
+    % \centering
+    % \includegraphics[width=0.9\textwidth]{figures/base_model_max_activating_patches.png} % Ensure path is correct for thesis
+    % \caption{Example of max activating patches extracted from within the environment (from Paper 1, Figure 3).}
+    % \label{fig:max_activating_patches_results} % Renamed to avoid conflict if original label used elsewhere
+    % \end{figure}
 
-\subsection{Feature Attribution Analysis}
-\label{subsec:feature_attr}
-% Results from attribution methods
-% Important state features identified
+\section{Steering and Activation Intervention Results}
+\label{sec:steering_results}
+    \subsection{General Steering Capabilities}
+    \label{subsec:general_steering}
+    % Content from Paper 1 & 2
+    Activation steering interventions were successful in multiple layers, notably `conv3a` and `conv4a`, for both the SAE-enhanced models and the base model (Paper 1). The `conv3a` layer was identified as particularly steerable, especially when an SAE was applied to it, partly attributed to the increased number of channels in the SAE's hidden layer (Paper 1).
 
-\subsection{Decision Boundary Visualization}
-\label{subsec:decision_boundary}
-% Visualizations of policy decision boundaries
-% Insights gained from these visualizations
+    In the SAE-enhanced model, channels in `sae_conv4a` appeared to represent identity-aware features whose influence on navigation was conditional on the agent's policy, offering a more targeted control mechanism than the more general channels found in the base model (Paper 1).
 
-\section{Comparative Analysis}
-\label{sec:comparative}
-% Comparison with existing interpretability methods
-% Strengths and weaknesses of your approach
+    Investigations with the base model (Paper 2) revealed that the green key was highly steerable. There was a notable improvement in the steerability of all objectives at layer 8 of the simplified architecture (equivalent to `conv4b`), followed by a sharp decrease in steerability in the subsequent pooling layer (layer 9). This pattern suggested that layer 8 might act as a crucial interface for processing salient information before it is passed to the fully connected layers for action selection (Paper 2).
 
-\section{Case Studies}
-\label{sec:case_studies}
-% Detailed analysis of specific examples
-% Deep dive into interesting instances
+    \subsection{Quantitative Steering Results and Channel Analysis}
+    \label{subsec:quantitative_steering}
+    % Content from Paper 1
+    Experiments demonstrated that the model is steerable across many different channels, with this effect being particularly pronounced in the `conv3a` layer. This also indicated that even after SAE training, a high degree of polysemanticity can persist in some layers, such as `conv3a`. However, the number of polysemantic channels significantly dropped in `conv4a` after SAE application. This suggests that signals related to targeting are shaped in `conv3a` and then refined into a more pointed representation in `conv4a` (Paper 1, see Figure \ref{fig:steering-dot-plot} for entity distribution by channel and activation).
 
-\section{Summary of Findings}
-\label{sec:findings_summary}
-% Synthesis of all results
-% Key takeaways from the experiments
+    % Placeholder for Figure from Paper 1
+    % \begin{figure}[H]
+    % \centering
+    % \includegraphics[width=0.9\textwidth]{figures/entity_distribution_plot_conv4a_expanded.png} % Ensure path is correct
+    % \caption{Distribution of successful interventions by entity, channel, and activation value in `conv4a` SAE (from Paper 1, Figure 5).}
+    % \label{fig:steering-dot-plot-results}
+    % \end{figure}
+
+    % Content from Paper 2
+    Analysis of steering vectors in the base model (Paper 2) showed them to be highly sparse, meaning most entries are approximately zero, containing information primarily related to the objective of interest. By examining the indices of the strongest positive and negative activations within these steering vectors against the location of the objective, specific channels were identified. For instance, in layer 8, channel 29 was found to fire strongly (positive activation) at the location of the objective, while channel 4 activated negatively. These channels tended to respond more to objectives encountered earlier in the game's sequence (e.g., blue key, then green key, then red key, then gem) (Paper 2, see Figure \ref{fig:comparative_activations_channel28}).
+
+    % Placeholder for Figure from Paper 2
+    % \begin{figure}[H]
+    % \centering
+    % \includegraphics[width=0.95\linewidth]{images/objective_detecting_channels.png} % Ensure path is correct
+    % \caption{Frequency with which each channel of an objective steering vector activates most strongly at the location of that objective (from Paper 2, Figure 4).}
+    % \label{fig:comparative_activations_channel28_results}
+    % \end{figure}
+
+    \subsection{Specific Steering Phenomena}
+    \label{subsec:specific_steering_phenomena}
+        \subsubsection{Entity Prioritization in Steering}
+        \label{subsubsec:entity_prioritization}
+        % Content from Paper 1
+        An important observation regarding steering was the model's adherence to the game's sequential objectives. If an attempt was made to retarget the agent towards a later objective in the sequence (e.g., intervening on channel 22, associated with the green key) while an earlier, prerequisite objective (e.g., the blue key) was still present in the environment, the agent would ignore the intervention and prioritize the blue key. The reverse, however, was not true; successfully collected earlier keys did not prevent targeting of subsequent ones (Paper 1).
+
+        \subsubsection{Role of Specific Channels}
+        \label{subsubsec:specific_channels_steering}
+        % Content from Paper 1
+        Detailed experiments revealed distinct roles for certain channels. For example, in one SAE, interventions on channel 110 could steer the agent, but interventions on channel 115 alone could not; however, combining interventions on channels 115 and 71 (while 110 was not manipulated) did result in steering. Channel 67 in `sae_conv3a` appeared to be generally active across different keys, suggesting a degree of generality. Channel 6 in the same layer also showed strong activation in multiple key-related steering scenarios, suggesting it might track keys in general. In the case of the red key (the final key), channel 6 could be the sole strongly activating channel, as no other keys remained (Paper 1).
+
+    \subsection{Steering with Dead Channels (SAE)}
+    \label{subsec:dead_channel_steering}
+    % Content from Paper 1
+    One of the most surprising findings from the SAE intervention experiments was that the majority of channels effective for steering the agent were, in fact, "dead channels." These are channels that exhibited no activation under normal operating conditions of the model. It was confirmed that these channels remained dead regardless of the input, indicating they were not simply highly selective for rare features (Paper 1).
+
+\section{Channel Ablation Study Results (SAE)}
+\label{sec:ablation_results}
+    % Content from Paper 1
+    Comprehensive ablation studies on the SAEs revealed a remarkable concentration of functionality in specific channels. By activating only a single SAE channel at a time (ablating all others), it was found that only a handful of channels could independently support the agent's navigation to different entities in the environment (see Figure \ref{fig:ablation-heatmap} from Paper 1 for a heatmap of these results).
+
+    Notably, channels 44 and 75, which were identified as non-dead channels capable of steering the agent through interventions, showed a weaker ability than some other channels to successfully navigate to all entities when in isolation during ablation. This implies some specialization in roles: channels like 13, for example, were very effective at guiding the agent to targets during ablation (suggesting they are good at identifying target locations and paths) but were not effective for steering via direct intervention (implying they do not unilaterally dictate the agent's goal focus when other signals are present).
+
+    The ablation results also revealed entity specialization patterns. Some channels performed better for earlier entities in the collection sequence (e.g., the blue key) than for later ones (e.g., the red key). This reflects the sequential nature of the task, where the agent must collect earlier keys before later ones become relevant (Paper 1).
+
+    % Placeholder for Figure from Paper 1
+    % \begin{figure}[H]
+    % \centering
+    % \includegraphics[width=1\textwidth]{figures/channel_ablation_heatmap_biggertext_conv4a_SAE_vast.png} % Ensure path is correct
+    % \caption{Heatmap showing entity collection counts when only a single SAE channel is active (from Paper 1, Figure 7).}
+    % \label{fig:ablation-heatmap-results}
+    % \end{figure}
+
+\section{Activation-Level Entity Encoding (SAE)}
+\label{sec:activation_level_encoding}
+    % Content from Paper 1
+    A key finding from the SAE analysis was that certain critical steering channels, specifically channels 44 and 75 in an SAE, encoded different entities at different activation strengths. This indicates a sophisticated mechanism for multiplexing information within a single channel, rather than requiring separate dedicated channels for each entity type.
+
+    By examining the distribution of successful interventions for different entity types (see Figure \ref{fig:steering-distribution} from Paper 1), it was observed that these interventions occurred at distinct activation values within the same channel. For example, in channel 44, successful steering toward the blue key typically required lower activation values (around 0.5-0.7 in the paper's example, though Figure 4 suggests 1.4-1.8 for blue key vs 0.5-1.0 for gem), while steering toward the red key needed higher values (e.g., 1.5-2.0). This activation-level encoding mechanism allows a single channel to represent multiple entity types, enabling efficient information encoding within a minimal set of active channels (Paper 1).
+
+    % Placeholder for Figure from Paper 1
+    % \begin{figure}[t]
+    % \centering
+    % \includegraphics[width=0.9\textwidth]{figures/2_channel_distribution.png} % Ensure path is correct
+    % \caption{Distribution of successful interventions by entity type across channels 44 and 75 in `conv4a` SAE, showing distinct activation values for different entities (from Paper 1, Figure 4).}
+    % \label{fig:steering-distribution-results}
+    % \end{figure}
+
+\section{Polysemanticity Observations (Base Model)}
+\label{sec:polysemanticity_base_model}
+    % Content from Paper 2
+    In the Procgen Heist environment, analysis of the base model (without SAEs) revealed that channels in a given layer tended to attend to many different entities, exhibiting less specialization than might be found in simpler environments (such as the Maze environment studied by \cite{mini_understanding_2023}). This phenomenon is known as polysemanticity \citep{olah_zoom_2020}, where a single channel activates in response to multiple, often unrelated, features or concepts.
+
+    A heatmap illustrating the frequency with which channels in layer 8 (of the simplified architecture in Paper 2) maximally activated on the position of specific entities (lock, gem, player, key) showed this polysemantic behavior. While some channels exhibited fairly clear specialization (e.g., channel 32 activating on the gem in the example), many channels activated across a range of different entities rather than exclusively tracking a single objective (Paper 2, see Figure \ref{fig:activation_frequency_histogram}).
+
+    % Placeholder for Figure from Paper 2
+    % \begin{figure}[H]
+    % \centering
+    % \includegraphics[width=0.95\linewidth]{images/maximum_activation_heatmap_layer8.png} % Ensure path is correct
+    % \caption{Heatmap illustrating the frequency with which a channel maximally activated on the position of a specific entity in layer 8 of the base model (from Paper 2, Figure 2).}
+    % \label{fig:activation_frequency_histogram_results}
+    % \end{figure}
+
+\section{Summary of Key Findings}
+\label{sec:results_summary_key_findings}
+    The experimental results provide several key insights into the workings of the RL agent and the effects of SAEs. SAEs were successfully trained to reconstruct activations with high fidelity and minimal impact on task performance, while offering clearer feature visualizations, particularly through max activating patches. Both base models and SAE-enhanced models were steerable via activation interventions in convolutional layers, with SAEs sometimes offering more targeted control and revealing layer-specific roles in goal processing.
+
+    Quantitative analysis highlighted the persistence of polysemanticity in some layers even after SAE training, though SAEs could also reduce it in others. A surprising finding was the steerability afforded by dead channels in SAEs. Ablation studies underscored the concentration of navigational capabilities into a few key SAE channels, which also showed specialization for different entities or stages of the task. Critically, some SAE channels were found to encode multiple entities within a single channel by utilizing different activation strengths—a sophisticated form of information multiplexing. In contrast, the base model exhibited more widespread polysemanticity across its channels. These findings collectively advance our understanding of how RL agents represent and pursue goals, and how tools like SAEs can help to uncover these mechanisms.
