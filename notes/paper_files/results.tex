@@ -30,16 +30,16 @@
     \subsection{General Steering Capabilities}
     \label{subsec:general_steering}
     % Content from Paper 1 & 2
-    Activation steering interventions were successful in multiple layers, notably `conv3a` and `conv4a`, for both the SAE-enhanced models and the base model (Paper 1). The `conv3a` layer was identified as particularly steerable, especially when an SAE was applied to it, partly attributed to the increased number of channels in the SAE's hidden layer (Paper 1).
+    Activation steering interventions were successful in multiple layers, notably \texttt{conv3a} and \texttt{conv4a}, for both the SAE-enhanced models and the base model (Paper 1). The \texttt{conv3a} layer was identified as particularly steerable, especially when an SAE was applied to it, partly attributed to the increased number of channels in the SAE's hidden layer (Paper 1).
 
-    In the SAE-enhanced model, channels in `sae_conv4a` appeared to represent identity-aware features whose influence on navigation was conditional on the agent's policy, offering a more targeted control mechanism than the more general channels found in the base model (Paper 1).
+    In the SAE-enhanced model, channels in \texttt{sae_conv4a} appeared to represent identity-aware features whose influence on navigation was conditional on the agent's policy, offering a more targeted control mechanism than the more general channels found in the base model (Paper 1).
 
-    Investigations with the base model (Paper 2) revealed that the green key was highly steerable. There was a notable improvement in the steerability of all objectives at layer 8 of the simplified architecture (equivalent to `conv4b`), followed by a sharp decrease in steerability in the subsequent pooling layer (layer 9). This pattern suggested that layer 8 might act as a crucial interface for processing salient information before it is passed to the fully connected layers for action selection (Paper 2).
+    Investigations with the base model (Paper 2) revealed that the green key was highly steerable. There was a notable improvement in the steerability of all objectives at layer 8 of the simplified architecture (equivalent to \texttt{conv4b}), followed by a sharp decrease in steerability in the subsequent pooling layer (layer 9). This pattern suggested that layer 8 might act as a crucial interface for processing salient information before it is passed to the fully connected layers for action selection (Paper 2).
 
     \subsection{Quantitative Steering Results and Channel Analysis}
     \label{subsec:quantitative_steering}
     % Content from Paper 1
-    Experiments demonstrated that the model is steerable across many different channels, with this effect being particularly pronounced in the `conv3a` layer. This also indicated that even after SAE training, a high degree of polysemanticity can persist in some layers, such as `conv3a`. However, the number of polysemantic channels significantly dropped in `conv4a` after SAE application. This suggests that signals related to targeting are shaped in `conv3a` and then refined into a more pointed representation in `conv4a` (Paper 1, see Figure \ref{fig:steering-dot-plot} for entity distribution by channel and activation).
+    Experiments demonstrated that the model is steerable across many different channels, with this effect being particularly pronounced in the \texttt{conv3a} layer. This also indicated that even after SAE training, a high degree of polysemanticity can persist in some layers, such as \texttt{conv3a}. However, the number of polysemantic channels significantly dropped in \texttt{conv4a} after SAE application. This suggests that signals related to targeting are shaped in \texttt{conv3a} and then refined into a more pointed representation in \texttt{conv4a} (Paper 1, see Figure \ref{fig:steering-dot-plot} for entity distribution by channel and activation).
 
     % Placeholder for Figure from Paper 1
     % \begin{figure}[H]
@@ -70,7 +70,7 @@
         \subsubsection{Role of Specific Channels}
         \label{subsubsec:specific_channels_steering}
         % Content from Paper 1
-        Detailed experiments revealed distinct roles for certain channels. For example, in one SAE, interventions on channel 110 could steer the agent, but interventions on channel 115 alone could not; however, combining interventions on channels 115 and 71 (while 110 was not manipulated) did result in steering. Channel 67 in `sae_conv3a` appeared to be generally active across different keys, suggesting a degree of generality. Channel 6 in the same layer also showed strong activation in multiple key-related steering scenarios, suggesting it might track keys in general. In the case of the red key (the final key), channel 6 could be the sole strongly activating channel, as no other keys remained (Paper 1).
+        Detailed experiments revealed distinct roles for certain channels. For example, in one SAE, interventions on channel 110 could steer the agent, but interventions on channel 115 alone could not; however, combining interventions on channels 115 and 71 (while 110 was not manipulated) did result in steering. Channel 67 in \texttt{sae_conv3a} appeared to be generally active across different keys, suggesting a degree of generality. Channel 6 in the same layer also showed strong activation in multiple key-related steering scenarios, suggesting it might track keys in general. In the case of the red key (the final key), channel 6 could be the sole strongly activating channel, as no other keys remained (Paper 1).
 
     \subsection{Steering with Dead Channels (SAE)}
     \label{subsec:dead_channel_steering}
