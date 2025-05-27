@@ -73,7 +73,7 @@ Following recommendations from \cite{hilton_understanding_2020}, a simplified ar
 Interpretability in machine learning refers to the extent to which a human can understand the cause and effect of a model's decisions. It is crucial for debugging, ensuring fairness, building trust, and verifying reliability, especially in high-stakes applications.
 
 % Content from Paper 1: "Entity Multiplexing..."
-Sparse AutoEncoders (SAEs) have proven to be a useful tool in understanding neural networks by acting as an unsupervised tool that can compress meaningful operations into more isolated circuitry. This allows for a reduction in the issue of neural network functionality being distributed across different regions within a layer \citep{elhage_toy_2022}, and facilitates a better understanding of the network's operations \citep{bricken_towards_2023}. Recent work has demonstrated how SAEs can reveal interpretable features in various neural architectures, including CNNs \citep{gorton_missing_2024} and transformers \citep{conerly_update_2024}.
+Sparse AutoEncoders (\model{SAE}s) have proven to be a useful tool in understanding neural networks by acting as an unsupervised tool that can compress meaningful operations into more isolated circuitry. This allows for a reduction in the issue of neural network functionality being distributed across different regions within a layer \citep{elhage_toy_2022}, and facilitates a better understanding of the network's operations \citep{bricken_towards_2023}. Recent work has demonstrated how \model{SAE}s can reveal interpretable features in various neural architectures, including CNNs \citep{gorton_missing_2024} and transformers \citep{conerly_update_2024}.
 % End Content from Paper 1
 
 \subsection{Post-hoc Explanations}
@@ -93,7 +93,7 @@ The feature visualization methodologies discussed, such as synthetic visualizati
 \subsection{Intrinsically Interpretable Models}
 \label{subsec:intrinsic}
 % Models designed to be interpretable from the ground up
-Intrinsically interpretable models are designed from the outset to be understandable, often by constraining their complexity (e.g., linear models, decision trees) or by building in mechanisms that are inherently transparent. Training SAEs, as discussed in "Entity Multiplexing Through Activation Strength," can be seen as an effort to transform parts of a complex model into a more intrinsically interpretable representation by disentangling features.
+Intrinsically interpretable models are designed from the outset to be understandable, often by constraining their complexity (e.g., linear models, decision trees) or by building in mechanisms that are inherently transparent. Training \model{SAE}s, as discussed in "Entity Multiplexing Through Activation Strength," can be seen as an effort to transform parts of a complex model into a more intrinsically interpretable representation by disentangling features.
 
 \section{Interpretability in Reinforcement Learning}
 \label{sec:rl_interpretability}
@@ -135,7 +135,7 @@ Activation manipulation experiments, such as intervening on specific channels, h
 % Visualization techniques for RL policies
 
 % Content from Paper 1: "Entity Multiplexing..."
-Feature visualization techniques, including synthetic visualization and finding maximally activating samples from a dataset, are employed. While synthetic visualizations can be noisy, maximally activating patches, especially from within the environment, can yield interpretable results, confirming findings in \cite{hilton_understanding_2020}. SAEs were found to provide significantly clearer visualizations than the original model.
+Feature visualization techniques, including synthetic visualization and finding maximally activating samples from a dataset, are employed. While synthetic visualizations can be noisy, maximally activating patches, especially from within the environment, can yield interpretable results, confirming findings in \cite{hilton_understanding_2020}. \model{SAE}s were found to provide significantly clearer visualizations than the original model.
 % End Content from Paper 1
 
 % Content from Paper 2: "Discovering Goals..."
@@ -151,17 +151,17 @@ Prior to the research detailed in the accompanying papers, several areas in RL i
 % Derived from Paper 1 Future Work & Discussion
 \begin{itemize}
     \item Understanding how RL agents track and switch between multiple objectives, especially when those objectives are not the immediate next target.
-    \item The application and efficacy of techniques like Sparse Autoencoders (SAEs) for disentangling representations specifically within RL agent architectures, particularly CNNs.
+    \item The application and efficacy of techniques like Sparse Autoencoders (\model{SAE}s) for disentangling representations specifically within RL agent architectures, particularly CNNs.
     \item Investigating how fine-grained details, such as the precise activation strength within a neural channel, might encode complex information like entity identity or priority.
-    \item The role and potential utility of "dead" channels in SAEs, which cease to activate during normal operation but might retain learned decoder weights.
+    \item The role and potential utility of "dead" channels in \model{SAE}s, which cease to activate during normal operation but might retain learned decoder weights.
     \item The generalization of interpretability findings from simpler RL agents to more complex architectures like decision transformers or RNN-based agents, especially for tasks requiring memory.
     \item The potential for more advanced attribution techniques, such as attribution-based parameter decomposition \citep{braun_interpretability_2025}, to yield insights in RL models.
-    \item Clarifying whether functionalities preserved or highlighted by SAEs (e.g., entity encoding via activation strength) reflect similar underlying mechanisms in the base model.
+    \item Clarifying whether functionalities preserved or highlighted by \model{SAE}s (e.g., entity encoding via activation strength) reflect similar underlying mechanisms in the base model.
 \end{itemize}
 
 % Derived from Paper 2 Discussion & Future Work
 \begin{itemize}
-    \item Many goal-related activations in RL agents can be entangled across channels, making it difficult to isolate the function of individual components without tools like SAEs or causal tracing.
+    \item Many goal-related activations in RL agents can be entangled across channels, making it difficult to isolate the function of individual components without tools like \model{SAE}s or causal tracing.
     \item The behavior of interpretability interventions (like activation patching) in off-distribution settings for RL agents.
     \item Providing precise, exhaustive maps of how different channels contribute to goal representations and decision-making.
     \item The effect of environment design (e.g., fixed vs. variable ordering of objectives) on the development of generalizable circuits for goal pursuit.
@@ -180,7 +180,7 @@ The research presented in the accompanying papers (forming the basis of this the
 \begin{itemize}
     \item Extending activation steering and intervention techniques to more complex, multi-objective RL environments like Procgen Heist.
     \item Applying Sparse Autoencoders to the convolutional layers of an RL agent to disentangle features and investigate phenomena like polysemanticity and feature encoding through activation strength.
-    \item Systematically analyzing the role of individual channels (including "dead" channels in SAEs) in navigation and goal pursuit through methods like ablation studies and targeted interventions.
+    \item Systematically analyzing the role of individual channels (including "dead" channels in \model{SAE}s) in navigation and goal pursuit through methods like ablation studies and targeted interventions.
     \item Exploring novel mechanisms of information encoding, such as multiplexing entity information within a single channel through varying activation strengths.
 \end{itemize}
 These contributions aim to deepen our understanding of how RL agents represent and pursue goals, and to refine the tools available for mechanistic interpretability in this domain.

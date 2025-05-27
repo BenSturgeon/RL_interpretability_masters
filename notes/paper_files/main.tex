@@ -17,6 +17,10 @@
 \usepackage{float}    % For [H] float specifier (place exactly HERE)
 \setlength{\headheight}{14.5pt} % Adjust headheight for fancyhdr
 
+% Define custom commands for consistent typesetting
+\newcommand{\layer}[1]{\texttt{#1}}
+\newcommand{\model}[1]{\textsc{#1}}  % For model names like SAE
+
 % Define theorem environments
 \newtheorem{theorem}{Theorem}[chapter]
 \newtheorem{lemma}[theorem]{Lemma}

@@ -6,7 +6,7 @@ Understanding how deep learning models perform their tasks is currently an unsol
 
 This research builds on the work done by \cite{mini_understanding_2023} in which precise control of a maze solving agent was achieved using activation steering. The current contribution begins by extending their work to an environment that involves multiple competing entities that an agent needs to reach in sequence. To this end, we chose the Procgen Heist environment as the target of our research.
 
-Initially, extracting meaningful insights from this model proved challenging because of the high degree of polysemanticity within the network that made it challenging to draw strong conclusions about how it worked. To address this, we train Sparse AutoEncoders (SAEs) on the CNN layers of our network in order to disentangle the functionality of the model.
+Initially, extracting meaningful insights from this model proved challenging because of the high degree of polysemanticity within the network that made it challenging to draw strong conclusions about how it worked. To address this, we train Sparse AutoEncoders (\\model{SAE}s) on the CNN layers of our network in order to disentangle the functionality of the model.
 
 % From Paper 2: "Discovering Goals in A Deep Reinforcement Learning Model by Studying Steering Vectors"
 As RL techniques become more effective and are deployed more widely, it will become increasingly necessary to provide safety guarantees and explanations behind critical trade-offs that RL policies are making so that we can deploy these systems with confidence that they will work as we expect \citep{shakya2023reinforcement}.

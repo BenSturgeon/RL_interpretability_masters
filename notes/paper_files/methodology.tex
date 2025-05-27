@@ -28,27 +28,27 @@
 
 \section{Interpretability Techniques Employed}
 \label{sec:interp_techniques}
-    \subsection{Sparse Autoencoder (SAE) Training}
+    \subsection{Sparse Autoencoder (\model{SAE}) Training}
     \label{subsec:sae_training}
     % Content from Paper 1: "Entity Multiplexing..."
-    SAEs were trained on the CNN layers of the Procgen model. For each SAE, recovery of >95\% of the performance within the environment was often achieved within only a few thousand training steps, with variance explained approaching 1 in a similar time frame. Models were trained for 6 million steps (later stated as 15 million steps in Paper 1, clarification may be needed) to allow for convergence.
-    An SAE was also trained on conv4a with a reduced number of channels (20, down from 32) to assess performance under compression.
-    Techniques from \cite{conerly_update_2024} such as scaling the feature activations of the SAE by the norm of their corresponding decoder columns were used. This provides greater flexibility to the SAEs during training while preserving desired sparsity properties, helping to lower loss and reduce dead features.
-    Recent work from \cite{gorton_missing_2024} on training SAEs on CNN layers provided essential groundwork. Similar hyperparameter choices for different layer depths were used, along with their approach of oversampling the strongest activations to avoid wasting computation. As in \cite{gorton_missing_2024}, 1x1 convolutional layers were used, generally applying an expansion factor of 4. To ensure stable training, activation normalisation and a warmup on the L1 coefficient were applied. Table \ref{tab:sae-params} (from Paper 1) summarizes expansion factors and L1 coefficients.
+    \model{SAE}s were trained on the CNN layers of the Procgen model. For each \model{SAE}, recovery of >95\% of the performance within the environment was often achieved within only a few thousand training steps, with variance explained approaching 1 in a similar time frame. Models were trained for 6 million steps (later stated as 15 million steps in Paper 1, clarification may be needed) to allow for convergence.
+    An \model{SAE} was also trained on \layer{conv4a} with a reduced number of channels (20, down from 32) to assess performance under compression.
+    Techniques from \cite{conerly_update_2024} such as scaling the feature activations of the \model{SAE} by the norm of their corresponding decoder columns were used. This provides greater flexibility to the \model{SAE}s during training while preserving desired sparsity properties, helping to lower loss and reduce dead features.
+    Recent work from \cite{gorton_missing_2024} on training \model{SAE}s on CNN layers provided essential groundwork. Similar hyperparameter choices for different layer depths were used, along with their approach of oversampling the strongest activations to avoid wasting computation. As in \cite{gorton_missing_2024}, 1x1 convolutional layers were used, generally applying an expansion factor of 4. To ensure stable training, activation normalisation and a warmup on the L1 coefficient were applied. Table \ref{tab:sae-params} (from Paper 1) summarizes expansion factors and L1 coefficients.
 
     \begin{table}[H] % Consider moving table definition to main.tex preamble or a separate style file
-    \caption{Expansion factors and L1 Coefficients for the different SAEs (from Paper 1)}
+    \caption{Expansion factors and L1 Coefficients for the different \model{SAE}s (from Paper 1)}
     \label{tab:sae-params-methodology} % Renamed label to avoid conflict
     \centering
     \begin{tabular}{@{}lcc@{}}
     \toprule
     Layer & Expansion Factor & L1 Coefficient \\
     \midrule
-    conv1a & 2 & 1e-4 \\
-    conv2a & 4 & 5e-4 \\
-    conv2b & 4 & 5e-4 \\
-    conv3a & 4 & 5e-4 \\
-    conv4a & 4 & 5e-3 \\
+    \layer{conv1a} & 2 & 1e-4 \\
+    \layer{conv2a} & 4 & 5e-4 \\
+    \layer{conv2b} & 4 & 5e-4 \\
+    \layer{conv3a} & 4 & 5e-4 \\
+    \layer{conv4a} & 4 & 5e-3 \\
     \bottomrule
     \end{tabular}
     \end{table}
@@ -80,7 +80,7 @@
         \label{subsubsec:activation_manipulation}
         % Content from Paper 1: "Entity Multiplexing..."
         For scaled-up steering experiments, a specific entity was placed into the environment. The network was intervened upon by setting all its values to 0 and setting a specific region of a channel to a specified value. A parameter sweep over a range of values (typically 0 to 3) was performed. Episode lengths were kept short.
-        This approach was scaled by running a static intervention across every channel in the SAE, measuring deviation to the targeted area. For each entity-channel combination, 100 trials were run with activation value incrementing: activation value = trial number \(\times\) (max range / number of trials).
+        This approach was scaled by running a static intervention across every channel in the \model{SAE}, measuring deviation to the targeted area. For each entity-channel combination, 100 trials were run with activation value incrementing: activation value = trial number \(\times\) (max range / number of trials).
         A box maze (see Figure \ref{fig:intervention-experiment} in Paper 1) was used to provide a clear decision point.
 
         % Content from Paper 2: "Discovering Goals..."
@@ -89,19 +89,19 @@
     \subsection{Ablation Studies}
     \label{subsec:ablation_studies}
     % Content from Paper 1: "Entity Multiplexing..."
-    To systematically assess the role of individual channels, a comprehensive ablation methodology was developed. For each channel in the SAE, episodes were run with only that channel active while ablating all other channels. This allowed measurement of the isolated capability of each channel to support navigation to different entities in the environment. Successful entity collection counts were recorded for each channel across multiple episodes.
+    To systematically assess the role of individual channels, a comprehensive ablation methodology was developed. For each channel in the \model{SAE}, episodes were run with only that channel active while ablating all other channels. This allowed measurement of the isolated capability of each channel to support navigation to different entities in the environment. Successful entity collection counts were recorded for each channel across multiple episodes.
 
 \section{Experimental Design and Evaluation Metrics}
 \label{sec:experimental_design_eval}
     \subsection{General Experimental Approach}
     \label{subsec:general_exp_approach}
-    The research involved training RL agents and corresponding SAEs, followed by a series of analytical experiments. These experiments included feature visualization to understand learned representations, activation steering and patching to test causal control over agent behavior, and ablation studies to determine the functional importance of individual channels. The primary goal was to dissect how the agent represents and pursues multiple objectives in the Procgen Heist environment and how SAEs might alter or clarify these representations.
+    The research involved training RL agents and corresponding \model{SAE}s, followed by a series of analytical experiments. These experiments included feature visualization to understand learned representations, activation steering and patching to test causal control over agent behavior, and ablation studies to determine the functional importance of individual channels. The primary goal was to dissect how the agent represents and pursues multiple objectives in the Procgen Heist environment and how \model{SAE}s might alter or clarify these representations.
 
     \subsection{Evaluation Metrics}
     \label{subsec:eval_metrics}
     Several metrics were used to evaluate the different components of the research:
     \begin{itemize}
-        \item \textbf{For SAE Training (Paper 1):} Performance was primarily tracked using variance explained (aiming for close to 1) and the reward attained on the maze-solving task after SAE integration (>95\% recovery). Sparsity was monitored by examining the number of dead features, the mean number of activating neurons, and the fraction of active neurons (target ~0.001).
+        \item \textbf{For \model{SAE} Training (Paper 1):} Performance was primarily tracked using variance explained (aiming for close to 1) and the reward attained on the maze-solving task after \model{SAE} integration (>95\% recovery). Sparsity was monitored by examining the number of dead features, the mean number of activating neurons, and the fraction of active neurons (target ~0.001).
         \item \textbf{For Steering and Activation Interventions (Paper 1 \& 2):} Success was measured by the agent's deviation to the artificially targeted zone or behavior change (e.g., moving away from an objective). For scaled-up experiments (Paper 1), the frequency of successful deviation across channels and activation strengths was recorded. For activation patching (Paper 2), the ability to steer the agent predictably was the primary metric.
         \item \textbf{For Ablation Studies (Paper 1):} The key metric was the count of successful entity collections per channel when all other channels were ablated, providing a quantitative measure of each channel's specialization and capability.
         \item \textbf{For Steering Vector Analysis (Paper 2):} The effectiveness of steering vectors was partly assessed by the steerability of different layers (reduction in objective pickups). Channel function was investigated by measuring the frequency with which a channel in an objective steering vector activated most strongly at the location of that particular objective.
