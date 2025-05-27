@@ -169,3 +169,19 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+# file types
+*.png
+*.gif
+*.pt
+*.wandb
+
+src/wandb/*
+src/*.txt
+src/output/
+src/output/entity_tracking_*
+src/entity_tracking_results*
+# special files 
+.DS_Store
+
