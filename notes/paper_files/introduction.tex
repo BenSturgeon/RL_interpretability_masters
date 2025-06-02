@@ -18,17 +18,15 @@ Our investigation seeks to build on the work of\cite{mini_2023_understanding}, w
 This thesis explores the mechanistic interpretability of reinforcement learning agents, specifically focusing on how these agents represent and pursue goals in complex, multi-objective environments. Building upon work that gives us tools for understanding neural networks through intervening on their operations via activation steering, as well as unsupervised methods to disentangle neural network representations such as Sparse AutoEncoders (SAEs), this research employs and extends these techniques by applying them to a CNN-based reinforcement learning agent trained on the Procgen Heist environment. The primary aim is to uncover the internal mechanisms by which the agent navigates, identifies targets, and prioritizes objectives, with a view to developing more generalizable insights into the workings of deep RL models.
 
 % Outline of the thesis structure (placeholder)
-This thesis is structured as follows: Chapter \ref{ch:literature} provides a review of the relevant literature in reinforcement learning and machine learning interpretability. Chapter \ref{ch:methodology} details the experimental setup, including the environment, model architecture, and the interpretability techniques employed. Chapter \ref{ch:results} presents the findings from our experiments, including feature visualizations, steering results, and ablation studies. Chapter \ref{ch:discussion} discusses the implications of these findings, and Chapter \ref{ch:conclusion} concludes the thesis and suggests avenues for future research.
+This thesis is structured as follows: Chapter\ref{ch:literature} provides a review of the relevant literature in reinforcement learning and machine learning interpretability. Chapter\ref{ch:methodology} details the experimental setup, including the environment, model architecture, and the interpretability techniques employed. Chapter\ref{ch:results} presents the findings from our experiments, including feature visualizations, steering results, and ablation studies. Chapter\ref{ch:discussion} discusses the implications of these findings, and Chapter\ref{ch:conclusion} concludes the thesis and suggests avenues for future research.
 
-\section{Background and Motivation}
-\label{sec:background}
-% Provide context for your research topic
-% Explain why the topic is important and interesting
+\section{Background and Motivation}\label{sec:background}
+Reinforcement learning is a field of machine learning that has always had the unique promise of delivering superhuman performance in a wide range of environments. However, the black box nature of these models has made it difficult to understand how they achieve these results. In recent years, RL has seen a surge in interest from the ML community, due to its application in LLMs and other frontier models. This has led to significant advances in performance in these models, but also presents the potential for these highly capable systems to manifest unexpected behavior that is unique to the RL setting. 
 
-\section{Problem Statement}
-\label{sec:problem}
-% Clearly state the problem that your research addresses
-% Identify the gap in knowledge that your work aims to fill
+Being able to understand how these models work is a key step towards building more reliable, controllable and understandable models. Specifically, we are interested in understanding how these models represent and pursue goals in complex, multi-objective environments that are a step beyond simple toy environments. Goals, specifically are something that advanced agentic AI would share with even simple models, and so understanding how goals work in these more complex environments is a key step towards understanding how to build safe and reliable agentic AI. 
+
+\section{Problem Statement}\label{sec:problem}
+
 
 \section{Research Objectives}
 \label{sec:objectives}
