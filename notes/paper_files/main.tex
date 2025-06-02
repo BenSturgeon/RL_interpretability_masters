@@ -8,7 +8,7 @@
 \usepackage{amssymb}
 \usepackage{amsthm}
 \usepackage{graphicx}
-\graphicspath{{images/}}
+% \graphicspath{{images/}}
 \usepackage{parskip}
 \usepackage{fancyhdr}
 \usepackage{mathtools}
@@ -93,9 +93,7 @@ I empower the university to reproduce for the purpose of research either the who
 % Abstract
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
-% Your abstract goes here. Consider copying from one of your papers.
-% For example, from "Entity Multiplexing Through Activation Strength...":
-% Sparse AutoEncoders (SAEs) have proven to be useful tools in understanding Large Language Models as a means of separating out features within neural networks. In this work we explore the efficacy of this tool in understanding a maze solving reinforcement learning agent trained in the Procgen Heist environment. We target this model because it initially presented a high degree of polysemanticity due to the fact that it has to target multiple different entities to succeed. Our first finding was that there are many channels that when manipulated in isolation allow for complete re-targeting of the agent. We discovered that a vast majority of the "steering channels" in the SAE were in fact dead channels that didn't activate at all during normal operation. We further found that the model was capable of steering itself to different entities in the maze, even when every other channel in the layer was completely ablated, and that there were significantly fewer channels capable of this in our SAEs. Finally, we discovered that the SAEs were in fact not splitting entities across multiple channels, but were in fact multiplexing entity information within the same channel and through varying the activation strength, sending a signal regarding the entity they were targeting. We believe these findings may provide insight into the application of SAEs more broadly, and help to shed light on the operations of reinforcement learning models.
+Sparse AutoEncoders (SAEs) have proven to be useful tools in understanding Large Language Models as a means of separating out features within neural networks. In this work we explore the efficacy of this tool in understanding a maze solving reinforcement learning agent trained in the Procgen Heist environment. We target this model because it initially presented a high degree of polysemanticity due to the fact that it has to target multiple different entities to succeed. Our first finding was that there are many channels that when manipulated in isolation allow for complete re-targeting of the agent. We discovered that a vast majority of the "steering channels" in the SAE were in fact dead channels that didn't activate at all during normal operation. We further found that the model was capable of steering itself to different entities in the maze, even when every other channel in the layer was completely ablated, and that there were significantly fewer channels capable of this in our SAEs. Finally, we discovered that the SAEs were in fact not splitting entities across multiple channels, but were in fact multiplexing entity information within the same channel and through varying the activation strength, sending a signal regarding the entity they were targeting. We believe these findings may provide insight into the application of SAEs more broadly, and help to shed light on the operations of reinforcement learning models.
 
 \clearpage
 
@@ -115,17 +113,17 @@ I empower the university to reproduce for the purpose of research either the who
 \clearpage
 
 % Main content
-\input{notes/paper_files/introduction.tex}
+\input{introduction.tex}
 
-\input{notes/paper_files/literature_review.tex}
+\input{literature_review.tex}
 
-\input{notes/paper_files/methodology.tex}
+\input{methodology.tex}
 
-\input{notes/paper_files/results.tex}
+\input{results.tex}
 
-\input{notes/paper_files/discussion.tex}
+\input{discussion.tex}
 
-\input{notes/paper_files/conclusion.tex}
+\input{conclusion.tex}
 
 % Bibliography
 % Ensure your .bib file is correctly named and in the right path for this to work.

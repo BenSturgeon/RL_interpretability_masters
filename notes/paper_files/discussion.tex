@@ -26,7 +26,7 @@ A surprising finding was the differentiation in channel roles within the SAE. Wh
 
 \subsection{Polysemanticity and Goal Representation in the Base Model}
 % From Paper 2 Discussion
-While prior work demonstrated interpretable channels in simpler environments (e.g., \cite{mini_understanding_2023} in Procgen Maze), agents trained in more complex, multi-objective environments like Procgen Heist tend to develop highly polysemantic representations in their base networks. Most early-layer channels, and many in later convolutional layers, activate across multiple, diverse entities, making it challenging to assign singular, clear functional roles. Despite this polysemanticity, steering vectors proved to be a useful tool for isolating goal-related activity. Measuring the sparsity of these vectors allowed for the identification of channels in later layers that reliably track specific goals, even when these goals appear in varied spatial configurations.
+While prior work demonstrated interpretable channels in simpler environments (e.g., \cite{mini_2023_understanding} in Procgen Maze), agents trained in more complex, multi-objective environments like Procgen Heist tend to develop highly polysemantic representations in their base networks. Most early-layer channels, and many in later convolutional layers, activate across multiple, diverse entities, making it challenging to assign singular, clear functional roles. Despite this polysemanticity, steering vectors proved to be a useful tool for isolating goal-related activity. Measuring the sparsity of these vectors allowed for the identification of channels in later layers that reliably track specific goals, even when these goals appear in varied spatial configurations.
 These results suggest different layers of abstraction within the model: lower layers appear to capture general visual features and multiple entity types, while later layers consolidate this information into more actionable, goal-directed signals. The methods used offer a diagnostic approach to probing this transition and identifying functionally important parts of the network, even amidst widespread polysemanticity.
 
 \section{Theoretical Implications}
@@ -41,8 +41,7 @@ Furthermore, the observed specialization of roles within SAE channels (e.g., ste
 
 For RL interpretability specifically, this work underscores that techniques successful in one domain (e.g., LLMs) or simpler environments may need adaptation or re-evaluation in more complex, interactive settings. The interplay between learned environmental structure (like sequential objectives in Heist) and emergent network representations is a key area for future theoretical development.
 
-\section{Practical Applications}
-\label{sec:applications}
+\section{Practical Applications}\label{sec:applications}
 % Real-world applications of your methods
 % Potential use cases in different domains
 While this research is primarily foundational, aiming to understand the internal workings of RL agents, the insights gained could have several long-term practical applications. A deeper understanding of how agents represent goals and make decisions can inform the development of more robust and reliable RL systems. For instance, identifying critical control channels or specific activation patterns linked to desired (or undesired) behaviors could lead to methods for:
@@ -54,8 +53,7 @@ While this research is primarily foundational, aiming to understand the internal
 \end{itemize}
 The techniques themselves, such as targeted activation steering or the analysis of SAE features, could become part of a standard toolkit for RL practitioners seeking to verify and validate their models beyond simple performance metrics.
 
-\section{Limitations of the Study}
-\label{sec:limitations}
+\section{Limitations of the Study}\label{sec:limitations}
 % Honest assessment of limitations
 % Factors that might affect validity or generalizability
 This research, while providing several insights, is subject to certain limitations:
@@ -68,8 +66,7 @@ This research, while providing several insights, is subject to certain limitatio
     \item \textbf{Focus on Convolutional Layers:} The primary focus of intervention and SAE application was on the convolutional layers. While these are crucial for visual processing and early planning, a full understanding would also require similar deep dives into the fully connected layers and the policy/value heads.
 \end{itemize}
 
-\section{Future Research Directions}
-\label{sec:future}
+\section{Future Research Directions}\label{sec:future}
 % Suggestions for further research
 % Unsolved problems and next steps
 The findings and limitations of this work point to several promising avenues for future research:
@@ -80,7 +77,7 @@ The findings and limitations of this work point to several promising avenues for
     \item \textbf{Application to Different Architectures:} Extending this line of inquiry to more complex agent architectures, such as decision transformers or RNN-style networks, would be valuable. These architectures have different mechanisms for handling temporal information and memory, and training probes or performing targeted interventions in their residual streams or hidden states could yield new insights.
     \item \textbf{Deeper Investigation of Activation Strength Encoding:} The phenomenon of activation strength encoding entity identity within SAE channels warrants further investigation. Understanding the precise mechanisms and robustness of this encoding could be highly beneficial.
     \item \textbf{Exploring Other Environment Entities:} This work focused primarily on keys and the gem. Future studies could investigate if other visual cues (e.g., the image of collected keys in a UI element) trigger steerable behaviors related to corresponding objectives (e.g., locks).
-    \item \textbf{Advanced Attribution Techniques:} Applying more advanced techniques like attribution-based parameter decomposition \citep{braun_interpretability_2025} to networks like the one studied here could yield valuable and potentially generalizable insights into how parameters contribute to function.
+    \item \textbf{Advanced Attribution Techniques:} Applying more advanced techniques like attribution-based parameter decomposition \citep{braun_2025_interpretability} to networks like the one studied here could yield valuable and potentially generalizable insights into how parameters contribute to function.
     \item \textbf{SAEs and Base Model Correspondence:} Investigating whether the functionalities highlighted or preserved by SAEs (such as entity encoding via activation strength) truly reflect similar underlying mechanisms in the base model, or are emergent properties of the SAE compression process, is a critical follow-up question.
 \end{itemize}
 
@@ -91,8 +88,7 @@ The findings and limitations of this work point to several promising avenues for
     \item \textbf{Synthesizing Distributed Information:} Developing tools or models capable of synthesizing information from across different parts of the network is crucial, as the factors contributing to a specific outcome are often distributed. SAEs are one step in this direction, but further methods are needed.
 \end{itemize}
 
-\section{Reflections on the Research Process}
-\label{sec:reflections}
+\section{Reflections on the Research Process}\label{sec:reflections}
 % Personal insights gained
 % Challenges encountered and overcome
 (This section is for your personal reflections on the research journey, challenges faced, and lessons learned. This content should be written by you.)
