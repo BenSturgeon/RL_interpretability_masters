@@ -16,7 +16,7 @@ This thesis investigated the internal representations and goal-directed behavior
 
     % From Paper 1 Conclusion
     \begin{itemize}
-        \item Successfully trained Sparse Autoencoders (SAEs) on the CNN layers of the Heist model, recovering >98\% of the original task performance.
+        \item Successfully trained Sparse Autoencoders (SAEs) on the CNN layers of the Heist model, recovering more than 98\% of the original task performance.
         \item Demonstrated that precise steering of the agent towards different entities could be achieved by intervening on single channels in multiple layers (`conv3a`, `conv4a`) of both the base model and SAE-enhanced models.
         \item Revealed that while some channels appeared to track specific entities and also affect steering, other SAE channels were highly efficient at tracking/navigation during ablations but could not unilaterally modify the agent's trajectory, indicating specialized roles within the SAE.
         \item Uncovered the surprising property that a large number of "dead channels" in the SAEs (channels with no activation during normal operation) could nonetheless be used to successfully steer the agent. This was explained as an artifact of the SAE's decoder architecture retaining learned weights.

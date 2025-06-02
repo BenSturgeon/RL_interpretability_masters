@@ -6,7 +6,7 @@
     \subsection{SAE Performance}
     \label{subsec:sae_performance}
     % Content from Paper 1: "Entity Multiplexing..."
-    For each Sparse Autoencoder (SAE) trained on the CNN layers of the Procgen model, it was found that performance on the original task could be largely recovered. Specifically, the SAEs enabled the model to recover >95\\% of its original performance within the Procgen Heist environment (the conclusion of Paper 1 mentions >98\\% performance recovery). This level of performance was often achieved within only a few thousand training steps for the SAEs. Concurrently, the variance explained by the SAEs approached 1 (indicating near-perfect reconstruction of the original activations) in a similar timeframe. The SAEs were typically trained for 6 to 15 million steps to ensure convergence.
+    For each Sparse Autoencoder (SAE) trained on the CNN layers of the Procgen model, it was found that performance on the original task could be largely recovered. Specifically, the SAEs enabled the model to recover >95 \% of its original performance within the Procgen Heist environment (the conclusion of Paper 1 mentions >98 \% performance recovery). This level of performance was often achieved within only a few thousand training steps for the SAEs. Concurrently, the variance explained by the SAEs approached 1 (indicating near-perfect reconstruction of the original activations) in a similar timeframe. The SAEs were typically trained for 6 to 15 million steps to ensure convergence.
 
     An experiment was also conducted where an SAE was trained on the `conv4a` layer with a reduced number of channels (20, down from the original 32 for that SAE). This compressed SAE was still able to recover most of the model's performance, although to a lesser extent than the SAEs with higher expansion factors.
 
@@ -112,7 +112,7 @@
 \section{Polysemanticity Observations (Base Model)}
 \label{sec:polysemanticity_base_model}
     % Content from Paper 2
-    In the Procgen Heist environment, analysis of the base model (without SAEs) revealed that channels in a given layer tended to attend to many different entities, exhibiting less specialization than might be found in simpler environments (such as the Maze environment studied by \\cite{mini_understanding_2023}). This phenomenon is known as polysemanticity \\citep{olah_zoom_2020}, where a single channel activates in response to multiple, often unrelated, features or concepts.
+    In the Procgen Heist environment, analysis of the base model (without SAEs) revealed that channels in a given layer tended to attend to many different entities, exhibiting less specialization than might be found in simpler environments (such as the Maze environment studied by \cite{mini_understanding_2023}). This phenomenon is known as polysemanticity \citep{olah_zoom_2020}, where a single channel activates in response to multiple, often unrelated, features or concepts.
 
     A heatmap illustrating the frequency with which channels in layer 8 (of the simplified architecture in Paper 2) maximally activated on the position of specific entities (lock, gem, player, key) showed this polysemantic behavior. While some channels exhibited fairly clear specialization (e.g., channel 32 activating on the gem in the example), many channels activated across a range of different entities rather than exclusively tracking a single objective (Paper 2, see Figure \ref{fig:activation_frequency_histogram}).
 
