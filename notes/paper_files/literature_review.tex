@@ -7,13 +7,13 @@
 % Outline the structure and focus of the review
 
 % Content from Paper 1: "Entity Multiplexing..."
-Understanding how deep learning models perform their tasks is currently an unsolved problem in the field of AI. This state of affairs ensures that highly reliable, controllable and understandable models remain out of reach. This is particularly the case in the field of reinforcement learning (RL) that has been somewhat neglected by the techniques of mechanistic interpretability (MI) whose focus has largely been on Large Language Models (LLMs) \citep{elhage_toy_2022, bricken_towards_2023}. With techniques from RL being applied to frontier models to a greater extent, it is our belief that insights from applying MI techniques to smaller AI systems trained using RL can yield insights that might be generalised to understanding frontier ML models.
+Understanding how deep learning models perform their tasks is currently an unsolved problem in the field of AI. This state of affairs ensures that highly reliable, controllable and understandable models remain out of reach. This is particularly the case in the field of reinforcement learning (RL) that has been somewhat neglected by the techniques of mechanistic interpretability (MI) whose focus has largely been on Large Language Models (LLMs) \citep{templeton_scaling_2024, bricken2023monosemanticity}. With techniques from RL being applied to frontier models to a greater extent, it is our belief that insights from applying MI techniques to smaller AI systems trained using RL can yield insights that might be generalised to understanding frontier ML models.
 % End Content from Paper 1
 
 % Content from Paper 2: "Discovering Goals..."
-As RL techniques become more effective and are deployed more widely, it will become increasingly necessary to provide safety guarantees and explanations behind critical trade-offs that RL policies are making so that we can deploy these systems with confidence that they will work as we expect \citep{shakya2023reinforcement}.
-Existing techniques are being used to better understand RL models \citep{atrey_exploratory_2020}, but many techniques developed for mechanistic interpretability elsewhere have not yet seen much application in reinforcement learning (\cite{hilton_understanding_2020} being a notable exception).
-There is an opportunity to explore novel techniques for interpreting other categories of AI systems with RL, as RL environments usually contain relatively simple goals and easily determined failure modes that allow us to test whether changes we make evoke a behavior we like. For example, the approach of steering Large Language Models (LLMs) using activation steering in \cite{turner_activation_2024} was inspired by the work done to understand and control a maze solving agent in the Procgen Maze environment \cite{mini_understanding_2023}.
+As RL techniques become more effective and are deployed more widely, it will become increasingly necessary to provide safety guarantees and explanations behind critical trade-offs that RL policies are making so that we can deploy these systems with confidence that they will work as we expect \citep{shakya_2023_reinforcement}.
+Existing techniques are being used to better understand RL models \citep{atrey_2020_exploratory}, but many techniques developed for mechanistic interpretability elsewhere have not yet seen much application in reinforcement learning (\cite{hilton_2020_understanding} being a notable exception).
+There is an opportunity to explore novel techniques for interpreting other categories of AI systems with RL, as RL environments usually contain relatively simple goals and easily determined failure modes that allow us to test whether changes we make evoke a behavior we like. For example, the approach of steering Large Language Models (LLMs) using activation steering in\cite{turner_2024_activation} was inspired by the work done to understand and control a maze solving agent in the Procgen Maze environment \cite{miniUnderstandingControllingMazeSolving2023}.
 % End Content from Paper 2
 
 This literature review will explore the foundations of reinforcement learning and machine learning interpretability, then delve into the specific challenges and advancements in making RL agents more understandable. It will cover key concepts, prevalent methodologies, and identify existing gaps that motivate further research in this domain.
@@ -29,7 +29,7 @@ The Procgen Heist environment, a focus of the presented research, requires an ag
 % End Content from Paper 1
 
 % Content from Paper 2: "Discovering Goals..."
-The Procgen Heist environment \citep{cobbe_leveraging_2020} presents a maze populated with various entities, where the primary objective is for the agent to reach a gem. To achieve this, the agent must unlock a series of colored locks using corresponding keys. The gem is always present, but the number of key-lock pairs can vary (up to three). The agent must unlock them in a specific order: blue, green, then red. This environment was selected due to the necessity for the agent to pursue multiple objectives within a single episode, likely influencing the development of generalizable maze-navigation circuits. It is a sparse learning environment.
+The Procgen Heist environment \citep{cobbe_2020_leveraging} presents a maze populated with various entities, where the primary objective is for the agent to reach a gem. To achieve this, the agent must unlock a series of colored locks using corresponding keys. The gem is always present, but the number of key-lock pairs can vary (up to three). The agent must unlock them in a specific order: blue, green, then red. This environment was selected due to the necessity for the agent to pursue multiple objectives within a single episode, likely influencing the development of generalizable maze-navigation circuits. It is a sparse learning environment.
 % End Content from Paper 2
 
 \subsection{Markov Decision Processes}
@@ -59,25 +59,23 @@ The model in "Discovering Goals in A Deep Reinforcement Learning Model" was trai
 Deep Reinforcement Learning (DRL) combines deep neural networks with RL principles to learn effective policies in complex environments.
 
 % Content from Paper 1: "Entity Multiplexing..."
-A compressed version of the Impala model \citep{espeholt_impala_2018} was trained, using 5 convolutional layers instead of 15, a choice motivated by \cite{hilton_understanding_2020} for better interpretability without significant performance loss.
+A compressed version of the Impala model \citep{espeholt_2018_impala} was trained, using 5 convolutional layers instead of 15, a choice motivated by\cite{hilton_2020_understanding} for better interpretability without significant performance loss.
 % End Content from Paper 1
 
 % Content from Paper 2: "Discovering Goals..."
-Following recommendations from \cite{hilton_understanding_2020}, a simplified architecture was used for interpretability. The model consisted of four convolutional blocks followed by fully connected layers. This simpler design, with fewer convolutional layers and more dense layers than standard architectures like IMPALA \citep{espeholt_impala_2018}, allows for clearer interpretation.
+Following recommendations from\cite{hilton_2020_understanding}, a simplified architecture was used for interpretability. The model consisted of four convolutional blocks followed by fully connected layers. This simpler design, with fewer convolutional layers and more dense layers than standard architectures like IMPALA \citep{espeholt_2018_impala}, allows for clearer interpretation.
 % End Content from Paper 2
 
-\section{Interpretability in Machine Learning}
-\label{sec:interpretability}
+\section{Interpretability in Machine Learning}\label{sec:interpretability}
 % Definition and importance of interpretability
 % Different approaches to interpretability
 Interpretability in machine learning refers to the extent to which a human can understand the cause and effect of a model's decisions. It is crucial for debugging, ensuring fairness, building trust, and verifying reliability, especially in high-stakes applications.
 
 % Content from Paper 1: "Entity Multiplexing..."
-Sparse AutoEncoders (SAEs) have proven to be a useful tool in understanding neural networks by acting as an unsupervised tool that can compress meaningful operations into more isolated circuitry. This allows for a reduction in the issue of neural network functionality being distributed across different regions within a layer \citep{elhage_toy_2022}, and facilitates a better understanding of the network's operations \citep{bricken_towards_2023}. Recent work has demonstrated how SAEs can reveal interpretable features in various neural architectures, including CNNs \citep{gorton_missing_2024} and transformers \citep{conerly_update_2024}.
+Sparse AutoEncoders (SAEs) have proven to be a useful tool in understanding neural networks by acting as an unsupervised tool that can compress meaningful operations into more isolated circuitry. This allows for a reduction in the issue of neural network functionality being distributed across different regions within a layer\citep{elhage_toy_2022}, and facilitates a better understanding of the network's operations\citep{bricken2023monosemanticity}. Recent work has demonstrated how SAEs can reveal interpretable features in various neural architectures, including CNNs\citep{gorton_2024_missing} and transformers\citep{conerly_update_2024}.
 % End Content from Paper 1
 
-\subsection{Post-hoc Explanations}
-\label{subsec:post_hoc}
+\subsection{Post-hoc Explanations}\label{subsec:post_hoc}
 % Methods that explain already trained models
 % Feature attribution, saliency maps, etc.
 Post-hoc explanation methods aim to provide insights into already trained models without altering their architecture or training process. Examples include feature attribution methods (like LIME, SHAP), saliency maps, and activation steering.
@@ -90,26 +88,23 @@ Activation steering, as demonstrated in \cite{mini_understanding_2023} and exten
 The feature visualization methodologies discussed, such as synthetic visualization (optimizing an input image for maximal channel activation) and finding maximally activating dataset samples \citep{olah_feature_2017, hilton_understanding_2020}, are also forms of post-hoc analysis.
 % End Content from Paper 1
 
-\subsection{Intrinsically Interpretable Models}
-\label{subsec:intrinsic}
+\subsection{Intrinsically Interpretable Models}\label{subsec:intrinsic}
 % Models designed to be interpretable from the ground up
-Intrinsically interpretable models are designed from the outset to be understandable, often by constraining their complexity (e.g., linear models, decision trees) or by building in mechanisms that are inherently transparent. Training SAEs, as discussed in "Entity Multiplexing Through Activation Strength," can be seen as an effort to transform parts of a complex model into a more intrinsically interpretable representation by disentangling features.
+Intrinsically interpretable models are designed from the outset to be understandable, often by constraining their complexity (e.g., linear models, decision trees) or by building in mechanisms that are inherently transparent. Training SAEs, as discussed in ``Entity Multiplexing Through Activation Strength'' can be seen as an effort to transform parts of a complex model into a more intrinsically interpretable representation by disentangling features.
 
-\section{Interpretability in Reinforcement Learning}
-\label{sec:rl_interpretability}
+\section{Interpretability in Reinforcement Learning}\label{sec:rl_interpretability}
 % Current state of interpretability research specifically for RL
 % Challenges unique to interpreting RL agents
 Interpretability in RL presents unique challenges due to the agent's interaction with an environment, credit assignment over long time horizons, and often complex, high-dimensional state and action spaces.
 
 % Content from Paper 1: "Entity Multiplexing..."
-Previous work by \cite{mini_understanding_2023} demonstrated the ability to manipulate an agent's navigation in a simple maze environment with an intervention to a single channel in the network, serving as a foundation for extending these techniques to more complex multi-objective settings.
-Work by \cite{betley_localizing_2023} found a specific circuit in the convolutional layers of the Impala model that activated strongly for specific directional goals, indicating that planning might occur in CNN layers.
+Previous work by\cite{miniUnderstandingControllingMazeSolving2023} demonstrated the ability to manipulate an agent's navigation in a simple maze environment with an intervention to a single channel in the network, serving as a foundation for extending these techniques to more complex multi-objective settings.
+Work by\cite{betley_2023_localizing} found a specific circuit in the convolutional layers of the Impala model that activated strongly for specific directional goals, indicating that planning might occur in CNN layers.
 % End Content from Paper 1
 
 % Content from Paper 2: "Discovering Goals..."
-In "Understanding and Controlling a Maze-Solving Policy Network," \cite{mini_understanding_2023} demonstrated that neural networks can develop interpretable mechanisms to track goals. They identified specific channels tracking objective locations and showed these could be manipulated.
-\cite{hilton_understanding_2020} established early methods for interpreting RL vision networks, demonstrating simpler architectures often develop more interpretable representations and showing how analyzing individual channels/neurons could reveal decision-making processes.
-The larger circuits framework by \cite{olah_zoom_2020} provides methods to understand how neural networks combine simple features into complex representations. Their work on polysemantic neurons (neurons responding to multiple distinct features) is particularly relevant when an agent must represent multiple objectives.
+In ``Understanding and Controlling a Maze-Solving Policy Network``\cite{miniUnderstandingControllingMazeSolving2023} demonstrated that neural networks can develop interpretable mechanisms to track goals. They identified specific channels tracking objective locations and showed these could be manipulated.\cite{hilton_2020_understanding} established early methods for interpreting RL vision networks, demonstrating simpler architectures often develop more interpretable representations and showing how analyzing individual channels/neurons could reveal decision-making processes.
+The larger circuits framework by\cite{olah_2020_zoom} provides methods to understand how neural networks combine simple features into complex representations. Their work on polysemantic neurons (neurons responding to multiple distinct features) is particularly relevant when an agent must represent multiple objectives.
 % End Content from Paper 2
 
 \subsection{State-Action Importance}
@@ -155,7 +150,7 @@ Prior to the research detailed in the accompanying papers, several areas in RL i
     \item Investigating how fine-grained details, such as the precise activation strength within a neural channel, might encode complex information like entity identity or priority.
     \item The role and potential utility of "dead" channels in SAEs, which cease to activate during normal operation but might retain learned decoder weights.
     \item The generalization of interpretability findings from simpler RL agents to more complex architectures like decision transformers or RNN-based agents, especially for tasks requiring memory.
-    \item The potential for more advanced attribution techniques, such as attribution-based parameter decomposition \citep{braun_interpretability_2025}, to yield insights in RL models.
+    \item The potential for more advanced attribution techniques, such as attribution-based parameter decomposition \citep{braun_2025_interpretability}, to yield insights in RL models.
     \item Clarifying whether functionalities preserved or highlighted by SAEs (e.g., entity encoding via activation strength) reflect similar underlying mechanisms in the base model.
 \end{itemize}
 
@@ -169,11 +164,10 @@ Prior to the research detailed in the accompanying papers, several areas in RL i
     \item Systematically analyzing the role of individual channels (including "dead" channels in SAEs) in navigation and goal pursuit through methods like ablation studies and targeted interventions.
 \end{itemize}
 
-\section{Summary}
-\label{sec:lit_summary}
+\section{Summary}\label{sec:lit_summary}
 % Synthesize the key findings from the literature
 % Explain how your research builds on existing work
-The literature on interpretability in reinforcement learning highlights a growing interest in moving beyond performance metrics to understand the internal workings of RL agents. Foundational work has demonstrated the feasibility of identifying and manipulating neural correlates of an agent's goals and behaviors, particularly in visual navigation tasks \citep{mini_understanding_2023, hilton_understanding_2020}. Techniques such as activation analysis, steering vectors, and feature visualization have provided initial windows into these complex systems. However, challenges like polysemanticity (where neurons or channels respond to multiple unrelated concepts \citep{olah_zoom_2020}) and the distributed nature of representations often complicate direct interpretation.
+The literature on interpretability in reinforcement learning highlights a growing interest in moving beyond performance metrics to understand the internal workings of RL agents. Foundational work has demonstrated the feasibility of identifying and manipulating neural correlates of an agent's goals and behaviors, particularly in visual navigation tasks \citep{mini_understanding_2023, hilton_understanding_2020}. Techniques such as activation analysis, steering vectors, and feature visualization have provided initial windows into these complex systems. However, challenges like polysemanticity (where neurons or channels respond to multiple unrelated concepts \citep{olah_2020_zoom}) and the distributed nature of representations often complicate direct interpretation.
 
 The emergence of tools like Sparse Autoencoders offers a promising direction for disentangling these representations \citep{elhage_toy_2022, bricken_towards_2023}, potentially making the functional roles of different network components clearer. While much of the early MI work focused on LLMs, applying and adapting these techniques to the unique context of RL—with its emphasis on sequential decision-making, credit assignment, and interaction with dynamic environments—is an active area of research.
 
