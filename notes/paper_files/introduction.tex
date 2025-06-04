@@ -2,8 +2,6 @@
 
 Understanding how deep learning models function is currently an unsolved problem in the field of machine learning. This state of affairs ensures that highly reliable, controllable and understandable models remain out of reach. This is particularly the case in the field of reinforcement learning (RL), which has been somewhat neglected by the techniques of Mechanistic Interpretability (MI) whose focus has largely been on Large Language Models (LLMs). With techniques from RL being applied to frontier models to a greater extent, it would appear that there is a gap in the application of MI techniques to RL models.
 
-As RL techniques become more effective and are deployed more widely, it will become increasingly necessary to provide safety guarantees and explanations behind critical trade-offs that RL policies are making so that these systems can be deployed with confidence that they will work as expected\citep{shakya_2023_reinforcement}.
-
 Existing techniques are being used to better understand RL models\citep{atrey_2020_exploratory}, but many techniques developed for MI elsewhere have not yet seen much application in RL (\cite{hilton_2020_understanding} being a notable exception). There is an opportunity to explore novel techniques for interpreting other categories of AI systems with RL, as RL environments usually contain relatively simple goals and easily determined failure modes that allow for testing whether changes made evoke a desired behavior. For example, the approach of steering Large Language Models (LLMs) using activation steering in\cite{turner_2024_activation} was inspired by the work done to understand and control a maze solving agent in the Procgen Maze environment\cite{mini_2023_understanding}.
 
 The investigation seeks to build on the work of\cite{mini_2023_understanding}, who found key parts of the model that could be used to control model behavior. This investigation's contribution is to extend their work to an environment that involves multiple competing entities that an agent needs to reach in sequence. To this end, the Procgen Heist environment was chosen as the target of this research. By exploring how models trained in the Procgen Heist environment\citep{cobbe_2020_leveraging} approach multiobjective maze solving, this work aims to understand how neural networks represent and pursue multiple sequential goals.
@@ -55,30 +53,47 @@ Being able to understand how these models work is a key step towards building mo
 
 
 \section{Problem Statement}\label{sec:problem}
+As AI systems become more complex and are deployed more widely, it will become increasingly necessary to provide safety guarantees and explanations behind critical trade-offs that RL policies are making so that these systems can be deployed with confidence that they will work as expected\citep{shakya_2023_reinforcement}.
+
+If we are unable to understand how goals specifically are represented and pursued within RL models, we risk deploying systems that may pursue unintended or misaligned objectives, leading to unpredictable or harmful outcomes, especially in complex, multi-step tasks. This challenge is exacerbated by the inherent opacity of deep neural networks, where phenomena such as polysemanticity---a key focus of this investigation---can obscure the very goal-related features we wish to isolate and understand. Without a clear understanding of these internal goal representations, ensuring agent alignment with intended behaviors, debugging undesirable policies, and building reliable autonomous systems remains a formidable task. The lack of such understanding in the context of multi-objective sequential decision-making, as typified by environments like Procgen Heist, forms the central problem this thesis aims to address.
 
 
-\section{Research Objectives}
-\label{sec:objectives}
-% List your research aims and objectives
-% These should be specific, measurable, and achievable
+
+\section{Research Objectives}\label{sec:objectives}
+This research seeks to demonstrate that it is possible to determine the key functional components in a maze solving agent which are responsible for determining the agent's goal. Specifically, we aim to determine what parts of the model are uniquely responsible for abstract goal formulation, and whether the model captures goals with singular representations within channels, or if there are general `current goal' channels in the network.
+
+We aim to show this through the use of SAEs to provide solid evidence of the means by which the model learns to encode these goals, due to their ability to disentangle the latent features of the model.
+
+
 
 \section{Research Questions}
 \label{sec:questions}
-% State the specific questions your research seeks to answer
+This research seeks to answer the following key questions:
+\begin{enumerate}
+    \item How are goals represented in the model weights?
+    \item Can we use Sparse AutoEncoders (SAEs) to better determine the role of specific features?
+    \item Why do dead channels seem able to still steer the network?
+    \item Do specific channels target specific entities, or are there general goal steering channels in the network?
+    \item Why do we observe different rates of success when steering the agent away from different entities?
+    \item Given that SAEs modify the original model\'s activations, how effectively do they preserve the agent\'s task performance, ensuring that their learned features are relevant to the agent\'s behavior?
+    \item Does the research indicate that different neural network layers (in the base model or SAEs) play specialized roles in how the agent processes goal information or becomes steerable?
+\end{enumerate}
 
-\section{Scope and Limitations}
-\label{sec:scope}
-% Define the boundaries of your research
-% Acknowledge what is beyond the scope of your study
+\section{Scope and Limitations}\label{sec:scope}
+This work is limited by the scope of the Procgen Heist environment, which is a simplified environment that may not fully capture the complexity of real-world multi-objective sequential decision-making. It is also limited by the use of a single model architecture, and the use of a single environment. 
 
-\section{Significance of the Study}
-\label{sec:significance}
-% Explain the theoretical and practical contributions of your research
-% Discuss the potential impact of your findings
+While the environment is a good fit for this research, due to its complexity it means that the construction of experiments is quite time consuming, which is the reason why only this environment was used.
+
+There are also a number of cutting edge MI techniques that became available over the course of this research, such as the use of bilinear activation functions to do weight based interpretability, and parameter based decomposition, which allows for the decomposition of a given channel into a sum of other activations, which can then be individually analysed and understood. Due to the time constraints of the research, these were not explored.
+
+\section{Significance of the Study}\label{sec:significance}
+The specific significance of this research is in demonstrating the application of SAEs to the problem of understanding how entities are represented within RL models. This provides a new tool for understanding the internal mechanisms of RL models. 
+
+Furthermore, the experiments conducted provide a straightforward and replicable mechanism to develop further insight into the behaviour and properties of different channels in convolutional neural networks, which is a key area of interest in the field of MI.
+
+The broader significance of this research is in demonstrating unique properties of SAEs, such as the dead channel steering phenomena that we observe, and the fact that model does in fact primarily represent goals with singular channels, which is a key finding of this research. This gives us some insight into the specific learning dynamics of serial goal pursuit, which opens the door to further questions about what environmental dynamics lead to different learning dynamics.
+
 
 \section{Thesis Structure}\label{sec:structure}
-% Provide an overview of the chapters that follow
-% Briefly describe the content of each chapter
-
 % Outline of the thesis structure (placeholder)
 This thesis is structured as follows: Chapter\ref{ch:literature} provides a review of the relevant literature in RL and MI. Chapter\ref{ch:methodology} details the experimental setup, including the environment, model architecture, and the interpretability techniques employed. Chapter\ref{ch:results} presents the findings from the experiments, including feature visualizations, steering results, and ablation studies. Chapter\ref{ch:discussion} discusses the implications of these findings, and Chapter\ref{ch:conclusion} concludes the thesis and suggests avenues for future research.
