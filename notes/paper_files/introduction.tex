@@ -2,9 +2,13 @@
 
 Understanding how deep learning models function is currently an unsolved problem in the field of machine learning. This state of affairs ensures that highly reliable, controllable and understandable models remain out of reach. This is particularly the case in the field of reinforcement learning (RL), which has been somewhat neglected by the techniques of Mechanistic Interpretability (MI) whose focus has largely been on Large Language Models (LLMs). With techniques from RL being applied to frontier models to a greater extent, it would appear that there is a gap in the application of MI techniques to RL models.
 
-Existing techniques are being used to better understand RL models\citep{atrey_2020_exploratory}, but many techniques developed for MI elsewhere have not yet seen much application in RL (\cite{hilton_2020_understanding} being a notable exception). There is an opportunity to explore novel techniques for interpreting other categories of AI systems with RL, as RL environments usually contain relatively simple goals and easily determined failure modes that allow for testing whether changes made evoke a desired behavior. For example, the approach of steering Large Language Models (LLMs) using activation steering in\cite{turner_2024_activation} was inspired by the work done to understand and control a maze solving agent in the Procgen Maze environment\cite{mini_2023_understanding}.
+Existing techniques are being used to better understand RL models\citep{atrey_2020_exploratory}, but many techniques developed for MI elsewhere have not yet seen much application in RL (\cite{hilton_2020_understanding} being a notable exception). RL does pose natural difficulties in interpretation due to the nature of RL outputs as actions or sequences of actions rather than as words or images. This adds to the challenge of extracting meaningful insights from the earlier layers of the model. The undpredictable nature of RL training further adds to these challenges where the different learning outcomes of the model may lead to confusions about what the genuine nature of what the model has learned can be difficult to determine.
 
-The investigation seeks to build on the work of\cite{mini_2023_understanding}, who found key parts of the model that could be used to control model behavior. This investigation's contribution is to extend their work to an environment that involves multiple competing entities that an agent needs to reach in sequence. To this end, the Procgen Heist environment was chosen as the target of this research. By exploring how models trained in the Procgen Heist environment\citep{cobbe_2020_leveraging} approach multiobjective maze solving, this work aims to understand how neural networks represent and pursue multiple sequential goals.
+Furthermore, given the high likelihood that RL systems are deployed in the operation of critical infrastructure such as data centres or nuclear fusion reactors\cite{Degrave_2022_Nature_Fusion}, there is significant urgency to guarantee high standards of operational safety and show that the policies predictably function within specified operational bounds so that we can avoid catastrophic failures in these systems\cite{Amodei_2016_AISafety}.
+
+There is an opportunity to explore novel techniques for interpreting other categories of AI systems with RL, as RL environments usually contain relatively simple goals and easily determined failure modes that allow for testing whether changes made evoke a desired behavior. For example, the approach of steering Large Language Models (LLMs) using activation steering in\cite{turner_2024_activation} was inspired by the work done to understand and control a maze solving agent in the Procgen Maze environment\cite{mini_2023_understanding}.
+
+The investigation seeks to build on the work of\cite{mini_2023_understanding}, who found key parts of the model that could be used to control model behavior. This investigation's contribution is to extend their work to an environment that involves multiple competing entities that an agent needs to reach in sequence. To this end, the Procgen Heist environment was chosen as the target of this research. This is because the procgen environment requires the agent to navigate through three locks of different colours each requiring a corresponding key before reaching a gem at the end. This means that the agent has to learn robust mechanisms for navigating to each entity in the environment\citep{cobbe_2020_leveraging}. By observing how the model learns to approach multiobjective maze solving, this work aims to understand how neural networks represent and pursue multiple sequential goals.
 
 A significant challenge in understanding the internal mechanisms of complex neural networks, particularly those operating in multifaceted environments like Procgen Heist, is the prevalence of polysemanticity. This phenomenon, where individual neurons respond to multiple distinct features, can make it challenging to draw strong conclusions about how a model works. To address this, Sparse AutoEncoders (SAEs) can be employed. SAEs are a type of unsupervised learning technique that can be used to break down the most critical functions of a model into a more interpretable set of sparse latents, often by training an overcomplete basis on the original activations of a given layer of the network. The application of this approach to the CNN layers of the network in this study, with the goal of disentangling model functionality, will be described in later sections.
 
@@ -55,19 +59,25 @@ Being able to understand how these models work is a key step towards building mo
 \section{Problem Statement}\label{sec:problem}
 As AI systems become more complex and are deployed more widely, it will become increasingly necessary to provide safety guarantees and explanations behind critical trade-offs that RL policies are making so that these systems can be deployed with confidence that they will work as expected\citep{shakya_2023_reinforcement}.
 
-If we are unable to understand how goals specifically are represented and pursued within RL models, we risk deploying systems that may pursue unintended or misaligned objectives, leading to unpredictable or harmful outcomes, especially in complex, multi-step tasks. This challenge is exacerbated by the inherent opacity of deep neural networks, where phenomena such as polysemanticity---a key focus of this investigation---can obscure the very goal-related features we wish to isolate and understand. Without a clear understanding of these internal goal representations, ensuring agent alignment with intended behaviors, debugging undesirable policies, and building reliable autonomous systems remains a formidable task. The lack of such understanding in the context of multi-objective sequential decision-making, as typified by environments like Procgen Heist, forms the central problem this thesis aims to address.
+If we are unable to understand how goals specifically are represented and pursued within RL models, we risk deploying systems that may pursue unintended or misaligned objectives, leading to unpredictable or harmful outcomes, especially in complex, multi-step tasks. This challenge is exacerbated by the inherent opacity of deep neural networks, where phenomena such as polysemanticity, a key focus of this investigation, can obscure the goal-related features we wish to isolate and understand. Without a clear understanding of these internal goal representations, ensuring agent alignment with intended behaviors, debugging undesirable policies, and building reliable autonomous systems remains a formidable task. The lack of such understanding in the context of multi-objective sequential decision-making, as typified by environments like Procgen Heist, forms the central problem this thesis aims to address. Addressing this problem necessitates a direct inquiry into the nature of these representations and the methods to uncover them, leading to the following research objectives.
 
 
 
 \section{Research Objectives}\label{sec:objectives}
-This research seeks to demonstrate that it is possible to determine the key functional components in a maze solving agent which are responsible for determining the agent's goal. Specifically, we aim to determine what parts of the model are uniquely responsible for abstract goal formulation, and whether the model captures goals with singular representations within channels, or if there are general `current goal' channels in the network.
+This research seeks to demonstrate that it is possible to determine the key functional components in a maze solving agent which are responsible for determining the agent's goal. To this end, our specific objectives are to:
+\begin{itemize}
+    \item Determine what parts of the model are uniquely responsible for abstract goal formulation and how goals are represented in the model weights. This includes investigating whether the model captures goals with singular representations within channels, or if there are general \texttt{current goal} or entity-specific steering channels in the network.
+    \item Assess the utility of Sparse AutoEncoders (SAEs) in disentangling polysemantic activations to better determine the role of specific, interpretable features in goal representation.
+    \item Investigate the mechanisms by which certain SAE channels, including those with low baseline activity (so-called \texttt{dead} channels), can nonetheless influence or steer the network's behavior when subject to interventions.
+    \item Explore the factors contributing to observed differences in success rates when attempting to steer the agent's behavior away from various entities or objectives within its environment.
+    \item Evaluate how effectively SAEs preserve the agent's task performance while modifying the original model's activations, thereby aiming to ensure that the features learned by the SAEs are relevant to the agent's operational policy.
+    \item Identify whether different neural network layers, either in the base model or in the derived SAEs, exhibit specialized roles in the processing of goal-related information or in their susceptibility to steering interventions.
+\end{itemize}
+Through these objectives, particularly by leveraging SAEs, we aim to provide clearer evidence of how the model learns, represents, and pursues sequential goals in an environment such as Procgen Heist.
 
-We aim to show this through the use of SAEs to provide solid evidence of the means by which the model learns to encode these goals, due to their ability to disentangle the latent features of the model.
 
 
-
-\section{Research Questions}
-\label{sec:questions}
+\section{Research Questions}\label{sec:questions}
 This research seeks to answer the following key questions:
 \begin{enumerate}
     \item How are goals represented in the model weights?
@@ -79,20 +89,36 @@ This research seeks to answer the following key questions:
     \item Does the research indicate that different neural network layers (in the base model or SAEs) play specialized roles in how the agent processes goal information or becomes steerable?
 \end{enumerate}
 
-\section{Scope and Limitations}\label{sec:scope}
-This work is limited by the scope of the Procgen Heist environment, which is a simplified environment that may not fully capture the complexity of real-world multi-objective sequential decision-making. It is also limited by the use of a single model architecture, and the use of a single environment. 
 
-While the environment is a good fit for this research, due to its complexity it means that the construction of experiments is quite time consuming, which is the reason why only this environment was used.
+
+\section{Key Hypotheses}\label{sec:hypotheses}
+Based on the preceding research questions, this study will investigate the following key hypotheses:
+\begin{enumerate}
+    \item It is hypothesized that the model predominantly learns to represent specific goals (like individual keys or the gem) via dedicated channels, rather than relying solely on generalized `current target' signals or highly distributed, non-specific encodings.
+    \item It is hypothesized that Sparse Autoencoders (SAEs) can deconstruct complex, polysemantic activations within the agent's layers into a more disentangled and interpretable set of features, thereby clarifying the specific roles of underlying neural computations related to goals.
+    \item It is hypothesized that the observed influence of apparently `dead' or low-activation SAE channels during steering interventions arises from the residual impact of their learned decoder weights.
+    \item It is hypothesized that variations in the success rates of steering the agent away from different entities are linked to the amount of time that the model spent in direct observation of those entities.
+    \item It is hypothesized that SAEs can be trained to reconstruct the original model's activations with sufficient fidelity to preserve the agent's task performance, indicating that the features learned by the SAE are indeed relevant to the agent's operational policy.
+    \item It is hypothesized that distinct layers within the Procgen agent's network (and by extension, the SAEs trained on them) play specialized roles in processing goal-related information, potentially with earlier layers focusing on perceptual parsing of the location of entities and the structure of the maze, while later layers encode more abstract things such as which entity to pursue plans for how to reach them.
+\end{enumerate}
+
+
+
+\section{Scope and Limitations}\label{sec:scope}
+This work is limited by the scope of the Procgen Heist environment, which is a simplified environment that may not fully capture the complexity of real-world decision-making in sequential, multi-objective tasks. It is also limited by the use of a single model architecture, and the use of a single environment. 
+
+Furthermore, the reliance on Sparse Autoencoders (SAEs) as the primary interpretability tool introduces its own set of limitations. The features discovered by SAEs can be sensitive to hyperparameter choices, such as the sparsity coefficient and dictionary size, which can influence the nature of the learned representations. This can create a gap between the features the SAE learns and the true underlying computational nature of the network. Additionally, the nature of the RL environment itself poses a challenge; much of the model's complexity is likely encoded in functionally critical but semantically ``illegible'' factors, such as subtle patterns for navigating obstacles. While SAEs may successfully isolate high-level goal features, they may struggle to render these low-level navigational strategies intelligible. Consequently, interpreting the full suite of discovered features remains a significant challenge, and SAEs may not capture all of the original model's computational strategies.
+
+While the environment is a good fit for this research, its complexity means that the construction of experiments is quite time consuming, which is the reason why only this environment was used.
 
 There are also a number of cutting edge MI techniques that became available over the course of this research, such as the use of bilinear activation functions to do weight based interpretability, and parameter based decomposition, which allows for the decomposition of a given channel into a sum of other activations, which can then be individually analysed and understood. Due to the time constraints of the research, these were not explored.
 
+
+
 \section{Significance of the Study}\label{sec:significance}
-The specific significance of this research is in demonstrating the application of SAEs to the problem of understanding how entities are represented within RL models. This provides a new tool for understanding the internal mechanisms of RL models. 
+This research contributes to the field of mechanistic interpretability by demonstrating the application of Sparse Autoencoders, a technique largely developed for language models, to the distinct challenges of Reinforcement Learning agents. Understanding goal representation is fundamental to ensuring agent alignment, especially as RL is increasingly used in safety-critical and frontier AI systems. By providing a pathway for disentangling and interpreting how an RL agent represents its objectives, this work offers new techniques and insights for decoding the internal mechanisms of these models.
 
-Furthermore, the experiments conducted provide a straightforward and replicable mechanism to develop further insight into the behaviour and properties of different channels in convolutional neural networks, which is a key area of interest in the field of MI.
-
-The broader significance of this research is in demonstrating unique properties of SAEs, such as the dead channel steering phenomena that we observe, and the fact that model does in fact primarily represent goals with singular channels, which is a key finding of this research. This gives us some insight into the specific learning dynamics of serial goal pursuit, which opens the door to further questions about what environmental dynamics lead to different learning dynamics.
-
+Furthermore, the study's findings have broader scientific implications. The investigation into phenomena like `dead channel' steering contributes to our fundamental knowledge of both neural network function and the properties of our interpretability tools. Some of the experimental frameworks used provide a replicable template for future studies seeking to causally probe goal-directed behaviors in neural networks. Ultimately, such insights could open the door to new research on how environmental factors shape learning dynamics and help inform the development of more robust and reliable AI systems.
 
 \section{Thesis Structure}\label{sec:structure}
 % Outline of the thesis structure (placeholder)
