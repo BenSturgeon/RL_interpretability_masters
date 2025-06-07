@@ -1,28 +1,14 @@
-\chapter{Literature Review}
-\label{ch:literature}
+\chapter{Literature Review}\label{ch:literature}
 
-\section{Introduction}
-\label{sec:lit_intro}
-% Brief introduction to the literature review chapter
-% Outline the structure and focus of the review
+\section{Introduction}\label{sec:lit_intro}
+The previous chapter established the motivation for this research, highlighting the need to better understand the internal workings of RL agents, particularly in multi-objective environments. This chapter provides a review of the foundational literature that underpins this thesis.
 
-% Content from Paper 1: "Entity Multiplexing..."
-Understanding how deep learning models perform their tasks is currently an unsolved problem in the field of AI. This state of affairs ensures that highly reliable, controllable and understandable models remain out of reach. This is particularly the case in the field of reinforcement learning (RL) that has been somewhat neglected by the techniques of mechanistic interpretability (MI) whose focus has largely been on Large Language Models (LLMs) \citep{templeton_scaling_2024, bricken2023monosemanticity}. With techniques from RL being applied to frontier models to a greater extent, it is our belief that insights from applying MI techniques to smaller AI systems trained using RL can yield insights that might be generalised to understanding frontier ML models.
-% End Content from Paper 1
+This review will first cover the fundamentals of Reinforcement Learning relevant concepts in MI. It will then delve into the specific challenges and recent advancements in making RL agents more understandable. By examining the existing methodologies and identifying critical gaps in the literature, this chapter will situate the present research within the research landscape and seek to demonstrate how it builds upon prior work to address unsolved problems in RL interpretability.
 
-% Content from Paper 2: "Discovering Goals..."
-As RL techniques become more effective and are deployed more widely, it will become increasingly necessary to provide safety guarantees and explanations behind critical trade-offs that RL policies are making so that we can deploy these systems with confidence that they will work as we expect \citep{shakya_2023_reinforcement}.
-Existing techniques are being used to better understand RL models \citep{atrey_2020_exploratory}, but many techniques developed for mechanistic interpretability elsewhere have not yet seen much application in reinforcement learning (\cite{hilton_2020_understanding} being a notable exception).
-There is an opportunity to explore novel techniques for interpreting other categories of AI systems with RL, as RL environments usually contain relatively simple goals and easily determined failure modes that allow us to test whether changes we make evoke a behavior we like. For example, the approach of steering Large Language Models (LLMs) using activation steering in\cite{turner_2024_activation} was inspired by the work done to understand and control a maze solving agent in the Procgen Maze environment \cite{miniUnderstandingControllingMazeSolving2023}.
-% End Content from Paper 2
-
-This literature review will explore the foundations of reinforcement learning and machine learning interpretability, then delve into the specific challenges and advancements in making RL agents more understandable. It will cover key concepts, prevalent methodologies, and identify existing gaps that motivate further research in this domain.
-
-\section{Reinforcement Learning Fundamentals}
-\label{sec:rl_fundamentals}
+\section{Reinforcement Learning Fundamentals}\label{sec:rl_fundamentals}
 % Overview of basic RL concepts
 % Key algorithms and approaches in RL
-This section provides a brief overview of the fundamental concepts in Reinforcement Learning (RL) that are relevant to the research discussed. While the papers assume a baseline understanding, key elements of the environments and training paradigms employed are highlighted.
+This section provides a brief overview of the fundamental concepts in RL that are relevant to the research discussed. While a baseline understanding is assumed, key elements of the environments and training paradigms employed are highlighted.
 
 % Content from Paper 1: "Entity Multiplexing..."
 The Procgen Heist environment, a focus of the presented research, requires an agent to collect up to 3 keys and 3 locks before reaching the final goal, a gem. The order in which the keys need to be collected is always the same (blue, green, red). The environment is procedurally generated and might generate with any combination of no keys, or 1-3 keys. The size of the maze will also change depending on how many objects are included. The environment provides sparse rewards, only giving out a score of 10 if the agent makes it all the way to the final goal and 0 otherwise. This establishes a natural curriculum for the agent and gives it a reasonable chance of reaching the end with a random walk before it starts to develop an actual policy.
