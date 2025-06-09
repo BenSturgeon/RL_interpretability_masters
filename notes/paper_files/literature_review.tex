@@ -1,56 +1,32 @@
 \chapter{Literature Review}\label{ch:literature}
 
 \section{Introduction}\label{sec:lit_intro}
-The previous chapter established the motivation for this research, highlighting the need to better understand the internal workings of RL agents, particularly in multi-objective environments. This chapter provides a review of the foundational literature that underpins this thesis.
+The previous chapter established the motivation for this research, highlighting the need to better understand the internal workings of Reinforcement Learning (RL) agents, particularly in multi-objective environments. This chapter provides a review of the foundational literature that underpins this thesis.
 
-This review will first cover the fundamentals of Reinforcement Learning relevant concepts in MI. It will then delve into the specific challenges and recent advancements in making RL agents more understandable. By examining the existing methodologies and identifying critical gaps in the literature, this chapter will situate the present research within the research landscape and seek to demonstrate how it builds upon prior work to address unsolved problems in RL interpretability.
+This review will cover the fundamentals of Reinforcement Learning relevant concepts in mechanistic interpretability (MI). It will then delve into the specific challenges and recent advancements in making RL agents more understandable. In particular we examine the foundational works upon which this research rests from the fundamental RL concepts to the algorithms used to train the models. The rest of this section will situate the present research within the research landscape and seek to demonstrate how it builds upon prior work in the field of MI to address unsolved problems in RL interpretability.
 
 \section{Reinforcement Learning Fundamentals}\label{sec:rl_fundamentals}
 % Overview of basic RL concepts
 % Key algorithms and approaches in RL
-This section provides a brief overview of the fundamental concepts in RL that are relevant to the research discussed. While a baseline understanding is assumed, key elements of the environments and training paradigms employed are highlighted.
+This section provides a brief overview of the fundamental concepts in RL that are relevant to the research discussed. While a baseline understanding of RL and AI concepts is assumed, key elements of the environments and training paradigms employed are highlighted.
 
-% Content from Paper 1: "Entity Multiplexing..."
-The Procgen Heist environment, a focus of the presented research, requires an agent to collect up to 3 keys and 3 locks before reaching the final goal, a gem. The order in which the keys need to be collected is always the same (blue, green, red). The environment is procedurally generated and might generate with any combination of no keys, or 1-3 keys. The size of the maze will also change depending on how many objects are included. The environment provides sparse rewards, only giving out a score of 10 if the agent makes it all the way to the final goal and 0 otherwise. This establishes a natural curriculum for the agent and gives it a reasonable chance of reaching the end with a random walk before it starts to develop an actual policy.
-% End Content from Paper 1
-
-% Content from Paper 2: "Discovering Goals..."
-The Procgen Heist environment \citep{cobbe_2020_leveraging} presents a maze populated with various entities, where the primary objective is for the agent to reach a gem. To achieve this, the agent must unlock a series of colored locks using corresponding keys. The gem is always present, but the number of key-lock pairs can vary (up to three). The agent must unlock them in a specific order: blue, green, then red. This environment was selected due to the necessity for the agent to pursue multiple objectives within a single episode, likely influencing the development of generalizable maze-navigation circuits. It is a sparse learning environment.
-% End Content from Paper 2
-
-\subsection{Markov Decision Processes}
-\label{subsec:mdp}
+\subsection{Markov Decision Processes}\label{subsec:mdp}
 % Mathematical framework for RL
 % Definitions and properties
-(This section would typically define MDPs: states, actions, transition probabilities, rewards. The provided papers use MDPs implicitly but do not define them in detail. Further elaboration from standard RL texts would be beneficial here.)
+At its core, the problem that RL solves in general can be formalized as a Markov Decision Process (MDP). An MDP is a mathematical framework for modeling decision-making in situations where outcomes are partially random and partially determined by the policy of the agent. It is defined by a tuple (\(S, A, P, R, \gamma\)), representing the set of states, the set of actions, the state transition probability function \(P(s'|s,a)\), the reward function \(R(s,a,s')\), and a discount factor \(\gamma \in [0, 1]\) that balances immediate and future rewards. The agent's goal is to learn a strategy that maximizes the cumulative discounted reward over time. Because the agent receives the entire 64 by 64 pixel view of the maze as its observation, the Procgen Heist environment is a fully-observable MDP, where the state is directly represented by the agent's visual input. There are variations of the environment which involved a limited view of the environment such as the `memory' distribution, which would be considered a partially observable MDP (POMDP).
 
-\subsection{Value Functions and Policies}
-\label{subsec:value_policy}
-% Explanation of value functions
-% Types of policies and policy optimization
-(This section would explain value functions (e.g., \(V(s)\), \(Q(s,a)\)) and policies (\(\pi(a|s)\)), and concepts like policy optimization. The papers utilize policy optimization algorithms like PPO.)
+\subsection{Value Functions and Policies}\label{subsec:value_policy}
 
-% Content from Paper 1: "Entity Multiplexing..."
-When training the model discussed in "Entity Multiplexing Through Activation Strength," a simple PPO (Proximal Policy Optimization) implementation was used.
-% End Content from Paper 1
+The process of training a model involves iterating through many interactions with the environment to produce a policy denoted as \(\pi(a|s)\), which is a mapping from states to a probability distribution over actions. The goal of the RL training process is to find an optimal policy, \(\pi^*\), that maximises the agent's expected reward over time. As a means of estimating the quality of a given policy, RL functions often use value functions\cite{sutton2018reinforcement}. The state-value function, \(V^\pi(s)\), represents the expected return after taking an action \(a\) in state \(s\) based on following policy \(\pi\). The action-value function, \(Q^\pi(s,a)\), is the expected return from continuing to follow policy \(\pi\) after taking an action given a certain state. 
 
-% Content from Paper 2: "Discovering Goals..."
-The model in "Discovering Goals in A Deep Reinforcement Learning Model" was trained using PPO on the Procgen Heist environment until convergence.
-% End Content from Paper 2
+These functions are foundational to the function of training algorithms such as PPO which was used to train the agent in this research. PPO alternates between sampling data from the environment and using that data to optimise a `surrogate' objective function using stochastic gradient ascent.
 
-\subsection{Deep Reinforcement Learning}
-\label{subsec:deep_rl}
+\subsection{Deep Reinforcement Learning}\label{subsec:deep_rl}
 % Integration of deep learning with RL
 % Notable architectures and algorithms
-Deep Reinforcement Learning (DRL) combines deep neural networks with RL principles to learn effective policies in complex environments.
+Deep Reinforcement Learning (DRL) combines deep neural networks with RL principles to learn effective policies in complex, high-dimensional environments like Procgen. These models typically use convolutional neural networks (CNNs) to process visual input and feed the resulting features into fully-connected layers that output a policy.
 
-% Content from Paper 1: "Entity Multiplexing..."
-A compressed version of the Impala model \citep{espeholt_2018_impala} was trained, using 5 convolutional layers instead of 15, a choice motivated by\cite{hilton_2020_understanding} for better interpretability without significant performance loss.
-% End Content from Paper 1
-
-% Content from Paper 2: "Discovering Goals..."
-Following recommendations from\cite{hilton_2020_understanding}, a simplified architecture was used for interpretability. The model consisted of four convolutional blocks followed by fully connected layers. This simpler design, with fewer convolutional layers and more dense layers than standard architectures like IMPALA \citep{espeholt_2018_impala}, allows for clearer interpretation.
-% End Content from Paper 2
+The research this thesis is based on utilizes specific DRL architectures chosen for their balance of performance and interpretability. Following the precedent set by\cite{hilton_2020_understanding}, which demonstrated that simpler architectures often yield more interpretable representations without significant performance loss, the models used were simplified versions of established architectures. For example, the primary policy model used is a compressed version of the Impala architecture\citep{espeholt_2018_impala} with only 5 convolutional layers instead of the standard 15. This choice reflects the principle that simpler architectures are often easier to interpret\citep{hilton_2020_understanding}.
 
 \section{Interpretability in Machine Learning}\label{sec:interpretability}
 % Definition and importance of interpretability
@@ -61,13 +37,14 @@ Interpretability in machine learning refers to the extent to which a human can u
 Sparse AutoEncoders (SAEs) have proven to be a useful tool in understanding neural networks by acting as an unsupervised tool that can compress meaningful operations into more isolated circuitry. This allows for a reduction in the issue of neural network functionality being distributed across different regions within a layer\citep{elhage_toy_2022}, and facilitates a better understanding of the network's operations\citep{bricken2023monosemanticity}. Recent work has demonstrated how SAEs can reveal interpretable features in various neural architectures, including CNNs\citep{gorton_2024_missing} and transformers\citep{conerly_update_2024}.
 % End Content from Paper 1
 
+
 \subsection{Post-hoc Explanations}\label{subsec:post_hoc}
 % Methods that explain already trained models
 % Feature attribution, saliency maps, etc.
 Post-hoc explanation methods aim to provide insights into already trained models without altering their architecture or training process. Examples include feature attribution methods (like LIME, SHAP), saliency maps, and activation steering.
 
 % Content from Paper 2: "Discovering Goals..."
-Activation steering, as demonstrated in \cite{mini_understanding_2023} and extended in the discussed research, is a post-hoc technique. Steering vectors, representing the difference in activations between states with and without an objective, can be used to influence a model's behavior.
+Activation steering, as demonstrated in \cite{mini_2023_understanding} and extended in the discussed research, is a post-hoc technique. Steering vectors, representing the difference in activations between states with and without an objective, can be used to influence a model's behavior.
 % End Content from Paper 2
 
 % Content from Paper 1: "Entity Multiplexing..."
@@ -89,35 +66,41 @@ Work by\cite{betley_2023_localizing} found a specific circuit in the convolution
 % End Content from Paper 1
 
 % Content from Paper 2: "Discovering Goals..."
-In ``Understanding and Controlling a Maze-Solving Policy Network``\cite{miniUnderstandingControllingMazeSolving2023} demonstrated that neural networks can develop interpretable mechanisms to track goals. They identified specific channels tracking objective locations and showed these could be manipulated.\cite{hilton_2020_understanding} established early methods for interpreting RL vision networks, demonstrating simpler architectures often develop more interpretable representations and showing how analyzing individual channels/neurons could reveal decision-making processes.
-The larger circuits framework by\cite{olah_2020_zoom} provides methods to understand how neural networks combine simple features into complex representations. Their work on polysemantic neurons (neurons responding to multiple distinct features) is particularly relevant when an agent must represent multiple objectives.
+In ``Understanding and Controlling a Maze-Solving Policy Network'' demonstrated that neural networks can develop interpretable mechanisms to track goals\cite{mini_2023_understanding}. The authors identified specific channels that tracked the location of objectives in a maze environment and showed that these could be manipulated to control the agent's behavior. They found that steering vectors, the difference in activations between otherwise identical states with and without an entity, could be used to influence the model's behavior in predictable ways. This work serves as the foundation for our research, though we extend it to a multi-objective setting. 
+
+The larger circuits framework by\cite{olah_2020_zoom} provides methods to understand how neural networks combine simple features into complex representations. Their work on polysemantic neurons (neurons responding to multiple distinct features) is particularly relevant when an agent must represent multiple objectives\cite{elhage_toy_2022}.
 % End Content from Paper 2
 
-\subsection{State-Action Importance}
-\label{subsec:state_action}
-% Methods for understanding which states/actions are important
-Understanding which states or state features are critical for an agent's decisions, and which actions are most influential, is key to interpreting its policy.
+Work by\cite{betley_2023_localizing} found a specific circuit in the convolutional layers of the Impala model that activated strongly when the direction to go was `up' and didn't activate when the goal was in a similar spot but the agent would need to go in a different direction. This indicates that much of the `planning' was already handled in the CNN layers, suggesting it should be possible to train probes that can detect the exact direction the agent needs to move towards.
 
-% Content from Paper 2: "Discovering Goals..."
-By examining steering vectors, it was found that specific channels (e.g., channel 4 and 29 in layer 8 of the model in "Discovering Goals...") fire strongly at the location of the current objective, with positive or negative activations. These channels tend to fire more strongly for objectives encountered earlier in the task sequence (e.g., blue key then green key, etc.).
-% End Content from Paper 2
+Work exploring the Procgen Coinrun environment provides a rich set of ideas for how to attribute attention from objects in the input to specific weights within the model, as well as visualizing the model's weights\cite{hilton_2020_understanding}. The most striking aspect of their work showing clear positive and negative attributions to specific entities according to how it might affect its ability to complete the task within the environment.
 
-% Content from Paper 1: "Entity Multiplexing..."
-Activation manipulation experiments, such as intervening on specific channels, help identify "steerable channels". The work on "Entity Multiplexing" found that interventions could re-target the agent, and that the strength of activation within a single channel could encode information about different target entities. Ablation studies, where only single channels are active, further quantify a channel's capability to support navigation to different entities.
-% End Content from Paper 1
+\section{The Procgen Suite of environments}\label{subsec:procgen}
 
-\subsection{Policy Distillation}
-\label{subsec:distillation}
-% Simplifying complex policies for better understanding
-(Neither of the provided papers directly discusses policy distillation in their related work or methods. This technique typically involves training a simpler, more interpretable model to mimic the behavior of a complex one.)
+The Procgen suite of environments consist of 16 different environments that rely on procedural generation to create diverse challenges for RL agents to learn to solve. They are inspired by Atari games and thus build upon existing games such as those used in the Arcade Learning Environment\cite{bellemare_2013_arcade}. This type of environment forces the agent to not overfit to a particular solution for playing the games effectively, and instead forces it to learn a robust, generalisable policy for each environment.
 
-\subsection{Visual Explanations}
-\label{subsec:visual}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.47\textwidth]{figures/Heist_env_simple_example.png}
+    \hfill
+    \includegraphics[width=0.47\textwidth]{figures/Heist_environment_example.png}
+    \caption{The Procgen Heist environment presents a procedurally generated maze where agents must collect keys and unlock corresponding doors in a specific sequence (blue, green, red) before reaching the final goal (gem). The environment varies in complexity, sometimes only having the gem present, and other times including multiple keys and locks.  }
+    \label{fig:environment-overview}
+\end{figure}
+
+The Procgen Heist environment, the focus of the presented research, requires an agent to collect up to 3 keys and 3 locks before reaching the final goal, a gem\cite{cobbe_2020_leveraging}. The order in which the keys need to be collected is always the same (blue, green, red). The environment is procedurally generated and might generate with any combination of no keys, or 1--3 keys, as can be seen in\ref{fig:environment-overview}. The size of the maze will also change depending on how many objects are included. The environment provides sparse rewards, only giving out a score of 10 if the agent makes it all the way to the final goal and 0 otherwise. This establishes a natural curriculum for the agent and gives it a reasonable chance of reaching the end with a random walk before it starts to develop an actual policy.
+
+This environment was selected due to the necessity for the agent to pursue multiple objectives within a single episode, likely influencing the development of generalizable maze-navigation circuits. It is a sparse learning environment.
+
+\subsection{Visual Explanations}\label{subsec:visual}
 % Visualization techniques for RL policies
 
-% Content from Paper 1: "Entity Multiplexing..."
-Feature visualization techniques, including synthetic visualization and finding maximally activating samples from a dataset, are employed. While synthetic visualizations can be noisy, maximally activating patches, especially from within the environment, can yield interpretable results, confirming findings in \cite{hilton_understanding_2020}. SAEs were found to provide significantly clearer visualizations than the original model.
-% End Content from Paper 1
+Feature visualization techniques, including synthetic visualization and finding maximally activating samples from a dataset, are employed. While synthetic visualizations can be noisy, maximally activating patches, especially from within the environment, can yield interpretable results, confirming findings in\cite{hilton_2020_understanding}. Work done on exploring SAEs such as\cite{gorton_2024_missing} makes effective use of visualisation to illustrate the improvement in interpretability of the SAE latents.
+
+
+
+Below this still needs work ----
 
 % Content from Paper 2: "Discovering Goals..."
 Visualization of neural network activations in different layers (e.g., \verb|fig:filter_visualizations| in "Discovering Goals...") can show how different channels respond to entities in the environment, such as keys and locks. Some filters might show minimal activation around certain entities in early layers, while later layer filters exhibit maximal activations around the current target.
