@@ -37,11 +37,26 @@ Interpretability in machine learning refers to the extent to which a human can u
 Sparse AutoEncoders (SAEs) have proven to be a useful tool in understanding neural networks by acting as an unsupervised tool that can compress meaningful operations into more isolated circuitry. This allows for a reduction in the issue of neural network functionality being distributed across different regions within a layer\citep{elhage_toy_2022}, and facilitates a better understanding of the network's operations\citep{bricken2023monosemanticity}. Recent work has demonstrated how SAEs can reveal interpretable features in various neural architectures, including CNNs\citep{gorton_2024_missing} and transformers\citep{conerly_update_2024}.
 % End Content from Paper 1
 
+\subsection{Visualising neural networks}\label{subsec:post_hoc}
+
+Techniques such as those developed by Zeiler and Fergus represented some of the first work on interpreting the operations of deep neural networks. They employ a deconv-net that reconstructs the max activating zones in pooling layers and when chained through subsequent CNN layers allows the reconstruction of complex visual representations of deep layers within the network, something that is normally very challenging due to the significant compression that is performed on the deep layers in the CNN. By applying this deconvolution the features appearing deeper in the network can be expanded back up to human interpretable scales.
+
+Early work in understanding the functioning of neural networks focused on techniques that could visually represent the features that were encoded in the weights of the neural network. In particular\cite{olah_feature_2017} developed techniques to generate maximally activating synthetic inputs that functioned as startlingly clear representations of channels and layers within the network. These demonstrated the layers of abstraction between layers that arose during the training of an image classification model, and how it was possible to trace the combinations of channels in a given layer through to a sensible visual combination in the next layer. This work also demonstrated the use of gathering maximum activating samples from the training data and pairing it with particular channels and showing the similarity between these and the synthetically generated examples as a means of confirming the veracity of the visualisations.
+
+
+
+While synthetic visualizations can be noisy, maximally activating patches, especially from within the environment, can yield interpretable results, confirming findings in\cite{hilton_2020_understanding}. Work done on exploring SAEs trained on CNNS such as\cite{gorton_2024_missing} makes effective use of visualisation to illustrate the improvement in interpretability of the SAE latents.
+
+
 
 \subsection{Post-hoc Explanations}\label{subsec:post_hoc}
 % Methods that explain already trained models
 % Feature attribution, saliency maps, etc.
+
 Post-hoc explanation methods aim to provide insights into already trained models without altering their architecture or training process. Examples include feature attribution methods (like LIME, SHAP), saliency maps, and activation steering.
+
+Perhaps the most famous and enduring of this type of technique is probing, particularly the linear probe. This is simply a linear classifier trained on activation data from a given layer on target labels that are provided. The degree of accuracy that the probe can achieve represents the degree to which a given layer can be said to have a clear representation of the given target feature within the layer\cite{alainUnderstandingIntermediateLayers2018}. Multi layer probes are also a useful tool, but these can obfuscate the degree to which the target feature is actually present due to the additional computation being performed.
+
 
 % Content from Paper 2: "Discovering Goals..."
 Activation steering, as demonstrated in \cite{mini_2023_understanding} and extended in the discussed research, is a post-hoc technique. Steering vectors, representing the difference in activations between states with and without an objective, can be used to influence a model's behavior.
@@ -93,10 +108,7 @@ The Procgen Heist environment, the focus of the presented research, requires an 
 
 This environment was selected due to the necessity for the agent to pursue multiple objectives within a single episode, likely influencing the development of generalizable maze-navigation circuits. It is a sparse learning environment.
 
-\subsection{Visual Explanations}\label{subsec:visual}
-% Visualization techniques for RL policies
 
-Feature visualization techniques, including synthetic visualization and finding maximally activating samples from a dataset, are employed. While synthetic visualizations can be noisy, maximally activating patches, especially from within the environment, can yield interpretable results, confirming findings in\cite{hilton_2020_understanding}. Work done on exploring SAEs such as\cite{gorton_2024_missing} makes effective use of visualisation to illustrate the improvement in interpretability of the SAE latents.
 
 
 
