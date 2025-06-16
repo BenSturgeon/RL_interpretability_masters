@@ -42,6 +42,12 @@ Here, \(x\) represents the original activation from the base model, the L2 norm 
 
 SAEs typically learn an overcomplete basis, where the hidden layer of the SAE is much larger than the original layer it is reproducing, typically chosen by multiplying the original hidden dimension size by some expansion factor. This high dimensionality allows the SAE to represent the input activations using a small number of highly specific, disentangled features. This addresses the problem of polysemantic neurons in a model, which can make the task of accurate interpretability much more challenging\cite{elhage_toy_2022}.
 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/sae_mermaid.pdf}
+    \caption{Sparse Autoencoder (SAE) architecture. The network consists of an encoder that maps input activations $X$ to sparse hidden representations $A$ through a $1\times 1$ convolution and ReLU activation, followed by a decoder that reconstructs the original activations as $\hat{X}$. The model is trained using a combined loss function comprising reconstruction loss (MSE between $X$ and $\hat{X}$) and sparsity loss (L1 regularization on $A$ with coefficient $\lambda$). Notation: $B$ = batch size, $C_{\text{in}}/C_{\text{hid}}$ = input/hidden channels, $H\times W$ = spatial dimensions. }
+    \label{fig:sae_architecture}
+\end{figure}
 % Add discussion from newer CNN SAE papers
 % End Content from Paper 1
 
