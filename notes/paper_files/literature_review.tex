@@ -45,7 +45,7 @@ SAEs typically learn an overcomplete basis, where the hidden layer of the SAE is
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.8\textwidth]{figures/sae_mermaid.pdf}
-    \caption{Sparse Autoencoder (SAE) architecture. The network consists of an encoder that maps input activations $X$ to sparse hidden representations $A$ through a $1\times 1$ convolution and ReLU activation, followed by a decoder that reconstructs the original activations as $\hat{X}$. The model is trained using a combined loss function comprising reconstruction loss (MSE between $X$ and $\hat{X}$) and sparsity loss (L1 regularization on $A$ with coefficient $\lambda$). Notation: $B$ = batch size, $C_{\text{in}}/C_{\text{hid}}$ = input/hidden channels, $H\times W$ = spatial dimensions. }
+    \caption{Sparse auto-encoder (SAE) architecture. An encoder applies a $1\times 1$ convolution and ReLU to map input activations $X$ to sparse hidden activations $A$; a second $1\times 1$ convolution reconstructs $\hat{X}$. Training minimises the reconstruction loss $\text{MSE}(X,\hat{X})$ plus an $\ell_{1}$ sparsity penalty $\lambda\lVert A\rVert_{1}$. \textit{Shapes:} $X\in\mathbb{R}^{B\times C_{\text{in}}\times H\times W}$, $A\in\mathbb{R}^{B\times C_{\text{hid}}\times H\times W}$, $\hat{X}\in\mathbb{R}^{B\times C_{\text{in}}\times H\times W}$.}
     \label{fig:sae_architecture}
 \end{figure}
 % Add discussion from newer CNN SAE papers
@@ -71,14 +71,29 @@ Post-hoc explanation methods aim to provide insights into already trained models
 
 Perhaps the most famous and enduring of this type of technique is probing, particularly the linear probe. This is simply a linear classifier trained on activation data from a given layer on target labels that are provided. The degree of accuracy that the probe can achieve represents the degree to which a given layer can be said to have a clear representation of the given target feature within the layer\cite{alainUnderstandingIntermediateLayers2018}. Multi layer probes are also a useful tool, but these can obfuscate the degree to which the target feature is actually present due to the additional computation being performed.
 
-% Add a discussion of TCAV (concept activation vectors)
+
+
+Concept Activation Vectors (CAVs) provide a way to bridge high dimensional vector space of neural network activations and human-readable concepts. To construct a CAV for a concept (for example, `striped'), one collects a small set of images that exhibit the concept and a set of random counter-examples, records the activations from a chosen layer, and trains a linear classifier to separate the two groups. The normal vector to the resulting decision boundary is the CAV. This can then be manipulated in one direction or the other to produce more or less of the effect you desire\cite{kim_2018_interpretability}. This can be used to test how much a particular concept is relied upon when the network is making a prediction. 
+
+To formalise the above concept, let $a^{l}(x)\in\mathbb{R}^{d}$ be the activations of layer $l$ for input $x$, and let $w\in\mathbb{R}^{d}$ be the extracted weight vector of the linear classifier trained to distinguish positive concept examples from counter-examples.  We take the concept activation vector as
+\[
+    v^{l}_{C}= \frac{w}{\lVert w \rVert_{2}}.
+\]
+Following \citet{kim_2018_interpretability}, the extent to which concept $C$ influences the logit $f_{k}(x)$ for class $k$ is measured by the directional derivative
+\[
+    S_{C,k,l}(x)= \nabla_{a^{l}(x)} f_{k}(x) \cdot v^{l}_{C},
+\]
+whose sign indicates whether amplifying the concept increases ($S_{C,k,l}>0$) or decreases ($S_{C,k,l}<0$) the likelhood of a particular prediction.
+
+Because these can be learned with a lightweight linear probe and then used to potentially intervene on neural network activations as illustrated in work such as othello GPT\cite{nanda_2023_emergent}, this technique has become fundamental as a tool in alignment\cite{mengLocatingEditingFactual2023}, and lays a conceptual foundation for things like steering vectors, which are produced in a different way but share many properties\cite{turner_2024_steering}.
+
 
 % Content from Paper 2: "Discovering Goals..."
-Activation steering, as demonstrated in\cite{mini_2023_understanding} and extended in the discussed research, is a post-hoc technique. Steering vectors, representing the difference in activations between states with and without an objective, can be used to influence a model's behavior.
+Activation steering, as demonstrated in\cite{mini_2023_understanding} and extended in the discussed research, is a post-hoc technique. Steering vectors, representing the difference in activations between states with and without an objective, can be used to influence a policy model's behaviour by acting as a superstimulus of sorts of a particular aspect of the environment to the model. This can be achieved through the simple addition of the steering vector into the given layer from which it was produced after multiplying it by a given factor to modulate its effects.  
 % End Content from Paper 2
 
 % Content from Paper 1: "Entity Multiplexing..."
-The feature visualization methodologies discussed, such as synthetic visualization (optimizing an input image for maximal channel activation) and finding maximally activating dataset samples \citep{olah_feature_2017, hilton_understanding_2020}, are also forms of post-hoc analysis.
+The feature visualization methodologies discussed, such as synthetic visualization (optimizing an input image for maximal channel activation) and finding maximally activating dataset samples \citep{olah_feature_2017,hilton_2020_understanding}, are also forms of post-hoc analysis.
 % End Content from Paper 1
 
 \subsection{Intrinsically Interpretable Models}\label{subsec:intrinsic}
@@ -104,7 +119,12 @@ Work by\cite{betley_2023_localizing} found a specific circuit in the convolution
 
 Work exploring the Procgen Coinrun environment provides a rich set of ideas for how to attribute attention from objects in the input to specific weights within the model, as well as visualizing the model's weights\cite{hilton_2020_understanding}. The most striking aspect of their work showing clear positive and negative attributions to specific entities according to how it might affect its ability to complete the task within the environment.
 
-% Add discussion of saliency based methods
+
+Saliency-based feature-attribution techniques, while originally developed for image classification, have been shown to yield insights into reinforcement-learning policies. These methods typically operate by computing the gradient of a relevant policy output (such as the value of a state or the probability of a specific action, $f(s)$) with respect to the input observation, $s$. The resulting saliency map is then defined as the magnitude of this gradient:
+\[
+    M(s) = |\nabla_s f(s)|,
+\]
+which highlights pixels that most strongly influence the agent's decision. Using this approach, \cite{greydanus_2018_visualizing} applied gradient saliency maps to Atari DQN agents, showing that agents frequently track critical entities like the ball in Breakout or enemy ships in Space Invaders. To address the shortcomings of simple gradients, Sundararajan's integrated-gradients method\,\cite{sundararajan_2017_axiomatic}, which accumulates gradients along a path from a baseline input, was later extended to policy networks by \cite{atrey_2020_exploratory}, who introduced `policy saliency' maps that operate over distributions of outputs from policy models. These approaches provide an easily computable and highly informative result without requiring additional training. However, unlike SAEs or steering vectors, these methods do not provide a mechanism for manipulating behaviour.
 
 % Integrated Gradients or Saliency-based methods applied to Atari agents (Greydanus et al., 2018).
 % Perturbation-based policy saliency (Atrey et al., 2020—already in Introduction but not in the lit review).
