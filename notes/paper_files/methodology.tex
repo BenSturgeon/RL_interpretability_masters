@@ -87,6 +87,30 @@
         % Content from Paper 2: "Discovering Goals..."
         For direct model control using activation patching, an activation vector from the environment for a given entity and layer was extracted. A specific channel's activation values were edited to indicate an entity should be in a specific position, and this patched steering vector was added back into the model's activations. Over 1000 activation patching experiments were performed across different channels and layers, with intervention coefficients from -2.0 to 2.0 in increments of 0.1, each with 100 episodes.
 
+
+        \begin{figure}[ht]
+            \centering
+            \begin{tabular}{cccc}
+            \includegraphics[width=0.25\linewidth]{figures/observation.png}&
+            \includegraphics[width=0.25\linewidth]{figures/layer1_filter10.png}&
+            \includegraphics[width=0.25\linewidth]{figures/layer2_filter10.png}&
+            \includegraphics[width=0.067\linewidth]{figures/colorbar.png}
+            \end{tabular}
+            
+            \vspace{0.5em}
+            
+            \begin{tabular}{ccc}
+            \hspace{0.1725\linewidth}&
+            \includegraphics[width=0.25\linewidth]{figures/filter29_layer8_no_title.png}&
+            \includegraphics[width=0.25\linewidth]{figures/filter29_layer9_no_title.png}
+            \end{tabular}
+            
+            \caption{Visualization of the maze and neural network activations in different layers. Top row (left to right): 
+            observation input, layer 1 channel 10, layer 2 channel 10, and activation colorbar. 
+            Bottom row: layer 8 channel 29 and layer 9 channel 29. In the top row filters we observe a minimal activation around the regions of the blue key and lock and in the bottom row we see maximal activations around the blue key. This is a replication of the approach used by\cite{mini_2023_understanding} in order to get an initial sense of the clarity with which entities could be seen in activations.}
+            \label{fig:filter_visualizations}
+        \end{figure}
+
     \subsection{Ablation Studies}
     \label{subsec:ablation_studies}
     % Content from Paper 1: "Entity Multiplexing..."
