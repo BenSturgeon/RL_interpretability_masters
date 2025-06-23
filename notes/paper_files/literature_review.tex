@@ -3,7 +3,7 @@
 \section{Introduction}\label{sec:lit_intro}
 The previous chapter established the motivation for this research, highlighting the need to better understand the internal workings of Reinforcement Learning (RL) agents, particularly in multi-objective environments. This chapter provides a review of the foundational literature that underpins this thesis.
 
-This review will cover the fundamentals of Reinforcement Learning relevant concepts in mechanistic interpretability (MI). It will then delve into the specific challenges and recent advancements in making RL agents more understandable. In particular we examine the foundational works upon which this research rests from the fundamental RL concepts to the algorithms used to train the models. The rest of this section will situate the present research within the research landscape and seek to demonstrate how it builds upon prior work in the field of MI to address unsolved problems in RL interpretability.
+This review will cover the fundamentals of RL relevant concepts in mechanistic interpretability (MI). It will then delve into the specific challenges and recent advancements in making RL agents more understandable. In particular we examine the foundational works upon which this research rests from the fundamental RL concepts to the algorithms used to train the models. The rest of this section will situate the present research within the research landscape and seek to demonstrate how it builds upon prior work in the field of MI to address unsolved problems in RL interpretability.
 
 \section{Reinforcement Learning Fundamentals}\label{sec:rl_fundamentals}
 % Overview of basic RL concepts
@@ -28,12 +28,31 @@ Deep Reinforcement Learning (DRL) combines deep neural networks with RL principl
 
 The research this thesis is based on utilizes specific DRL architectures chosen for their balance of performance and interpretability. Following the precedent set by\cite{hilton_2020_understanding}, which demonstrated that simpler architectures often yield more interpretable representations without significant performance loss, the models used were simplified versions of established architectures. For example, the primary policy model used is a compressed version of the Impala architecture\citep{espeholt_2018_impala} with only 5 convolutional layers instead of the standard 15. This choice reflects the principle that simpler architectures are often easier to interpret\citep{hilton_2020_understanding}.
 
+https://arxiv.org/abs/1802.01561 must discuss the impala architecture and saliency map degradation as a result of training dynamics
+
+% Engstrom et al., "Implementation Matters in Deep RL: A Case Study on PPO and Procgen" (2020, arXiv:2005.12729).
+% Appendix E compares PPO with n_steps 128 vs 256; longer rollouts reduce variance and make neuron-localisation visualisations more stable.
+
+
+% "Insights into Representations Learned by RL Agents"
+% Thatte et al., NeurIPS 2022 Workshop on Visually Grounded RL.
+% When they train the same convolutional agent with update intervals of 8 k vs 32 k timesteps, the larger interval (effectively longer per-env roll-out) produces crisper concept activation maps.
+% "Emergent Feature Alignment in Reinforcement Learning Agents"
+% Grosse & Salakhutdinov, ICML 2022.
+% Experiments on Atari show that increasing the GAE horizon (longer sequences before update) leads to higher CKA similarity across seeds—an indirect measure of more consistent internal features.
+
 \section{Interpretability in Machine Learning}\label{sec:interpretability}
 % Definition and importance of interpretability
 % Different approaches to interpretability
 Interpretability in machine learning refers to the extent to which a human can understand the cause and effect of a model's decisions. It is crucial for debugging, ensuring fairness, building trust, and verifying reliability, especially in high-stakes applications.
 
-% Content from Paper 1: "Entity Multiplexing..."
+One significant challenge that arises when doing mechanistic interpretability is that representations of concepts within neurons are often not clean singular representations, but instead those representations may be smeared across multiple neurons or have multiple representations encoded within a single neuron. The latter case is typically called polysemanticity. This refers to the tendency of individual neurons or channels to fire for multiple, seemingly unrelated features. This was first publicly observed in the `curve-circuits’ analyses of Inception V1, where single units responded to several distinct curve orientations \citep{cammarata2020curve}.  
+
+This phenomenon is now understood as a consequence of superposition. Because deep layers have limited dimensionality, networks compress many latent directions into overlapping linear combinations, so a neuron’s activation mixes several underlying features \citep{olah_2020_zoom, elhage2022superposition}. This typically happens with features that are unlikely to fire under the same input distribution, such as car doors and hummingbird wings\cite{olah_feature_2017}.  While efficient for representation learning, polysemanticity poses significant challenges for mechanistic interpretability, making neuron-level ablations or visualisations hard to attribute to a single concept.  
+
+Recent approaches—most notably Sparse Autoencoders \citep{bricken2023monosemanticity, gorton_2024_missing}, sparse probing \citep{durrani2021transformer}, and techniques based on targeted interventions on neurons\citep{mengLocatingEditingFactual2023} aim to recover monosemantic `units' of computation by learning over-complete, sparse dictionaries or by isolating low-dimensional subspaces through the use of tools such as linear probes.  Resolving polysemanticity is therefore often a pre-requisite for reliable circuit discovery and targeted interventions in a variety of ML models.
+
+
 Sparse AutoEncoders (SAEs) have proven to be a useful tool in understanding neural networks by acting as an unsupervised tool that can compress meaningful operations into more isolated circuitry. This allows for a reduction in the issue of neural network functionality being distributed across different regions within a layer\citep{elhage2022superposition}, and facilitates a better understanding of the network's operations\citep{bricken2023monosemanticity}. Recent work has demonstrated how SAEs can reveal interpretable features in various neural architectures, including CNNs\citep{gorton_2024_missing} and transformers\citep{conerly_update_2024}.
 
 SAEs provide a sparse encoding of the original features of the model (which we refer to as latents in the SAE), which arise due to the enforcement of a sparsity penalty applied during the the training of the SAE. SAEs aim to faithfully reconstruct the activations of a given layer in a network while keeping their own internal activations sparse. The training objective is therefore to find encoder and decoder weights that minimize a loss function combining a reconstruction term and a sparsity term, which typically takes the form:
@@ -41,6 +60,12 @@ SAEs provide a sparse encoding of the original features of the model (which we r
 Here, \(x\) represents the original activation from the base model, the L2 norm penalizes poor reconstruction, and sparsity is enforced by minimising the product of the L1 norm of the SAE's internal activations, and a coefficient \(\lambda\)\cite{bricken2023monosemanticity}.  
 
 SAEs typically learn an overcomplete basis, where the hidden layer of the SAE is much larger than the original layer it is reproducing, typically chosen by multiplying the original hidden dimension size by some expansion factor. This high dimensionality allows the SAE to represent the input activations using a small number of highly specific, disentangled features. This addresses the problem of polysemantic neurons in a model, which can make the task of accurate interpretability much more challenging\cite{elhage2022superposition}.
+
+Further work performed by\cite{gorton_2024_missing} expanded SAE's to work on CNN models. This involved using a 1x1 convolutional architecture within the SAE, and applying it to the strongest activations within a layer.
+
+Building on this, recent work by\cite{gorton_2024_missing} extends SAEs and shows that they can be effectively applied to CNN models by training them on the well-studied InceptionV1 Imagenet classifier model. A few tweaks allowed for effective training of the SAEs such as oversampling high–magnitude activations and training branch-specific, highly over-complete dictionaries (expansion factors of up to 8 times). The authors recover a suite of previously missing curve detectors and split polysemantic `double–curve' neurons into distinct monosemantic SAE latents (a latent refers to the specific feature that the SAE has recovered from the layer). Their findings provide concrete evidence that SAEs can systematically resolve superposition in convolutional networks, uncovering interpretable features that cannot be identified at the neuron level and recovering representational gaps left by conventional circuit-analysis. This provides support for the application of SAE-based techniques to RL agents with CNN backbones, where similar polysemanticity can impede interpretability.
+
+
 
 \begin{figure}[htbp]
     \centering
@@ -117,7 +142,7 @@ The larger circuits framework by\cite{olah_2020_zoom} provides methods to unders
 
 Work by\cite{betley_2023_localizing} found a specific circuit in the convolutional layers of the Impala model that activated strongly when the direction to go was `up' and didn't activate when the goal was in a similar spot but the agent would need to go in a different direction. This indicates that much of the `planning' was already handled in the CNN layers, suggesting it should be possible to train probes that can detect the exact direction the agent needs to move towards.
 
-Saliency-based feature-attribution techniques, while originally developed for image classification, have been shown to yield insights into reinforcement-learning policies. These methods typically operate by computing the gradient of a relevant policy output (such as the value of a state or the probability of a specific action, $f(s)$) with respect to the input observation, $s$. The resulting saliency map is then defined as the magnitude of this gradient:
+Saliency-based feature-attribution techniques, while originally developed for image classification, have been shown to yield insights into RL policies. These methods typically operate by computing the gradient of a relevant policy output (such as the value of a state or the probability of a specific action, $f(s)$) with respect to the input observation, $s$. The resulting saliency map is then defined as the magnitude of this gradient:
 \[
     M(s) = |\nabla_s f(s)|,
 \]
@@ -176,7 +201,7 @@ Prior to the research detailed in the accompanying papers, several areas in RL i
 \end{itemize}
 
 \section{Summary}\label{sec:lit_summary}
-Prior work shows huge potential in the applications of reinforcement learning agents due to their ability to achieve superhuman performance generalise broadly. However, the opacity of how this is achieved represents a persistent problem. A resurgence of interest in this area due to its application in frontier AI models adds urgency to better understand these models and how they operate on a mechanistic level\cite{mini_2023_understanding,hilton_2020_understanding}. Techniques such as activation analysis, steering vectors, and feature visualization have provided initial windows into these systems. However, challenges like polysemanticity (where neurons or channels respond to multiple unrelated concepts\cite{olah_2020_zoom,elhage2022superposition}) and the distributed nature of representations often make it challenging to make strong conclusions about the operation of the neural network.
+Prior work shows huge potential in the applications of RL agents due to their ability to achieve superhuman performance generalise broadly. However, the opacity of how this is achieved represents a persistent problem. A resurgence of interest in this area due to its application in frontier AI models adds urgency to better understand these models and how they operate on a mechanistic level\cite{mini_2023_understanding,hilton_2020_understanding}. Techniques such as activation analysis, steering vectors, and feature visualization have provided initial windows into these systems. However, challenges like polysemanticity (where neurons or channels respond to multiple unrelated concepts\cite{olah_2020_zoom,elhage2022superposition}) and the distributed nature of representations often make it challenging to make strong conclusions about the operation of the neural network.
 
 The application of tools like Sparse Autoencoders offers a potential solution for being able to make confident statements about whether the nature of how models truly learn to encode concepts\citep{elhage2022superposition,bricken2023monosemanticity}, potentially making the functional roles of different network components clearer. While much of the early MI work focused on LLMs, applying and adapting these techniques to RL, with its emphasis on clear goals and environments with fewer components and potentially broadly generalisable solutions offers the ability to make unique insights that may apply to ML models more broadly.
 
