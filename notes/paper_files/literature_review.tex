@@ -46,14 +46,25 @@ https://arxiv.org/abs/1802.01561 must discuss the impala architecture and salien
 % Different approaches to interpretability
 Interpretability in machine learning refers to the extent to which a human can understand the cause and effect of a model's decisions. It is crucial for debugging, ensuring fairness, building trust, and verifying reliability, especially in high-stakes applications.
 
-One significant challenge that arises when doing mechanistic interpretability is that representations of concepts within neurons are often not clean singular representations, but instead those representations may be smeared across multiple neurons or have multiple representations encoded within a single neuron. The latter case is typically called polysemanticity. This refers to the tendency of individual neurons or channels to fire for multiple, seemingly unrelated features. This was first publicly observed in the `curve-circuits’ analyses of Inception V1, where single units responded to several distinct curve orientations \citep{cammarata2020curve}.  
+One significant challenge that arises when doing MI is that representations of concepts within neurons are often not clean singular representations, but instead those representations may be smeared across multiple neurons or have multiple representations encoded within a single neuron. The latter case is typically called polysemanticity. This refers to the tendency of individual neurons or channels to fire for multiple, seemingly unrelated features. This was first publicly observed in the `curve-circuits' analyses of Inception V1, where single units responded to several distinct curve orientations \citep{cammarata2020curve}.  
 
-This phenomenon is now understood as a consequence of superposition. Because deep layers have limited dimensionality, networks compress many latent directions into overlapping linear combinations, so a neuron’s activation mixes several underlying features \citep{olah_2020_zoom, elhage2022superposition}. This typically happens with features that are unlikely to fire under the same input distribution, such as car doors and hummingbird wings\cite{olah_feature_2017}.  While efficient for representation learning, polysemanticity poses significant challenges for mechanistic interpretability, making neuron-level ablations or visualisations hard to attribute to a single concept.  
+This phenomenon is now understood as a consequence of superposition. Because deep layers have limited dimensionality, networks compress many latent directions into overlapping linear combinations, so a neuron's activation mixes several underlying features \citep{olah_2020_zoom, elhage2022superposition}. This typically happens with features that are unlikely to fire under the same input distribution, such as car doors and hummingbird wings\cite{olah_feature_2017}.  While efficient for representation learning, polysemanticity poses significant challenges for mechanistic interpretability, making neuron-level ablations or visualisations hard to attribute to a single concept.  
 
 Recent approaches—most notably Sparse Autoencoders \citep{bricken2023monosemanticity, gorton_2024_missing}, sparse probing \citep{durrani2021transformer}, and techniques based on targeted interventions on neurons\citep{mengLocatingEditingFactual2023} aim to recover monosemantic `units' of computation by learning over-complete, sparse dictionaries or by isolating low-dimensional subspaces through the use of tools such as linear probes.  Resolving polysemanticity is therefore often a pre-requisite for reliable circuit discovery and targeted interventions in a variety of ML models.
 
+Let $x\in\mathbb{R}^{d}$ be the activation vector of a layer expressed as a linear combination of $k$ (potentially $k\!\gg\! d$) latent feature directions collected in $F\in\mathbb{R}^{d\times k}$, i.e.
+\begin{equation}
+    x\;=\;F\,s, \qquad s\in\mathbb{R}^{k},\; \text{sparse}. \label{eq:superposition}
+\end{equation}
+Because $k>d$, the same neuron must participate in multiple columns of $F$, giving rise to \emph{polysemantic} units.  Defining a linear read-out $a=W^{\top}x$ with $W\in\mathbb{R}^{d\times d}$, we obtain
+\begin{equation}
+    a\;=\;W^{\top}F\,s\;=:\;M\,s. \label{eq:mixing}
+\end{equation}
+A neuron $i$ is polysemantic when the $i$-th row of the mixing matrix $M$ has significant weight on multiple features (row sparsity $\lVert M_{i,:}\rVert_{0}>1$).  The toy model of \citet{elhage2022superposition} shows that packing many sparse features ($k$ large, $s$ sparse) into a narrow layer of width $d$ forces an unavoidable trade-off:
+\[ \mathbb{E}\,\lVert a-Ms\rVert^{2} \;\propto\; \frac{\lambda k}{d}, \]
+where $\lambda$ is the expected sparsity of $s$. Methods such as Sparse AutoEncoders (SAEs) reduce the effective $\lambda$ by encouraging even sparser codes, thereby converting polysemantic neurons into more interpretable, monosemantic directions. 
 
-Sparse AutoEncoders (SAEs) have proven to be a useful tool in understanding neural networks by acting as an unsupervised tool that can compress meaningful operations into more isolated circuitry. This allows for a reduction in the issue of neural network functionality being distributed across different regions within a layer\citep{elhage2022superposition}, and facilitates a better understanding of the network's operations\citep{bricken2023monosemanticity}. Recent work has demonstrated how SAEs can reveal interpretable features in various neural architectures, including CNNs\citep{gorton_2024_missing} and transformers\citep{conerly_update_2024}.
+SAEs have proven to be a useful tool in understanding neural networks by acting as an unsupervised tool that can compress meaningful operations into more isolated circuitry. This allows for a reduction in the issue of neural network functionality being distributed across different regions within a layer\citep{elhage2022superposition}, and facilitates a better understanding of the network's operations\citep{bricken2023monosemanticity}. Recent work has demonstrated how SAEs can reveal interpretable features in various neural architectures, including CNNs\citep{gorton_2024_missing} and transformers\citep{conerly_update_2024}.
 
 SAEs provide a sparse encoding of the original features of the model (which we refer to as latents in the SAE), which arise due to the enforcement of a sparsity penalty applied during the the training of the SAE. SAEs aim to faithfully reconstruct the activations of a given layer in a network while keeping their own internal activations sparse. The training objective is therefore to find encoder and decoder weights that minimize a loss function combining a reconstruction term and a sparsity term, which typically takes the form:
 \[L(x) = \|x - \text{Dec}(\text{Enc}(x))\|_2^2 + \lambda \|\text{Enc}(x)\|_1\]
@@ -61,11 +72,15 @@ Here, \(x\) represents the original activation from the base model, the L2 norm 
 
 SAEs typically learn an overcomplete basis, where the hidden layer of the SAE is much larger than the original layer it is reproducing, typically chosen by multiplying the original hidden dimension size by some expansion factor. This high dimensionality allows the SAE to represent the input activations using a small number of highly specific, disentangled features. This addresses the problem of polysemantic neurons in a model, which can make the task of accurate interpretability much more challenging\cite{elhage2022superposition}.
 
-Further work performed by\cite{gorton_2024_missing} expanded SAE's to work on CNN models. This involved using a 1x1 convolutional architecture within the SAE, and applying it to the strongest activations within a layer.
+Building on this, recent work by\cite{gorton_2024_missing} extends SAEs and shows that they can be effectively applied to CNN models by training them on the well-studied InceptionV1 Imagenet classifier model. A few tweaks allowed for effective training of the SAEs such as oversampling high–magnitude activations and training branch-specific, highly over-complete dictionaries (expansion factors of up to 8 times). The authors recover a suite of previously missing curve detectors and split polysemantic `double–curve' neurons into distinct monosemantic SAE latents (a latent refers to the specific feature that the SAE has recovered from the layer). Their findings provide concrete evidence that SAEs can systematically resolve superposition in convolutional networks, uncovering interpretable features that cannot be identified at the neuron level and recovering representational gaps left by conventional circuit-analysis. 
 
-Building on this, recent work by\cite{gorton_2024_missing} extends SAEs and shows that they can be effectively applied to CNN models by training them on the well-studied InceptionV1 Imagenet classifier model. A few tweaks allowed for effective training of the SAEs such as oversampling high–magnitude activations and training branch-specific, highly over-complete dictionaries (expansion factors of up to 8 times). The authors recover a suite of previously missing curve detectors and split polysemantic `double–curve' neurons into distinct monosemantic SAE latents (a latent refers to the specific feature that the SAE has recovered from the layer). Their findings provide concrete evidence that SAEs can systematically resolve superposition in convolutional networks, uncovering interpretable features that cannot be identified at the neuron level and recovering representational gaps left by conventional circuit-analysis. This provides support for the application of SAE-based techniques to RL agents with CNN backbones, where similar polysemanticity can impede interpretability.
+The approach taken by \cite{gorton_2024_missing} uses the `1×1‐conv SAE' illustrated in Fig\ref{fig:sae_architecture}.  Concretely, for an activation tensor $X\in\mathbb{R}^{B\times C_{\text{in}}\times H\times W}$ from a convolutional layer, the encoder applies a learnable $1\times1$ kernel $W_{\text{enc}}\in\mathbb{R}^{C_{\text{hid}}\times C_{\text{in}}}$ and a ReLU non-linearity to produce the hidden activations $A=\mathrm{ReLU}(W_{\text{enc}}*X)$.  A symmetric $1\times1$ decoder $W_{\text{dec}}$ reconstructs $\hat X=W_{\text{dec}}*A$. This means that the outputs of a given decoder entirely depend on the ouputs of its corresponding encoder.
 
-
+Training minimises
+\[
+  \mathcal L\;=\;\tfrac12\lVert X-\hat X\rVert_2^2\; +\;\lambda\,\|A\|_1,\label{eq:sae_loss}
+\]
+where $\lambda$ is layer-dependent (see \citealt{gorton_2024_missing}, Table~1). A particular training detail is worth noting: \emph{activation oversampling} — positions are sampled with probability proportional to $\|X\|_2$ so that only the strongest activating regions are learned in the minibatch. This oversampling reduces computation being wasted on low variance background noise activations and can significantly reduce training time.  With an expansion factor $e=8$ the hidden width $C_{\text{hid}}=e\,C_{\text{in}}$ is highly over-complete, enabling the SAE to disentangle polysemantic directions: on mixed3b the model splits a single double-curve neuron into two monosemantic curve features plus a residual, and it recovers eleven additional curve detectors that fill previously missing orientations.  These results establish that dictionary-learning style SAEs can be applied to CNNs and motivate their use for RL agents with convolutional backbones.
 
 \begin{figure}[htbp]
     \centering
@@ -76,7 +91,7 @@ Building on this, recent work by\cite{gorton_2024_missing} extends SAEs and show
 % Add discussion from newer CNN SAE papers
 % End Content from Paper 1
 
-\subsection{Visualising neural networks}\label{subsec:post_hoc}
+\subsection{Visualising neural networks}\label{subsec:visualising_neural_networks}
 
 Techniques such as those developed by Zeiler and Fergus represented some of the first work on interpreting the operations of deep neural networks. They employ a deconv-net, a model that maps feature activations from a deep layer back to the input pixel space by approximately reversing the network's pooling and convolutional operations. By reconstructing the maximally activating zones in pooling layers and being chained through subsequent CNN layers the reconstruction of complex visual representations of deep layers within the network can be achieved. This is normally very challenging due to the significant compression that is performed on the deep layers in the CNN. By applying this deconvolution the features appearing deeper in the network can be expanded back up to human interpretable scales.
 
@@ -140,7 +155,7 @@ In ``Understanding and Controlling a Maze-Solving Policy Network'' demonstrated 
 The larger circuits framework by\cite{olah_2020_zoom} provides methods to understand how neural networks combine simple features into complex representations. Their work on polysemantic neurons (neurons responding to multiple distinct features) is particularly relevant when an agent must represent multiple objectives\cite{elhage2022superposition}.
 % End Content from Paper 2
 
-Work by\cite{betley_2023_localizing} found a specific circuit in the convolutional layers of the Impala model that activated strongly when the direction to go was `up' and didn't activate when the goal was in a similar spot but the agent would need to go in a different direction. This indicates that much of the `planning' was already handled in the CNN layers, suggesting it should be possible to train probes that can detect the exact direction the agent needs to move towards.
+Work by\cite{betley_2023_localizing} found a specific circuit in the convolutional layers of the Impala model that activated strongly when the direction to go was 'up' and didn't activate when the goal was in a similar spot but the agent would need to go in a different direction. This indicates that much of the 'planning' was already handled in the CNN layers, suggesting it should be possible to train probes that can detect the exact direction the agent needs to move towards.
 
 Saliency-based feature-attribution techniques, while originally developed for image classification, have been shown to yield insights into RL policies. These methods typically operate by computing the gradient of a relevant policy output (such as the value of a state or the probability of a specific action, $f(s)$) with respect to the input observation, $s$. The resulting saliency map is then defined as the magnitude of this gradient:
 \[
@@ -151,13 +166,13 @@ which highlights pixels that most strongly influence the agent's decision. Using
 
 Work exploring the Procgen Coinrun environment builds on saliency based methods to calculate an attribution within the model weights themselves. By measuring the contribution of a given convolutional feature map to the value function, it becomes possible to determine if a particular feature that the model is observing is likely to have a positive or negative effect on the success of the model, based on whether the collected gradient multipled by the activation score is positive or negative. This advances previous saliency mapping methods by linking the gradients to specific features within the model, rather than pixels in the input\cite{hilton_2020_understanding}.
 
-This is achieved by applying non-negative matrix factorisation (NMF) of the attribution tensor to cluster correlated locations across channels into object-level `features' such as coins, enemies, obstacles etc. By using this dimensionality reduction they are able to produce clear, interpretable object detectors. 
+This is achieved by applying non-negative matrix factorisation (NMF) of the attribution tensor to cluster correlated locations across channels into object-level 'features' such as coins, enemies, obstacles etc. By using this dimensionality reduction they are able to produce clear, interpretable object detectors. 
 
 To elucidate this process, let $X^{(n)}\in\mathbb{R}^{C\times H\times W}$ be the activation tensor of a convolutional layer for input $n$ and let $V^{(n)}$ be the value head.  Element-wise product of activation and gradient attribution is
 \[
 A^{(n)}_{c,h,w}=X^{(n)}_{c,h,w}\;\frac{\partial V^{(n)}}{\partial X^{(n)}_{c,h,w}}.
 \]
-Flatten $A^{(n)}$ to a vector $a^{(n)}\in\mathbb{R}^{D}$ with $D=CHW$ and stack $N$ such vectors into a matrix $R\in\mathbb{R}^{N\times D}$. This results in an $N \times D$ matrix where each row is a single observation, and each column is a `feature location'. We then apply NMF to this matrix, keeping $A^{(n)+}_{c,h,w}=\max\bigl(0, A^{(n)}_{c,h,w}\bigr)$ to satisfy the non-negativity constraint. Non-negative matrix factorisation seeks
+Flatten $A^{(n)}$ to a vector $a^{(n)}\in\mathbb{R}^{D}$ with $D=CHW$ and stack $N$ such vectors into a matrix $R\in\mathbb{R}^{N\times D}$. This results in an $N \times D$ matrix where each row is a single observation, and each column is a 'feature location'. We then apply NMF to this matrix, keeping $A^{(n)+}_{c,h,w}=\max\bigl(0, A^{(n)}_{c,h,w}\bigr)$ to satisfy the non-negativity constraint. Non-negative matrix factorisation seeks
 \[
     R\;\approx\;W H,\quad W\in\mathbb{R}_{\ge0}^{N\times r},\;H\in\mathbb{R}_{\ge0}^{r\times D},
 \]
@@ -196,7 +211,7 @@ Prior to the research detailed in the accompanying papers, several areas in RL i
     \item Understanding how RL agents track and switch between multiple objectives, especially when those objectives are not the immediate next target.
     \item The application and efficacy of techniques like Sparse Autoencoders (SAEs) for disentangling representations specifically within RL agent architectures, particularly CNNs.
     \item Investigating how different aspects of neural network activation encode useful information for the next layer such as how activation strength within a channel might encode information like entity identity.
-    \item The role and potential utility of `dead' channels in SAEs for interpretability, which cease to activate during normal operation but might retain learned decoder weights.
+    \item The role and potential utility of 'dead' channels in SAEs for interpretability, which cease to activate during normal operation but might retain learned decoder weights.
     \item The generalization of interpretability findings from simpler RL agents to more complex architectures like decision transformers or RNN-based agents, especially for tasks requiring memory.
 \end{itemize}
 
@@ -209,7 +224,7 @@ The research presented in the accompanying papers (forming the basis of this the
 \begin{itemize}
     \item Extending activation steering and intervention techniques to more complex, multi-objective RL environments like Procgen Heist.
     \item Applying Sparse Autoencoders to the convolutional layers of an RL agent to disentangle features and investigate the extent to which multiple entities are truly captured within a single layer of the model and through what mechanism this is done. 
-    \item Systematically analyzing the role of individual channels (including `dead' channels in SAEs) in navigation and goal pursuit through methods like ablation studies and retargeting interventions.
+    \item Systematically analyzing the role of individual channels (including 'dead' channels in SAEs) in navigation and goal pursuit through methods like ablation studies and retargeting interventions.
     \item Exploring novel mechanisms of information encoding, such as multiplexing entity information within a single channel through varying activation strengths.
 \end{itemize}
 These contributions aim to deepen our understanding of how RL agents represent and pursue goals, and to refine the tools available for mechanistic interpretability for use in this domain.
