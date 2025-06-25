@@ -19,7 +19,7 @@ At its core, the problem that RL solves in general can be formalized as a Markov
 
 The process of training a model involves iterating through many interactions with the environment to produce a policy denoted as \(\pi(a|s)\), which is a mapping from states to a probability distribution over actions. The goal of the RL training process is to find an optimal policy, \(\pi^*\), that maximises the agent's expected reward over time. As a means of estimating the quality of a given policy, RL functions often use value functions\cite{sutton2018reinforcement}. The state-value function, \(V^\pi(s)\), represents the expected return after taking an action \(a\) in state \(s\) based on following policy \(\pi\). The action-value function, \(Q^\pi(s,a)\), is the expected return from continuing to follow policy \(\pi\) after taking an action given a certain state. 
 
-These functions are foundational to the function of training algorithms such as PPO which was used to train the agent in this research. PPO alternates between sampling data from the environment and using that data to optimise a 'surrogate' objective function using stochastic gradient ascent.
+These functions are foundational to the function of training algorithms such as PPO which was used to train the agent in this research. PPO alternates between sampling data from the environment and using that data to optimise a `surrogate' objective function using stochastic gradient ascent.
 
 \subsection{Deep Reinforcement Learning}\label{subsec:deep_rl}
 % Integration of deep learning with RL
@@ -61,7 +61,7 @@ One significant challenge that arises when doing MI is that representations of c
 
 This phenomenon is now understood as a consequence of superposition. Because deep layers have limited dimensionality, networks compress many latent directions into overlapping linear combinations, so a neuron's activation mixes several underlying features \citep{olah_2020_zoom, elhage2022superposition}. This typically happens with features that are unlikely to fire under the same input distribution, such as car doors and hummingbird wings\cite{olah_feature_2017}.  While efficient for representation learning, polysemanticity poses significant challenges for mechanistic interpretability, making neuron-level ablations or visualisations hard to attribute to a single concept.  
 
-Recent approaches—most notably Sparse Autoencoders \citep{bricken2023monosemanticity, gorton_2024_missing}, sparse probing \citep{durrani2021transformer}, and techniques based on targeted interventions on neurons\citep{mengLocatingEditingFactual2023} aim to recover monosemantic units' of computation by learning over-complete, sparse dictionaries or by isolating low-dimensional subspaces through the use of tools such as linear probes.  Resolving polysemanticity is therefore often a pre-requisite for reliable circuit discovery and targeted interventions in a variety of ML models.
+Recent approaches—most notably Sparse Autoencoders \citep{bricken2023monosemanticity, gorton_2024_missing}, sparse probing \citep{durrani2021transformer}, and techniques based on targeted interventions on neurons\citep{mengLocatingEditingFactual2023} aim to recover monosemantic `units' of computation by learning over-complete, sparse dictionaries or by isolating low-dimensional subspaces through the use of tools such as linear probes.  Resolving polysemanticity is therefore often a pre-requisite for reliable circuit discovery and targeted interventions in a variety of ML models.
 
 Let $x\in\mathbb{R}^{d}$ be the activation vector of a layer expressed as a linear combination of $k$ (potentially $k\!\gg\! d$) latent feature directions collected in $F\in\mathbb{R}^{d\times k}$, i.e.
 \begin{equation}
@@ -166,24 +166,24 @@ In "Understanding and Controlling a Maze-Solving Policy Network" demonstrated th
 The larger circuits framework by\cite{olah_2020_zoom} provides methods to understand how neural networks combine simple features into complex representations. Their work on polysemantic `units' (neurons responding to multiple distinct features) is particularly relevant when an agent must represent multiple objectives\cite{elhage2022superposition}.
 % End Content from Paper 2
 
-Work by\cite{betley_2023_localizing} found a specific circuit in the convolutional layers of the Impala model that activated strongly when the direction to go was 'up' and didn't activate when the goal was in a similar spot but the agent would need to go in a different direction. This indicates that much of the 'planning' was already handled in the CNN layers, suggesting it should be possible to train probes that can detect the exact direction the agent needs to move towards.
+Work by\cite{betley_2023_localizing} found a specific circuit in the convolutional layers of the Impala model that activated strongly when the direction to go was `up' and didn't activate when the goal was in a similar spot but the agent would need to go in a different direction. This indicates that much of the `planning' was already handled in the CNN layers, suggesting it should be possible to train probes that can detect the exact direction the agent needs to move towards.
 
 Saliency-based feature-attribution techniques, while originally developed for image classification, have been shown to yield insights into RL policies. These methods typically operate by computing the gradient of a relevant policy output (such as the value of a state or the probability of a specific action, $f(s)$) with respect to the input observation, $s$. The resulting saliency map is then defined as the magnitude of this gradient:
 \[
     M(s) = |\nabla_s f(s)|,
 \]
-which highlights pixels that most strongly influence the agent's decision. Using this approach, \cite{greydanus_2018_visualizing} applied gradient saliency maps to Atari DQN agents, showing that agents frequently track critical entities like the ball in Breakout or enemy ships in Space Invaders. To address the shortcomings of simple gradients, Sundararajan's integrated-gradients method\,\cite{sundararajan_2017_axiomatic}, which accumulates gradients along a path from a baseline input, was later extended to policy networks by \cite{atrey_2020_exploratory}, who introduced `policy saliency' maps that operate over distributions of outputs from policy models. These approaches provide an easily computable and highly informative result without requiring additional training. However, unlike SAEs or steering vectors, these methods do not provide a mechanism for manipulating behaviour.
+which highlights pixels that most strongly influence the agent's decision. Using this approach,\cite{greydanus_2018_visualizing} applied gradient saliency maps to Atari DQN agents, showing that agents frequently track critical entities like the ball in Breakout or enemy ships in Space Invaders. To address the shortcomings of simple gradients, Sundararajan's integrated-gradients method\,\cite{sundararajan_2017_axiomatic}, which accumulates gradients along a path from a baseline input, was later extended to policy networks by\cite{atrey_2020_exploratory}, who introduced `policy saliency' maps that operate over distributions of outputs from policy models. These approaches provide an easily computable and highly informative result without requiring additional training. However, unlike SAEs or steering vectors, these methods do not provide a mechanism for manipulating behaviour.
 
 
 Work exploring the Procgen Coinrun environment builds on saliency based methods to calculate an attribution within the model weights themselves. By measuring the contribution of a given convolutional feature map to the value function, it becomes possible to determine if a particular feature that the model is observing is likely to have a positive or negative effect on the success of the model, based on whether the collected gradient multipled by the activation score is positive or negative. This advances previous saliency mapping methods by linking the gradients to specific features within the model, rather than pixels in the input\cite{hilton_2020_understanding}.
 
-This is achieved by applying non-negative matrix factorisation (NMF) of the attribution tensor to cluster correlated locations across channels into object-level 'features' such as coins, enemies, obstacles etc. By using this dimensionality reduction they are able to produce clear, interpretable object detectors. 
+This is achieved by applying non-negative matrix factorisation (NMF) of the attribution tensor to cluster correlated locations across channels into object-level `features' such as coins, enemies, obstacles etc. By using this dimensionality reduction they are able to produce clear, interpretable object detectors. 
 
 To elucidate this process, let $X^{(n)}\in\mathbb{R}^{C\times H\times W}$ be the activation tensor of a convolutional layer for input $n$ and let $V^{(n)}$ be the value head.  Element-wise product of activation and gradient attribution is
 \[
 A^{(n)}_{c,h,w}=X^{(n)}_{c,h,w}\;\frac{\partial V^{(n)}}{\partial X^{(n)}_{c,h,w}}.
 \]
-Flatten $A^{(n)}$ to a vector $a^{(n)}\in\mathbb{R}^{D}$ with $D=CHW$ and stack $N$ such vectors into a matrix $R\in\mathbb{R}^{N\times D}$. This results in an $N \times D$ matrix where each row is a single observation, and each column is a 'feature location'. We then apply NMF to this matrix, keeping $A^{(n)+}_{c,h,w}=\max\bigl(0, A^{(n)}_{c,h,w}\bigr)$ to satisfy the non-negativity constraint. Non-negative matrix factorisation seeks
+Flatten $A^{(n)}$ to a vector $a^{(n)}\in\mathbb{R}^{D}$ with $D=CHW$ and stack $N$ such vectors into a matrix $R\in\mathbb{R}^{N\times D}$. This results in an $N \times D$ matrix where each row is a single observation, and each column is a `feature location'. We then apply NMF to this matrix, keeping $A^{(n)+}_{c,h,w}=\max\bigl(0, A^{(n)}_{c,h,w}\bigr)$ to satisfy the non-negativity constraint. Non-negative matrix factorisation seeks
 \[
     R\;\approx\;W H,\quad W\in\mathbb{R}_{\ge0}^{N\times r},\;H\in\mathbb{R}_{\ge0}^{r\times D},
 \]
@@ -222,7 +222,7 @@ Prior to the research detailed in the accompanying papers, several areas in RL i
     \item Understanding how RL agents track and switch between multiple objectives, especially when those objectives are not the immediate next target.
     \item The application and efficacy of techniques like Sparse Autoencoders (SAEs) for disentangling representations specifically within RL agent architectures, particularly CNNs.
     \item Investigating how different aspects of neural network activation encode useful information for the next layer such as how activation strength within a channel might encode information like entity identity.
-    \item The role and potential utility of 'dead' channels in SAEs for interpretability, which cease to activate during normal operation but might retain learned decoder weights.
+    \item The role and potential utility of `dead' channels in SAEs for interpretability, which cease to activate during normal operation but might retain learned decoder weights.
     \item The generalization of interpretability findings from simpler RL agents to more complex architectures like decision transformers or RNN-based agents, especially for tasks requiring memory.
 \end{itemize}
 
@@ -235,7 +235,7 @@ The research presented in the accompanying papers (forming the basis of this the
 \begin{itemize}
     \item Extending activation steering and intervention techniques to more complex, multi-objective RL environments like Procgen Heist.
     \item Applying Sparse Autoencoders to the convolutional layers of an RL agent to disentangle features and investigate the extent to which multiple entities are truly captured within a single layer of the model and through what mechanism this is done. 
-    \item Systematically analyzing the role of individual channels (including 'dead' channels in SAEs) in navigation and goal pursuit through methods like ablation studies and retargeting interventions.
+    \item Systematically analyzing the role of individual channels in navigation and goal pursuit through methods like ablation studies and retargeting interventions.
     \item Exploring novel mechanisms of information encoding, such as multiplexing entity information within a single channel through varying activation strengths.
 \end{itemize}
 These contributions aim to deepen our understanding of how RL agents represent and pursue goals, and to refine the tools available for mechanistic interpretability for use in this domain.
