@@ -19,7 +19,9 @@ At its core, the problem that RL solves in general can be formalized as a Markov
 
 The process of training a model involves iterating through many interactions with the environment to produce a policy denoted as \(\pi(a|s)\), which is a mapping from states to a probability distribution over actions. The goal of the RL training process is to find an optimal policy, \(\pi^*\), that maximises the agent's expected reward over time. As a means of estimating the quality of a given policy, RL functions often use value functions\cite{sutton2018reinforcement}. The state-value function, \(V^\pi(s)\), represents the expected return after taking an action \(a\) in state \(s\) based on following policy \(\pi\). The action-value function, \(Q^\pi(s,a)\), is the expected return from continuing to follow policy \(\pi\) after taking an action given a certain state. 
 
-These functions are foundational to the function of training algorithms such as PPO which was used to train the agent in this research. PPO alternates between sampling data from the environment and using that data to optimise a `surrogate' objective function using stochastic gradient ascent.
+These functions are foundational to the function of training algorithms such as PPO which was used to train the agent in this research. PPO alternates between sampling data from the environment and using that data to optimise a `surrogate' objective function using stochastic gradient ascent. 
+
+% potentially add more discussion regarding PPO
 
 \subsection{Deep Reinforcement Learning}\label{subsec:deep_rl}
 % Integration of deep learning with RL
@@ -27,8 +29,6 @@ These functions are foundational to the function of training algorithms such as 
 Deep Reinforcement Learning (DRL) combines deep neural networks with RL principles to learn effective policies in complex, high-dimensional environments like Procgen. These models typically use convolutional neural networks (CNNs) to process visual input and feed the resulting features into fully-connected layers that output a policy.
 
 The research this work is based on utilizes specific DRL architectures chosen for their balance of performance and interpretability. Following the precedent set by\cite{hilton_2020_understanding}, which demonstrated that simpler architectures often yield more interpretable representations without significant performance loss, the models used were simplified versions of established architectures. For example, the primary policy model used is a compressed version of the Impala architecture\citep{espeholt_2018_impala} with only 5 convolutional layers instead of the standard 15. This choice reflects the principle that simpler architectures are often easier to interpret\citep{hilton_2020_understanding}.
-
-https://arxiv.org/abs/1802.01561 must discuss the impala architecture and saliency map degradation as a result of training dynamics
 
 % Engstrom et al., "Implementation Matters in Deep RL: A Case Study on PPO and Procgen" (2020, arXiv:2005.12729).
 % Appendix E compares PPO with n_steps 128 vs 256; longer rollouts reduce variance and make neuron-localisation visualisations more stable.
@@ -52,6 +52,21 @@ Every block doubles the channel count (from $16\to32\to64\to128$ in the original
 
 Earlier work also shows that training dynamics of RL systems can have a significant impact on the interpretability and clarity of weights in the trained network.\citet{engstrom2020implementation} show that doubling the rollout length (e.g. from 128 to 256 steps) stabilises gradients, which in turn makes gradient-based visualisations such as saliency maps crisper, as later confirmed by\cite{thatte2022insights}. This has important consequences for potential MI work.
 
+\section{Reinforcement Learning Safety}\label{sec:rl_safety}
+\subsection{Safety Problems in RL}
+RL suffers from several well-documented failure modes, notably reward hacking, unsafe exploration, distributional shift, and goal misgeneralisation \citep{amodei2016concrete,garcia2015safe,langosco2022goal}.
+
+These pathologies often surface in surprising ways.  During training, exploratory actions are frequently close to random; if such actions were executed on a physical robot they could easily damage themselves or their surroundings.  Moreover, entirely novel stimuli are typically treated as reward-neutral by default, making it non-trivial to teach agents caution around unknown phenomena\citep{garcia2015safe}.
+
+Reward hacking occurs when an agent finds a loophole that maximises the reward signal without producing the behaviour we truly want.  A well-known example is the CoastRunners Atari agent that learned to drive in circles collecting speed boosts rather than racing, because this strategy yielded higher reward\citep{krakovna2020specgaming}.  Such outcomes are typical instances of specification gaming, where a proxy objective is optimised at the expense of the real goal\citep{amodei2016concrete}.
+
+In the real world the problem of safe exploration is equally pressing: naïve random exploration can damage the agent or its environment.  Research on risk-sensitive and shielded RL provides principled ways to constrain exploration steps\citep{garcia2015safe,kahn2017uncertainty}.
+
+Even if exploration is safe and training rewards are faithful, agents can fail under distribution shift.  Policies that perform well in simulation or under limited training conditions often generalise poorly when the environment changes\citep{amodei2016concrete}.
+
+Relatedly, goal misgeneralisation describes policies that appear successful during training but pursue the wrong goal when deployed outside of their training distribution\citep{langosco2022goal}.
+
+
 \section{Interpretability in Machine Learning}\label{sec:interpretability}
 % Definition and importance of interpretability
 % Different approaches to interpretability
@@ -61,7 +76,6 @@ One significant challenge that arises when doing MI is that representations of c
 
 This phenomenon is now understood as a consequence of superposition. Because deep layers have limited dimensionality, networks compress many latent directions into overlapping linear combinations, so a neuron's activation mixes several underlying features \citep{olah_2020_zoom, elhage2022superposition}. This typically happens with features that are unlikely to fire under the same input distribution, such as car doors and hummingbird wings\cite{olah_feature_2017}.  While efficient for representation learning, polysemanticity poses significant challenges for mechanistic interpretability, making neuron-level ablations or visualisations hard to attribute to a single concept.  
 
-Recent approaches—most notably Sparse Autoencoders \citep{bricken2023monosemanticity, gorton_2024_missing}, sparse probing \citep{durrani2021transformer}, and techniques based on targeted interventions on neurons\citep{mengLocatingEditingFactual2023} aim to recover monosemantic `units' of computation by learning over-complete, sparse dictionaries or by isolating low-dimensional subspaces through the use of tools such as linear probes.  Resolving polysemanticity is therefore often a pre-requisite for reliable circuit discovery and targeted interventions in a variety of ML models.
 
 Let $x\in\mathbb{R}^{d}$ be the activation vector of a layer expressed as a linear combination of $k$ (potentially $k\!\gg\! d$) latent feature directions collected in $F\in\mathbb{R}^{d\times k}$, i.e.
 \begin{equation}
@@ -75,7 +89,7 @@ A neuron $i$ is polysemantic when the $i$-th row of the mixing matrix $M$ has si
 \[ \mathbb{E}\,\lVert a-Ms\rVert^{2} \;\propto\; \frac{\lambda k}{d}, \]
 where $\lambda$ is the expected sparsity of $s$. Methods such as Sparse AutoEncoders (SAEs) reduce the effective $\lambda$ by encouraging even sparser codes, thereby converting polysemantic `units' into more interpretable, monosemantic directions. 
 
-SAEs have proven to be a useful tool in understanding neural networks by acting as an unsupervised tool that can compress meaningful operations into more isolated circuitry. This allows for a reduction in the issue of neural network functionality being distributed across different regions within a layer\citep{elhage2022superposition}, and facilitates a better understanding of the network's operations\citep{bricken2023monosemanticity}. Recent work has demonstrated how SAEs can reveal interpretable features in various neural architectures, including CNNs\citep{gorton_2024_missing} and transformers\citep{conerly_update_2024}.
+Recent approaches—including Sparse Autoencoders (SAEs) \citep{bricken2023monosemanticity, gorton_2024_missing}, sparse probing \citep{durrani2021transformer}, and neuron-level interventions \citep{mengLocatingEditingFactual2023}—combat superposition by learning over-complete sparse dictionaries or low-dimensional subspaces that disentangle features. In particular, SAEs compress activations into sparse, over-complete codes that split polysemantic neurons into monosemantic latents and have revealed interpretable features in both CNNs and transformers\citep{conerly_update_2024}.
 
 SAEs provide a sparse encoding of the original features of the model (which we refer to as latents in the SAE), which arise due to the enforcement of a sparsity penalty applied during the the training of the SAE. SAEs aim to faithfully reconstruct the activations of a given layer in a network while keeping their own internal activations sparse. The training objective is therefore to find encoder and decoder weights that minimize a loss function combining a reconstruction term and a sparsity term, which typically takes the form:
 \[L(x) = \|x - \text{Dec}(\text{Enc}(x))\|_2^2 + \lambda \|\text{Enc}(x)\|_1\]
