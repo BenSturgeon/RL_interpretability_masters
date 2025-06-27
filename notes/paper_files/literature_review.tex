@@ -153,7 +153,6 @@ whose sign indicates whether amplifying the concept increases ($S_{C,k,l}>0$) or
 Because these can be learned with a lightweight linear probe and then used to potentially intervene on neural network activations as illustrated in work such as othello GPT\cite{nanda_2023_emergent}, this technique has become fundamental as a tool in alignment\cite{mengLocatingEditingFactual2023}, and lays a conceptual foundation for things like steering vectors, which are produced in a different way but share many properties\cite{turner_2024_steering}.
 
 
-% Content from Paper 2: "Discovering Goals..."
 Activation steering, as demonstrated in\cite{mini_2023_understanding} and extended in the discussed research, is a post-hoc technique. Steering vectors, representing the difference in activations between states with and without an objective, can be used to influence a policy model's behaviour by acting as a superstimulus of sorts of a particular aspect of the environment to the model. This can be achieved through the simple addition of the steering vector into the given layer from which it was produced after multiplying it by a given factor to modulate its effects.  
 % End Content from Paper 2
 
@@ -170,17 +169,12 @@ Intrinsically interpretable models are designed from the outset to be understand
 % Challenges unique to interpreting RL agents
 Interpretability in RL presents unique challenges due to the agent's interaction with an environment, the fact that specific outputs of the model might be extremely semantically distant from the contents of a given activation, and because we can only infer the meaning of a given observation of an activation within the model, we can't directly glean it as we could a word extracted from the embedding space of a language model.
 
-% Content from Paper 1: "Entity Multiplexing..."
-Previous work by\cite{miniUnderstandingControllingMazeSolving2023} demonstrated the ability to manipulate an agent's navigation in a simple maze environment with an intervention to a single channel in the network, serving as a foundation for extending these techniques to more complex multi-objective settings.
-Work by\cite{betley_2023_localizing} found a specific circuit in the convolutional layers of the Impala model that activated strongly for specific directional goals, indicating that planning might occur in CNN layers.
-% End Content from Paper 1
 
-In "Understanding and Controlling a Maze-Solving Policy Network" demonstrated that neural networks can develop interpretable mechanisms to track goals\cite{mini_2023_understanding}. The authors identified specific channels that tracked the location of objectives in a maze environment and showed that these could be manipulated to control the agent's behavior. They found that steering vectors, the difference in activations between otherwise identical states with and without an entity, could be used to influence the model's behavior in predictable ways. This work serves as the foundation for our research, though we extend it to a multi-objective setting. 
+Work by\cite{betley_2023_localizing} found a specific circuit in the convolutional layers of the Impala model that activated strongly when the direction to go was `up' and didn't activate when the goal was in a similar spot but the agent would need to go in a different direction. This indicates that much of the `planning' was already handled in the CNN layers, suggesting it should be possible to train probes that can detect the exact direction the agent needs to move towards.
 
 The larger circuits framework by\cite{olah_2020_zoom} provides methods to understand how neural networks combine simple features into complex representations. Their work on polysemantic `units' (neurons responding to multiple distinct features) is particularly relevant when an agent must represent multiple objectives\cite{elhage2022superposition}.
 % End Content from Paper 2
 
-Work by\cite{betley_2023_localizing} found a specific circuit in the convolutional layers of the Impala model that activated strongly when the direction to go was `up' and didn't activate when the goal was in a similar spot but the agent would need to go in a different direction. This indicates that much of the `planning' was already handled in the CNN layers, suggesting it should be possible to train probes that can detect the exact direction the agent needs to move towards.
 
 Saliency-based feature-attribution techniques, while originally developed for image classification, have been shown to yield insights into RL policies. These methods typically operate by computing the gradient of a relevant policy output (such as the value of a state or the probability of a specific action, $f(s)$) with respect to the input observation, $s$. The resulting saliency map is then defined as the magnitude of this gradient:
 \[
@@ -203,13 +197,6 @@ Flatten $A^{(n)}$ to a vector $a^{(n)}\in\mathbb{R}^{D}$ with $D=CHW$ and stack 
 \]
 with a small rank $r$. Each row of $H$, reshaped back to $(C,H,W)$, yields a sparse mask that acts as a detector for in-game entities (coin, enemy, hazard).
 
-
-
-
-
-% Integrated Gradients or Saliency-based methods applied to Atari agents (Greydanus et al., 2018).
-% Perturbation-based policy saliency (Atrey et al., 2020—already in Introduction but not in the lit review).
-
 \section{The Procgen Suite of environments}\label{subsec:procgen}
 
 The Procgen suite of environments consist of 16 different environments that rely on procedural generation to create diverse challenges for RL agents to learn to solve. They are inspired by Atari games and thus build upon existing games such as those used in the Arcade Learning Environment\cite{bellemare_2013_arcade}. This type of environment forces the agent to not overfit to a particular solution for playing the games effectively, and instead forces it to learn a robust, generalisable policy for each environment.
@@ -227,6 +214,13 @@ The Procgen suite of environments consist of 16 different environments that rely
 The Procgen Heist environment, the focus of the presented research, requires an agent to collect up to 3 keys and 3 locks before reaching the final goal, a gem\cite{cobbe_2020_leveraging}. The order in which the keys need to be collected is always the same (blue, green, red). The environment is procedurally generated and might generate with any combination of no keys, or 1--3 keys, as can be seen in\ref{fig:environment-overview}. The size of the maze will also change depending on how many objects are included. The environment provides sparse rewards, only giving out a score of 10 if the agent makes it all the way to the final goal and 0 otherwise. This establishes a natural curriculum for the agent and gives it a reasonable chance of reaching the end with a random walk before it starts to develop an actual policy.
 
 This environment was selected due to the necessity for the agent to pursue multiple objectives within a single episode, likely influencing the development of generalizable maze-navigation circuits. It is a sparse learning environment.
+
+\section{Understanding and Controlling a Maze Solving Policy Network}\label{sec:Understanding}
+Previous work by\cite{mini_2023_understanding} demonstrated the ability to manipulate an agent's navigation in a simple maze environment with an intervention to a single channel in the network, serving as a foundation for extending these techniques to more complex multi-objective settings. They further demonstrate that neural networks can develop interpretable mechanisms to track goals. The authors identified specific channels that tracked the location of objectives in a maze environment and showed that these could be manipulated to control the agent's behavior. They found that steering vectors, the difference in activations between otherwise identical states with and without an entity, could be used to influence the model's behavior in predictable ways. This work serves as the foundation for our research, though we extend it to a multi-objective setting.
+
+The primary findings of their investigation was that control of the agent could be isolated to a handful of specific channels in the network. The control of the agent could achieved through modifying a single channel with an artificial activation in a target region. They also found that the goal was redundantly encoded across eleven different channels. 
+Their most significant contribution was that of the concept of steering vectors which can be produced their activation subtraction. This done by taking two very similar sets inputs to the network with a single difference representing an entity of interest, in this case the cheese, and then subtracting the resulting sets of activations from one another to produce a single activation vector that could then be multiplied by a scaling factor in order to direct the agent towards or away from the target entity.
+
 
 
 \section{Gaps in the Literature}\label{sec:gaps}
