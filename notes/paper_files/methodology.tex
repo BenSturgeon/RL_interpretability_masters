@@ -16,8 +16,8 @@
     This environment was selected due to the necessity for the agent to pursue multiple objectives within a single episode. This complexity is likely to influence the development of the model's internal mechanisms, such as the formation of generalizable maze-navigation circuits that can be adapted to pursue different objectives based on the current context. It is a sparse learning environment where the agent is only rewarded for reaching the final goal.
     The maze has some noteworthy features for this investigation. The keys and locks, when present, always arise in the same order, blue, green, and red, followed by the gem. If only the blue and green key are present then they will maintain this order. The environment also samples equally from this distribution, meaning that certain entities are seen more often by the model, such as the gem and blue key and lock, while the red key is seen the least. This investigation uses the "easy" distribution, which provides the full 64x64 observation to the agent, making it a fully-observable MDP. While memory-based variants exist that would make the environment partially-observable, they were not used in this research.
 
-    \subsection{Model Architecture and Training}
-    \label{subsec:model_arch_train}
+    \subsection{Model Architecture}
+    \label{subsec:model_arch}
     % Content from Paper 1: "Entity Multiplexing..."
     A compressed version of the Impala model \citep{espeholt_impala_2018} was trained, using 5 convolutional layers instead of 15 as used in the original Impala paper. This architecture comes from \cite{hilton_understanding_2020} where they find that this model was more interpretable with no discernible losses in performance. (Full architecture details are in Appendix~\ref{app:model_architecture} of Paper 1).
     When training the model, a simple PPO implementation from an open source implementation designed to train Procgen models called Procgen-pfrl was used. The model was trained for around 105 million steps.
@@ -25,6 +25,17 @@
     % Content from Paper 2: "Discovering Goals..."
     Following recommendations from \cite{hilton_understanding_2020}, a simplified architecture designed for interpretability was used. The model consists of four convolutional blocks followed by fully connected layers, with each convolutional block containing a convolution operation and pooling layer (full architecture details in Appendix D of Paper 2). This simpler design, with fewer convolutional layers and more dense layers than standard architectures like IMPALA, allows for clearer interpretation of the model's decision-making process while maintaining comparable performance.
     The model was trained using PPO on the Procgen Heist environment until convergence, defined as no statistically significant increase in mean episode reward over a window of 10,000 timesteps. While key findings were validated on an IMPALA-based architecture to ensure generality, all results presented in Paper 2 use the simplified architecture.
+
+    
+    \subsection{Model Training}
+    \label{subsec:model_training}
+
+    In order to explore the effects of random perturbation on the final structure of the Model's weights, many experiments with different training configurations were run over multiple iterations to observe the repeatability of phenomena observed. This applies to both the policy model and the SAEs of the various layers.
+
+    The primary variations in policy model training involved altering the geometry of the batches that the learning algorithm would observe during an update, which were primarily controlled with four hyperparameters, namely the number of environments collected from in parallel, the number of steps taken, the mini-batch size and the number of epochs.
+
+    In the implementation we use (a fork of PFRL) the flag \texttt{batch\_size} specifies the number of mini–batches each roll-out is split into.  With the geometry adopted in experiments we primarily report on being ($N_{\text{env}}=64$, $N_{\text{step}}=256$, $\texttt{batch\_size}=8$, $n_{\text{epoch}}=3$) the roll-out buffer contains $N_{\text{env}}N_{\text{step}}=16\,384$ transitions, which are reshaped into $8$ mini-batches of $B_{\text{mb}}=2\,048$ samples. The optimiser therefore performs $8\times 3 = 24$ gradient steps per PPO update and processes $16\,384\times 3 = 49\,152$ sample-updates. This provides a balance of a fairly large batch (stable learning), while ensuring overall training time per update is kept reasonable.
+
 
 
 \section{Interpretability Techniques Employed}
