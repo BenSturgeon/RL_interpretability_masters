@@ -19,22 +19,19 @@
     
     \subsection{Model Training}
     \label{subsec:model_training}
-    The policy models were trained using Proximal Policy Optimization (PPO) with an open-source implementation based on PFRL, specifically designed for Procgen environments. Training was conducted until convergence, which in this case was when no statistical improvement was observed for 10000 update steps. The primary model was trained for approximately 600 million steps. 
+    The policy models were trained using Proximal Policy Optimization (PPO) with an open-source implementation based on PFRL, specifically designed for Procgen environments. We also made use of Envpool to accelerate the speed of our training while keeping the actual training dynamics unchanged\cite{weng2022envpool}. Training was conducted until convergence, which in this case was when no statistical improvement was observed for 10000 update steps. The primary model was trained for approximately 600 million steps. 
 
     To explore the effects of training dynamics on the final learned representations, experiments were run with different training configurations. These variations primarily involved altering the batch geometry through four main hyperparameters: the number of parallel environments, the number of steps per rollout, the mini-batch size, and the number of epochs.
 
     In the primary configuration reported in this thesis, we used a setup of ($N_{\text{env}}=64$, $N_{\text{step}}=256$, $\texttt{batch\_size}=8$, $n_{\text{epoch}}=3$). In this geometry, the rollout buffer contains $N_{\text{env}}N_{\text{step}}=16\,384$ transitions. This is reshaped into $8$ mini-batches, each containing $B_{\text{mb}}=2\,048$ samples. The optimizer performs $8\times 3 = 24$ gradient steps per PPO update, processing a total of $16\,384\times 3 = 49\,152$ sample-updates per cycle. This configuration was chosen to balance stable learning from large batches with reasonable training time per update.
 
-    We ran 5 sets of training runs for this geometry in order to confirm the repeatability of our results, 
+    We ran 5 sets of training runs for this geometry in order to confirm the repeatability of our results, and ran further training runs with other geometries to observe the extent to which this altered  the final structure of the model weights. Namely ($N_{\text{env}}=128$, $N_{\text{step}}=128$, $\texttt{batch\_size}=8$), ($N_{\text{env}}=256$, $N_{\text{step}}=256$, $\texttt{batch\_size}=8$), and ($N_{\text{env}}=256$, $N_{\text{step}}=128$, $\texttt{batch\_size}=16$). These variants were included to probe the sensitivity of the learned representations to rollout length and batch composition. A detailed comparison of the models trained under these settings is provided in Chapter~\ref{ch:results}.
 
 \section{Interpretability Techniques Employed}
 \label{sec:interp_techniques}
     \subsection{Sparse Autoencoder (SAE) Training}
     \label{subsec:sae_training}
-    SAEs were trained on the CNN layers of the Procgen model. For each SAE, recovery of >95\% of the performance within the environment was often achieved within only a few thousand training steps, with variance explained approaching 1 in a similar time frame. Models were trained for 6 million steps (later stated as 15 million steps in Paper 1, clarification may be needed) to allow for convergence.
-    An SAE was also trained on conv4a with a reduced number of channels (20, down from 32) to assess performance under compression.
-    Techniques from \cite{conerly_update_2024} such as scaling the feature activations of the SAE by the norm of their corresponding decoder columns were used. This provides greater flexibility to the SAEs during training while preserving desired sparsity properties, helping to lower loss and reduce dead features.
-    Recent work from \cite{gorton_missing_2024} on training SAEs on CNN layers provided essential groundwork. Similar hyperparameter choices for different layer depths were used, along with their approach of oversampling the strongest activations to avoid wasting computation. As in \cite{gorton_missing_2024}, 1x1 convolutional layers were used, generally applying an expansion factor of 4. To ensure stable training, activation normalisation and a warmup on the L1 coefficient were applied. Table \ref{tab:sae-params} (from Paper 1) summarizes expansion factors and L1 coefficients.
+    SAEs were trained on the CNN layers of the Procgen model. Each model followed the 1×1-conv recipe of \citet{gorton_missing_2024} with an expansion factor of~4 and an L1 warm-up schedule. Training ran for 6\,M steps, during which time variance-explained would rapidly exceed ~0.98 and policy reward recovered to within 98\,\% of baseline. A compressed variant, with conv4a reduced to 20 channels, was also trained to test robustness under capacity constraints. Table~\ref{tab:sae-params-methodology} lists the expansion factors and L1 coefficients for all layers.
 
     \begin{table}[H] % Consider moving table definition to main.tex preamble or a separate style file
     \caption{Expansion factors and L1 Coefficients for the different SAEs (from Paper 1)}
@@ -55,7 +52,6 @@
 
     \subsection{Feature Visualization}
     \label{subsec:feature_viz}
-    % Content from Paper 1: "Entity Multiplexing..."
     Two main approaches to feature visualization were used: synthetic visualization and finding maximally activating samples.
     Synthetic visualization involves using gradient descent to iteratively adjust an input image with the optimization target of getting the strongest possible average activation across a channel in a target channel, layer, or single neuron (focus was on whole channels). The strength of activations across the width and height of a given channel was summed, and the mean activation multiplied by -1 was used as the loss to minimize.
     Techniques from \cite{olah_feature_2017} were used to improve synthetic visualizations, such as applying jitter, rotations, and de-correlating visualizations from within the color spectrum during gradient descent, then re-applying colors using a matrix developed from environment samples.
@@ -78,12 +74,10 @@
 
         \subsubsection{Activation Manipulation and Patching}
         \label{subsubsec:activation_manipulation}
-        % Content from Paper 1: "Entity Multiplexing..."
         For scaled-up steering experiments, a specific entity was placed into the environment. The network was intervened upon by setting all its values to 0 and setting a specific region of a channel to a specified value. A parameter sweep over a range of values (typically 0 to 3) was performed. Episode lengths were kept short.
         This approach was scaled by running a static intervention across every channel in the SAE, measuring deviation to the targeted area. For each entity-channel combination, 100 trials were run with activation value incrementing: activation value = trial number \(\times\) (max range / number of trials).
         A box maze (see Figure \ref{fig:intervention-experiment} in Paper 1) was used to provide a clear decision point.
 
-        % Content from Paper 2: "Discovering Goals..."
         For direct model control using activation patching, an activation vector from the environment for a given entity and layer was extracted. A specific channel's activation values were edited to indicate an entity should be in a specific position, and this patched steering vector was added back into the model's activations. Over 1000 activation patching experiments were performed across different channels and layers, with intervention coefficients from -2.0 to 2.0 in increments of 0.1, each with 100 episodes.
 
 
