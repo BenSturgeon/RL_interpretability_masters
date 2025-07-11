@@ -57,6 +57,29 @@
     Techniques from \cite{olah_feature_2017} were used to improve synthetic visualizations, such as applying jitter, rotations, and de-correlating visualizations from within the color spectrum during gradient descent, then re-applying colors using a matrix developed from environment samples.
     Max activation sampling involves selecting samples from a dataset that produce the highest mean activation score across a given layer. To avoid duplicates, a diversity score (cosine similarity penalty) was applied. This technique focused on specific patches within the image rather than the whole image.
 
+    \begin{figure}[ht]
+        \centering
+        \begin{tabular}{cccc}
+        \includegraphics[width=0.25\linewidth]{figures/observation.png}&
+        \includegraphics[width=0.25\linewidth]{figures/layer1_filter10.png}&
+        \includegraphics[width=0.25\linewidth]{figures/layer2_filter10.png}&
+        \includegraphics[width=0.067\linewidth]{figures/colorbar.png}
+        \end{tabular}
+        
+        \vspace{0.5em}
+        
+        \begin{tabular}{ccc}
+        \hspace{0.1725\linewidth}&
+        \includegraphics[width=0.25\linewidth]{figures/filter29_layer8_no_title.png}&
+        \includegraphics[width=0.25\linewidth]{figures/filter29_layer9_no_title.png}
+        \end{tabular}
+        
+        \caption{Visualization of the. maze and neural network activations in different layers. Top row (left to right): 
+        observation input, layer 1 channel 10, layer 2 channel 10, and activation colorbar. 
+        Bottom row: layer 8 channel 29 and layer 9 channel 29. In the top row filters we observe a minimal activation around the regions of the blue key and lock and in the bottom row we see maximal activations around the blue key. This is a replication of the approach used by\cite{mini_2023_understanding} in order to get an initial sense of the clarity with which entities could be seen in activations.}
+        \label{fig:filter_visualizations}
+    \end{figure}
+
     \subsection{Steering Vectors and Activation Interventions}
     \label{subsec:steering_interventions}
         \subsubsection{Steering Vector Calculation}
@@ -75,34 +98,27 @@
         \subsubsection{Activation Manipulation and Patching}
         \label{subsubsec:activation_manipulation}
         For scaled-up steering experiments, a specific entity was placed into the environment. The network was intervened upon by setting all its values to 0 and setting a specific region of a channel to a specified value. A parameter sweep over a range of values (typically 0 to 3) was performed. Episode lengths were kept short.
-        This approach was scaled by running a static intervention across every channel in the SAE, measuring deviation to the targeted area. For each entity-channel combination, 100 trials were run with activation value incrementing: activation value = trial number \(\times\) (max range / number of trials).
+        This approach was scaled by running a static intervention across every channel in the SAE, measuring deviation to the targeted area. For each entity-channel combination, 100 trials were run with activation value incrementing: activation value = trial number \(\times\) (max range / number of trials). The results of this sweep were then analyzed to determine if different entities were successfully targeted at systematically different activation levels, testing the hypothesis of activation-level multiplexing.
+        
+
+        
         A box maze (see Figure \ref{fig:intervention-experiment} in Paper 1) was used to provide a clear decision point.
 
         For direct model control using activation patching, an activation vector from the environment for a given entity and layer was extracted. A specific channel's activation values were edited to indicate an entity should be in a specific position, and this patched steering vector was added back into the model's activations. Over 1000 activation patching experiments were performed across different channels and layers, with intervention coefficients from -2.0 to 2.0 in increments of 0.1, each with 100 episodes.
 
+    \subsection{Analysis of Channel Properties}
+    \label{subsec:channel_properties}
+    To better characterize the features learned by both the base model and the SAEs, we performed several quantitative analyses on channel activation patterns.
+    
+    \subsubsection{Identifying Dead Channels (SAE)}
+    \label{subsubsec:dead_channel_id}
+    Steering the model with different SAE channels led to discovery that `dead channels' could in fact still exert a steering effect on the network. A channel was classified as `dead' if its maximum activation across a large,diverse dataset of 10000 states remained below a minimal threshold (\(\epsilon=10^{-6}\)). This allowed us to distinguish between channels that were genuinely unused by the model under normal conditions and those that were merely highly selective for rare game states.
 
-        \begin{figure}[ht]
-            \centering
-            \begin{tabular}{cccc}
-            \includegraphics[width=0.25\linewidth]{figures/observation.png}&
-            \includegraphics[width=0.25\linewidth]{figures/layer1_filter10.png}&
-            \includegraphics[width=0.25\linewidth]{figures/layer2_filter10.png}&
-            \includegraphics[width=0.067\linewidth]{figures/colorbar.png}
-            \end{tabular}
-            
-            \vspace{0.5em}
-            
-            \begin{tabular}{ccc}
-            \hspace{0.1725\linewidth}&
-            \includegraphics[width=0.25\linewidth]{figures/filter29_layer8_no_title.png}&
-            \includegraphics[width=0.25\linewidth]{figures/filter29_layer9_no_title.png}
-            \end{tabular}
-            
-            \caption{Visualization of the maze and neural network activations in different layers. Top row (left to right): 
-            observation input, layer 1 channel 10, layer 2 channel 10, and activation colorbar. 
-            Bottom row: layer 8 channel 29 and layer 9 channel 29. In the top row filters we observe a minimal activation around the regions of the blue key and lock and in the bottom row we see maximal activations around the blue key. This is a replication of the approach used by\cite{mini_2023_understanding} in order to get an initial sense of the clarity with which entities could be seen in activations.}
-            \label{fig:filter_visualizations}
-        \end{figure}
+    \subsubsection{Investigating Goal Representation and Polysemanticity}
+    \label{subsubsec:polysemanticity_investigation}
+    Our initial steering experiments on the base model revealed that numerous channels responded to multiple, distinct objectives. This prompted further investigation to determine whether this was unstructured polysemanticity (single channels encoding unrelated concepts) or a deliberate, general encoding strategy for related concepts.
+    
+    We used SAEs as the primary analytical tool to distinguish between these possibilities. The hypothesis was that if the model was learning abstract concepts like `blue key' or `blue lock' a properly trained SAE should be able to isolate these concepts into distinct, interpretable features. After training the SAEs, we analyzed their latent representations using the steering and ablation techniques described previously. The key objective was to search for individual SAE channels that generalized across a class of related entities—for example, a single channel that could be used to steer the agent towards any of the keys, or if instead entire channels would be dedicated to specific keys and locks, or perhaps only keys or only locks. The discovery of channels that encoded all types of entities would provide strong evidence that the model learns general, goal-oriented features, rather than simply having widespread polysemanticity.
 
     \subsection{Ablation Studies}
     \label{subsec:ablation_studies}
