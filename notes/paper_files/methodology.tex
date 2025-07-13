@@ -116,13 +116,34 @@
 
     \subsubsection{Investigating Goal Representation and Polysemanticity}
     \label{subsubsec:polysemanticity_investigation}
-    Our initial steering experiments on the base model revealed that numerous channels responded to multiple, distinct objectives. This prompted further investigation to determine whether this was unstructured polysemanticity (single channels encoding unrelated concepts) or a deliberate, general encoding strategy for related concepts.
+    Our initial steering experiments on the base model revealed that numerous channels responded to multiple, distinct objectives. This prompted further investigation to determine whether this was unstructured polysemanticity (single channels encoding unrelated concepts) or a general encoding strategy for related concepts.
     
     We used SAEs as the primary analytical tool to distinguish between these possibilities. The hypothesis was that if the model was learning abstract concepts like `blue key' or `blue lock' a properly trained SAE should be able to isolate these concepts into distinct, interpretable features. After training the SAEs, we analyzed their latent representations using the steering and ablation techniques described previously. The key objective was to search for individual SAE channels that generalized across a class of related entities—for example, a single channel that could be used to steer the agent towards any of the keys, or if instead entire channels would be dedicated to specific keys and locks, or perhaps only keys or only locks. The discovery of channels that encoded all types of entities would provide strong evidence that the model learns general, goal-oriented features, rather than simply having widespread polysemanticity.
 
+    \subsubsection{Steering effects per individual channels}
+    \label{subsubsec:steering_interventions}
+    To reveal what parts of the network might be responsible for attending to specific entities in the environment we developed an intervention based experiment that could then be run for base models as well as SAEs trained on a given layer. 
+    
+    The method involved placing a specific entity into an artificially generated environment using a box maze with the shape visible in figure\ref{fig:intervention-experiment}. This design was chosen because it was challenging enough that the agent would need to retain its navigational abilities to reach either target, while providing a clear decision point where the agent needed to choose between pursuing the original entity or our artificial target zone.
+    
+    The intervention involves masking the channel to 0 and setting a target region of the channel to a specified value. In this experiment, we would do a parameter sweep over a range of values from 0 to the maximum observed value that we observed the channel producing over 10000 sample inputs. By running this sweep, we can get a sense of what the different channels do at different intervention strengths. We kept the length of the episodes short so that the agent would either be able to reach the target zone, or the actual entity, but not both to keep the results clear.
+
+
+    We scaled up this approach by running a static intervention across every channel in the SAE, and then measured how often it would deviate to the area we targeted. For each entity-channel combination, we ran 100 trials with the activation value incrementing according to: activation value = trial number × (max range / number of trials). This allowed us to systematically identify whether channels would only influence navigation when activated within specific value ranges.
+
+
+
+    \begin{figure}[t]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/intervention_illustration.png}
+    \caption{Example of the intervention experiment. We test channels to see the extent to which a single channel is capable of steering the agent to another location given the presence of a single entity in the environment. We consider an intervention a success if the agent enters the modified region.}
+    \label{fig:intervention-experiment}
+    \end{figure}
+
+
+
     \subsection{Ablation Studies}
     \label{subsec:ablation_studies}
-    % Content from Paper 1: "Entity Multiplexing..."
     To systematically assess the role of individual channels, a comprehensive ablation methodology was developed. For each channel in the SAE, episodes were run with only that channel active while ablating all other channels. This allowed measurement of the isolated capability of each channel to support navigation to different entities in the environment. Successful entity collection counts were recorded for each channel across multiple episodes.
 
 \section{Experimental Design and Evaluation Metrics}
