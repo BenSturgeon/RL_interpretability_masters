@@ -34,17 +34,19 @@ Deep Reinforcement Learning (DRL) combines deep neural networks with RL principl
 
 The research this work is based on utilizes specific DRL architectures chosen for their balance of performance and interpretability. Following the precedent set by\cite{hilton_2020_understanding}, which demonstrated that simpler architectures often yield more interpretable representations without significant performance loss, the models used were simplified versions of established architectures. For example, the primary policy model used is a compressed version of the Impala architecture\citep{espeholt_2018_impala} with only 5 convolutional layers instead of the standard 15. This choice reflects the principle that simpler architectures are often easier to interpret\citep{hilton_2020_understanding}.
 
-% Engstrom et al., "Implementation Matters in Deep RL: A Case Study on PPO and Procgen" (2020, arXiv:2005.12729).
-% Appendix E compares PPO with n_steps 128 vs 256; longer rollouts reduce variance and make neuron-localisation visualisations more stable.
+\subsection{Policy Gradient Methods}
 
+Policy gradient methods arise from the natural challenges produced by trying to learn optimal policies within continuous action spaces and stochastic policies. Rather than learning state values using these to indirectly develop a policy, policy gradients directly optimise parameterized policy $\pi_\theta(a|s)$ by gradient ascent on expected returns.
 
-% "Insights into Representations Learned by RL Agents"
-% Thatte et al., NeurIPS 2022 Workshop on Visually Grounded RL.
-% When they train the same convolutional agent with update intervals of 8 k vs 32 k timesteps, the larger interval (effectively longer per-env roll-out) produces crisper concept activation maps.
-% "Emergent Feature Alignment in Reinforcement Learning Agents"
-% Grosse & Salakhutdinov, ICML 2022.
-% Experiments on Atari show that increasing the GAE horizon (longer sequences before update) leads to higher CKA similarity across seeds—an indirect measure of more consistent internal features.
+The policy gradient theorem \citep{sutton_1999_policy} provides the insight required for this approach. For an objective $J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}[R(\tau)]$, the gradient can be computed without requiring pre-existing knowledge of the environment:
+\[
+\nabla_\theta J(\theta) = \mathbb{E}_{\pi_\theta}\left[\sum_{t=0}^{T} \nabla_\theta \log \pi_\theta(a_t|s_t) \cdot G_t\right]
+\]
+where $G_t = \sum_{k=t}^{T} \gamma^{k-t} r_k$ is the discounted return from timestep $t$. This approach allows the development of a policy requiring only the ability to sample trajectories and differentiate the policy network without any model of environment dynamics.
 
+However, vanilla policy gradients suffer from erratic training dynamics because returns can vary dramatically between episodes. Actor-critic methods use advantage estimates to ensure that model updates are in a consistent range around zero with the function $A(s,a) = Q(s,a) - V(s)$, instead of directly updating the policy on expected returns. The advantage measures how much better an action is compared to the expected value from the current state. This fixes the final updates to the network around zero, reducing variance without altering the direction of the gradients \citep{schulman_2018_highdimensional}.
+
+\subsection{IMPALA Models}
 
 IMPALA (Importance Weighted Actor Learner Architecture) was introduced by as a scalable RL framework, but its convolutional encoder has since become a primary baseline for Procgen and Atari agents\cite{espeholt_2018_impala}. The encoder consists of three ``IMPALA blocks'', each containing:
 \begin{itemize}
@@ -192,7 +194,7 @@ Flatten $A^{(n)}$ to a vector $a^{(n)}\in\mathbb{R}^{D}$ with $D=CHW$ and stack 
 \[
     R\;\approx\;W H,\quad W\in\mathbb{R}_{\ge0}^{N\times r},\;H\in\mathbb{R}_{\ge0}^{r\times D},
 \]
-with a small rank $r$. Each row of $H$, reshaped back to $(C,H,W)$, yields a sparse mask that acts as a detector for in-game entities (coin, enemy, hazard). This sparse mask can then be applied to the 
+with a small rank $r$. Each row of $H$, reshaped back to $(C,H,W)$, yields a sparse mask that acts as a detector for in-game entities (coin, enemy, hazard). 
 
 \section{The Procgen Suite of environments}\label{subsec:procgen}
 
