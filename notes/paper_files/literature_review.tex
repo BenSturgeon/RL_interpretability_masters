@@ -5,7 +5,7 @@ The previous chapter established the motivation for this research, highlighting 
 
 This review will cover the fundamentals of RL relevant concepts in mechanistic interpretability (MI). It will then delve into the specific challenges and recent advancements in making RL agents more understandable. In particular, we examine the foundational works upon which this research rests from the fundamental RL concepts to the algorithms used to train the models. The rest of this section will situate the present research within the research landscape and seek to demonstrate how it builds upon prior work in the field of MI to address unsolved problems in RL interpretability.
 
-Chapter~\ref{ch:methodology} builds on this review, translating the concepts reviewd here into approaches that were employed in the remainder of the thesis.
+Chapter~\ref{ch:methodology} builds on this review, translating the concepts reviewed here into approaches that were employed in the remainder of the thesis.
 
 \subsection{Reinforcement Learning Fundamentals}\label{subsec:rl_fundamentals}
 
@@ -18,7 +18,7 @@ The objective of the training process is formalized as an optimisation process m
 \[
 J(\pi) = \mathbb{E}_{\tau \sim \pi}\left[\sum_{t=0}^{\infty} \gamma^t r_t\right]
 \]
-where the discount factor $\gamma$ determines the trade-off between immediate and future rewards. Lower $\gamma$ values prioritize short-term gains, while values approaching 1 weight all rewards more equally.
+where the discount factor $\gamma$ determines the trade-off between immediate and future rewards. Lower $\gamma$ values prioritize short-term gains, while values approaching 1 weight all rewards equally.
 
 
 \subsubsection{Value Functions and Policies}\label{subsec:value_policy}
@@ -36,13 +36,12 @@ Early RL methods operated in discrete state spaces where optimal value functions
 \end{align}
     
 
-However, visual environments such as Atari game environments have state spaces that would be computationally infeasible to solve with a lookup table (64×64×3 = 12,288 dimensional input with 256^12,288 possible states for 8-bit RGB images). This necessitates function approximation, which does not provide convergence guarantees, and causes the learned representations in our models to become opaque. This opacity is a further motivator for the need for mechanistic interpretability on models of the kind studied in our research.
+However, visual environments such as Atari game environments have state spaces that would be computationally infeasible to solve with a lookup table (64×64×3 = 12,288 dimensional input with \(256^{12,288}\) possible states for 8-bit RGB images). This necessitates function approximation, which does not provide convergence guarantees, and causes the learned representations in our models to become opaque. This opacity is a further motivator for the need for mechanistic interpretability on models of the kind studied in our research.
 
 \subsection{Development of Deep RL}\label{subsec:development_deep_rl}
 
 \subsubsection{Value-Based Deep RL}\label{subsubsec:value_based_deep_rl}
-% TODO: Add content on DQN, experience replay, etc.
-Deep Q-Networks (DQN) \citep{mnih_2015_humanlevel} achieved a landmark breakthrough by showing that Deep Q networks could achieve human level performance in 49 Atari games using the same algorithm, architecture, and set of training parameters by combining deep learning with RL. 
+Deep Q-Networks (DQN)\citep{mnih_2015_humanlevel} achieved a landmark breakthrough by showing that Deep Q networks could achieve human level performance in 49 Atari games using the same algorithm, architecture, and set of training parameters by combining deep learning with RL. 
 
 The key innovations they contributed were:
 
@@ -50,13 +49,13 @@ Experience replay buffers that store state transitions $(s, a, r, s')$ and are s
 
 The use of target networks $Q_{\theta^-}$ that are periodically copied from the main network $Q_\theta$ that provide stable targets for temporal difference (TD) learning. While the main network $Q_\theta$ updates every gradient step, the target $Q_{\theta^-}$ is overwritten by the main network periodically (typically every 10,000 steps), preventing the optimization target from changing too rapidly and reducing training stability.
 
-These contributions provided sufficient stability for RL training to meet and surpass human performance on challenging Atari games, proving that CNNs could learn meaningful features from pixels. However, value based methods struggle to learn stochastic policies and continuous action spaces, leading to an increased focus on policy gradient methods to push the state of the art.
+These contributions provided sufficient stability for RL training to meet and surpass human performance on challenging Atari games, proving that CNNs could learn meaningful features from pixels. However, value based methods such as these struggle to learn stochastic policies and continuous action spaces, leading to an increased focus on policy gradient methods to push the state of the art.
 
 \subsubsection{Policy Gradient Methods}\label{subsubsec:policy_gradient_methods}
 
 Policy gradient methods arise from the natural challenges produced by trying to learn optimal policies within continuous action spaces and stochastic policies. Rather than learning state values using these to indirectly develop a policy, policy gradients directly optimise parameterized policy $\pi_\theta(a|s)$ by gradient ascent on expected returns.
 
-The policy gradient theorem \citep{sutton_1999_policy} provides the insight required for this approach. For an objective $J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}[R(\tau)]$, the gradient can be computed without requiring pre-existing knowledge of the environment:
+The policy gradient theorem \cite{sutton_1999_policy} provides the insight required for this approach. For an objective $J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}[R(\tau)]$, the gradient can be computed without requiring pre-existing knowledge of the environment:
 \[
 \nabla_\theta J(\theta) = \mathbb{E}_{\pi_\theta}\left[\sum_{t=0}^{T} \nabla_\theta \log \pi_\theta(a_t|s_t) \cdot G_t\right]
 \]
@@ -89,7 +88,15 @@ Modern implementations such as A3C and A2C\citep{mnih_2016_asynchronous} both ty
 
 PPO, used in this work, extends the actor-critic framework with clipped objectives to prevent destabilising policy updates while maintaining the variance reduction benefits of the critic.
 \subsubsection{Generalized Advantage Estimation}\label{subsubsec:gae}
-% TODO: Add content on GAE
+Generalized Advantage Estimation (GAE)\citep{schulman_2018_highdimensional} addresses a fundamental trade-off in actor-critic methods, between high variance and low bias updates. It act as a tool to interpolate between approaches to calculating update steps that are either high variance and low bias (Monte Carlo methods), or methods that are low variance but high bias (single-step TD error). GAE provides a principled approach to trading off along this spectrum using exponentially-weighted averaging of n-step advantage estimates.
+
+A mathematical formulation of the GAE estimator:
+\[
+\hat{A}_t^{\{\text{GAE}(\gamma,\lambda)\}} = \sum_{l=0}^{\infty} (\gamma\lambda)^l \delta_{t+l}^V
+\]
+where $\delta_t^V = r_t + \gamma V(s_{t+1}) - V(s_t)$ is the TD residual. This can be interpreted as a discounted sum of TD errors, or equivalently, as an exponentially-weighted average of all n-step advantage estimates. The parameter $\lambda \in [0,1]$ controls the bias-variance trade-off. When $\lambda=0$, GAE reduces to the one-step TD error (high bias, low variance), while $\lambda=1$ produces Monte Carlo returns minus baseline (low bias, high variance).
+
+In practice, GAE with $\lambda \approx 0.95$ is typically chosen as the hyperparameter, using information from around 20 steps into the future while providing meaningful variance. For sparse reward environment where there are often large delays before observing any rewards, GAE enables credit to backward propagate through the value function bootstrapping while preventing destabalising variance from Monte-Carlo methods. PPO typically implements GAE alongside its clipped objective, with the GAE advantages providing the $A_t$ terms in the surrogate loss function. The combination of low-variance advantage with stable policy updates are critical factors in PPO's sample efficiency and reliability during RL training.
 
 \subsubsection{Proximal Policy Optimization}\label{subsubsec:ppo}
 
@@ -100,24 +107,26 @@ To achieve this, the approach taken is to use Trust Region Policy Optimization (
 PPO achieves a similar performance improvement through a simpler first order approximation which uses the probability ratio of the old and new policies. This is used as a surrogate objective, and can be formalised as: \[
 L^{\text{CLIP}}(\theta) = \mathbb{E}_t\left[\min\left(r_t(\theta)A_t, \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)A_t\right)\right]
 \]
-where $r_t(\theta) = \pi_\theta(a_t|s_t)/\pi_{\theta_{\text{old}}}(a_t|s_t)$ represents the probability ratio between new and old policies. This is then clipped to be between a min and max ratio $[1-\epsilon, 1+\epsilon]$ (typically with $\epsilon=0.2$), which means that samples whose probability ratios exceed the clipping range contribute zero gradient to the update step. This prevents individual experiences with large advantages from changing the policy drastically while still allowing learning from other samples in the batch.
+where $r_t(\theta) = \pi_\theta(a_t|s_t)/\pi_{\theta_{\text{old}}}(a_t|s_t)$ represents the probability ratio between new and old policies. This is then clipped to be between a min and max ratio $[1-\epsilon, 1+\epsilon]$ (typically with $\epsilon=0.2$), which means that samples whose probability ratios exceed the clipping range contribute zero gradient to the update step. This prevents individual experiences with large advantages ($A_t$) from changing the policy drastically while still allowing learning from other samples in the batch.
 
+PPO typically employs Generalized Advantage Estimation (GAE, discussed in\ref{subsubsec:gae}) to compute the advantage terms $A_t$, providing a tunable bias-variance trade-off that is particularly important for environments with sparse rewards, such as those used in this research.
 
 \subsection{Architectures and Environments}\label{subsec:architectures_environments}
 
 \subsubsection{CNN Architectures for Visual RL}\label{subsubsec:cnn_architectures}
 % Integration of deep learning with RL
 % Notable architectures and algorithms
-Deep Reinforcement Learning (DRL) combines deep neural networks with RL principles to learn effective policies in complex, high-dimensional environments like Procgen. These models typically use convolutional neural networks (CNNs) to process visual input and feed the resulting features into fully-connected layers that output a policy.
+Deep Reinforcement Learning (DRL) combines deep neural networks with RL principles to learn effective policies in complex, high-dimensional environments. DRL models typically use convolutional neural network (CNN) layers to process visual input and feed the resulting features into fully-connected layers that output a policy.
 
-DQN showed CNNs could learn from pixels
-Shared encoders for efficiency vs interpretability trade-off
-Why simpler architectures for interpretability research
+Following the success of\cite{mnih_2015_humanlevel} in showing that CNNs could be viable as feature detectors in deeper networks, architectural improvements occurred along several axes. Initial DQN implementations used a simple 3-layer CNN (8×8 and 4×4 filters with stride 4 and 2, followed by 3×3 with stride 1), sufficient for Atari's 84×84 pixel inputs\cite{mnih_2015_humanlevel}. However, more complex visual environments demanded deeper architectures with improved methods for scaling model capacity.
 
+A critical feature of deeper networks is that of residual connections\cite{he_2015_deep}, which allow for propagation of information deeper into the network. By learning residual functions $F(x)$ with respect to the input $x$, rather than learning the full transformation $H(x)$, the network can default to identity mappings ($F(x)=0$) when beneficial, allowing computational capacity to focus on learning meaningful deviations from the identity \citep{he_2016_identity}. This enabled training of 15+ layer networks without vanishing gradients.
+
+To improve computational efficiency, most modern actor-critic approaches combine their encoder layers and simply add a split policy and value head that produces the outputs of the actor and critic. This parameter sharing enhances sample efficiency by allowing both objectives to benefit from feature learning in the early layers of the model. However, this creates a multi-task learning problem where features must simultaneously encode `what action to take' and `how valuable is this state', potentially contrasting objectives that can lead to mixed or confused representations across both tasks. These confused representations show early signs of being challenging to disentangle and make the task of interpretability more challenging\cite{hilton_2020_understanding}
 
 \subsubsection{IMPALA Models}\label{subsubsec:impala_models}
 
-IMPALA (Importance Weighted Actor Learner Architecture) was introduced by as a scalable RL framework, but its convolutional encoder has since become a primary baseline for Procgen and Atari agents\cite{espeholt_2018_impala}. The encoder consists of three ``IMPALA blocks'', each containing:
+IMPALA (Importance Weighted Actor Learner Architecture) was introduced by\cite{espeholt_2018_impala} as a scalable RL framework, but its convolutional encoder has since become a primary baseline for Procgen and Atari agents\cite{espeholt_2018_impala}. The encoder consists of three ``IMPALA blocks'', each containing:
 \begin{itemize}
     \item A $3\times3$ convolution with stride~1 followed by ReLU,\\[-0.8em]
     \item A second $3\times3$ convolution and ReLU,\\[-0.8em]
@@ -125,26 +134,29 @@ IMPALA (Importance Weighted Actor Learner Architecture) was introduced by as a s
 \end{itemize}
 Every block doubles the channel count (from $16\to32\to64\to128$ in the original), though in work such as that performed by\cite{mini_2023_understanding} the number of channels remains fixed. A final fully-connected layer produces a 256 dimension embedding that feeds into two heads, one which outputs the actions of the polcy, and the other producing estimated value.
 
-Earlier work also shows that training dynamics of RL systems can have a significant impact on the interpretability and clarity of weights in the trained network.\citet{engstrom2020implementation} show that doubling the rollout length (e.g. from 128 to 256 steps) stabilises gradients, which in turn makes gradient-based visualisations such as saliency maps crisper, as later confirmed by\cite{thatte2022insights}. This has important consequences for potential MI work.
-
+The training dynamics of RL systems can significantly impact the interpretability of the learned weights. For instance, \citet{engstrom2020implementation} show that doubling the rollout length (e.g., from 128 to 256 steps) stabilises gradients, which yields crisper gradient-based visualisations such as saliency maps. This finding was later confirmed by \cite{thatte2022insights} and has important consequences for potential MI work.
 
 \subsubsection{Sparse Rewards and Credit Assignment}\label{subsubsec:sparse_rewards}
-TODO: talk about the difficulties created by sparse reward environments and how PPO helps with that. 
-Credit assignment problems
-Procgen's procedural generation preventing memorization
-Natural curriculum in Heist (0-3 keys)
-Why interpretability matters more when we can't trace credit assignment
+
+Environments with sparse rewards pose fundamental challenges for RL training. In such environments, helpful actions and the final reward may be separated by hundreds of steps. This is typically called a credit assignment problem\cite{sutton_1999_policy}. With typical discount factors of $\gamma=0.99$, early actions in a 500-step episode receive gradient signals approximately $0.99^{500} \approx 0.007$ times weaker than actions near the conclusion of an episode. This means that early game strategies cannot be learned straightforwardly by direct reinforcement.
+
+The challenge is worsened by the enormous number of possible action sequences. In a 300-step episode with 15 possible actions, there exist $15^{300}$ potential trajectories. Because the chances of success are so low with a random walk, learning from early training at all can be extremely challenging, and what little signal there is, is hard to learn from.
+
+PPO's actor-critic architecture, with GAE (Section\ref{subsubsec:gae}) provides a structure that is particularly well-suited to solving the problem. The critic learns which states have high value, via temporal difference learning, gradually propagating reward backward from successful episodes. As the critic learns from this signal, it enables the computation of advantage estimates that then provide immediate learning signals without having to reach terminal states. This transforms the sparse reward problem into a series of dense value predictions, though it requires the critic to first learn via reward information being propagated backward through some successful attempts, a process requiring potentially thousands of episodes, some of which initially require success through random walks.
+
 
 \subsubsection{The Procgen Benchmark}\label{subsubsec:procgen_benchmark}
+The Procgen benchmark\citep{cobbe_2020_leveraging} consists of 16 procedurally generated environments based on Atari style games. Procgen's procedurally generated environments prevent easily memorised solutions and forces agents to learn general strategies and representations of the environment.
 
-
-In Procgen Heist, the structure of the environemnt is as follows:
+In Procgen Heist, the structure of the environment is as follows:
 - States: 64×64 RGB pixel observations of the maze
 - Actions: Discrete movement commands (The procgen environments have 16 actions available, though some of them do nothing in heist. They consist of vertical, horizontal and diagonal movements).
 - Rewards: Sparse. +10 for reaching the gem, 0 otherwise
 - Transitions: Perfectly deterministic maze physics
 
 Because the agent receives the entire (64 by 64 by 3) pixel state space of the maze as its observation, the Procgen Heist environment is a fully-observable MDP, where the state is directly represented by the agent's visual input. There are variations of the environment which involved a limited view of the environment such as the `memory' distribution, which would be considered a partially observable MDP (POMDP).
+
+Procgen's procedural generation adds another layer of complexity by preventing memorization-based solutions. Unlike fixed environments where agents might memorize successful trajectories, procedurally generated mazes force agents to learn generalizable navigation strategies. Heist's design includes a natural curriculum: episodes randomly generate with 0 to 3 keys, allowing agents to first master simple gem-only mazes before tackling complex multi-key sequences. This curriculum provides crucial scaffolding, as agents can learn basic navigation on easy layouts while gradually building representations for more complex objectives.
 
 \subsubsection{Architectural Choices for Interpretability}\label{subsubsec:architectural_choices}
 
@@ -351,3 +363,4 @@ The research presented in the accompanying papers (forming the basis of this the
     \item Exploring novel mechanisms of information encoding, such as multiplexing entity information within a single channel through varying activation strengths.
 \end{itemize}
 These contributions aim to deepen our understanding of how RL agents represent and pursue goals, and to refine the tools available for mechanistic interpretability for use in this domain.
+
