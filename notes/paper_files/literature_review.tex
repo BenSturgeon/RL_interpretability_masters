@@ -11,8 +11,8 @@ Chapter~\ref{ch:methodology} builds on this review, translating the concepts rev
 
 This section provides a brief overview of the fundamental concepts in RL that are relevant to the research discussed. While a baseline understanding of RL and AI concepts is assumed, key elements of the environments and training paradigms employed from the literature are reviewed.
 
+At its core, the problem that RL solves can be formalized as a Markov Decision Process (MDP). An MDP is a mathematical framework for modeling decision-making in situations where the outcomes of actions may not be predictable to the agent. Environments can be both entirely deterministic or stochastic in nature. MDPs are defined by a tuple (\(S, A, P, R, \gamma\)), representing the set of states, the set of actions, the state transition probability function \(P(s'|s,a)\), the reward function \(R(s,a,s')\), and a discount factor \(\gamma \in [0, 1]\) that balances immediate and future rewards. The agent's goal is to learn a strategy that maximizes the cumulative discounted reward over time. 
 \subsubsection{Markov Decision Processes}\label{subsec:mdp}
-At its core, the problem that RL solves can be formalized as a Markov Decision Process (MDP). An MDP is a mathematical framework for modeling decision-making in situations where outcomes are partially random and partially determined by the policy of the agent. It is defined by a tuple (\(S, A, P, R, \gamma\)), representing the set of states, the set of actions, the state transition probability function \(P(s'|s,a)\), the reward function \(R(s,a,s')\), and a discount factor \(\gamma \in [0, 1]\) that balances immediate and future rewards. The agent's goal is to learn a strategy that maximizes the cumulative discounted reward over time. 
 
 The objective of the training process is formalized as an optimisation process maximizing expected discounted return:
 \[
@@ -23,9 +23,9 @@ where the discount factor $\gamma$ determines the trade-off between immediate an
 
 \subsubsection{Value Functions and Policies}\label{subsec:value_policy}
 
-The process of training a model involves iterating through many interactions with the environment to produce a policy denoted as \(\pi(a|s)\), which is a mapping from states to a probability distribution over actions. The goal of the RL training process is to find an optimal policy, \(\pi^*\), that maximises the agent's expected reward over time. As a means of estimating the quality of a given policy, RL functions often use value functions\cite{sutton2018reinforcement}. The state-value function, \(V^\pi(s)\), represents the expected return after taking an action \(a\) in state \(s\) based on following policy \(\pi\). The action-value function, \(Q^\pi(s,a)\), is the expected return from continuing to follow policy \(\pi\) after taking an action given a certain state. 
+The process of training a model involves iterating through many interactions with the environment to produce a policy denoted as \(\pi(a|s)\), which is a mapping from states to a probability distribution over actions. The goal of the RL training process is to find an optimal policy, \(\pi^*\), that maximises the agent's expected reward over time. As a means of estimating the quality of a given policy, RL often makes use of value functions\cite{sutton2018reinforcement} such as the state-value function, \(V^\pi(s)\), which represents the expected return following policy \(\pi\) given state \(s\) and the action-value function, \(Q^\pi(s,a)\), which calculates the expected return from continuing to follow policy \(\pi\) after taking action \(a\) in state \(s\).
 
-These functions are foundational to the function of training algorithms such as Proximal Policy Optimisation (PPO, discussed in Section~\ref{sec:training_details}), which alternates between sampling data from the environment and optimising a `surrogate' objective via stochastic gradient ascent. 
+These are foundational to the operation of training algorithms such as Proximal Policy Optimisation (PPO, discussed in Section~\ref{sec:training_details}), which alternates between sampling data from the environment and optimising a `surrogate' objective via stochastic gradient ascent. 
 
 \subsubsection{From Tabular Methods to Function Approximation}
 Early RL methods operated in discrete state spaces where optimal value functions could be represented precisely in lookup tables. Convergence is guaranteed for algorithms based on these Bellman optimality equations.
@@ -36,7 +36,7 @@ Early RL methods operated in discrete state spaces where optimal value functions
 \end{align}
     
 
-However, visual environments like Procgen have state spaces that would be computationally infeasible to solve with a lookup table (64×64×3 = 12,288 dimensional input). This necessitates function approximation, which does not provide convergence guarantees, and causes the learned representations in our models to become opaque. This opacity is a further motivator for the need for mechanistic interpretability on models of the kind studied in our research.
+However, visual environments such as Atari game environments have state spaces that would be computationally infeasible to solve with a lookup table (64×64×3 = 12,288 dimensional input with 256^12,288 possible states for 8-bit RGB images). This necessitates function approximation, which does not provide convergence guarantees, and causes the learned representations in our models to become opaque. This opacity is a further motivator for the need for mechanistic interpretability on models of the kind studied in our research.
 
 \subsection{Development of Deep RL}\label{subsec:development_deep_rl}
 
@@ -93,7 +93,7 @@ PPO, used in this work, extends the actor-critic framework with clipped objectiv
 
 \subsubsection{Proximal Policy Optimization}\label{subsubsec:ppo}
 
-PPO is a policy gradient based approach that aims to solve the problem of achieving reasonable updates to the parameters of the policy such that they aren't so large as to throw off learning, but not so small that useful training information is wasted. 
+PPO is a policy gradient based approach that aims to solve the problem of achieving reasonable updates to the parameters of the policy such that are sufficiently stable for learning, but not so small that useful training information is wasted. 
 
 To achieve this, the approach taken is to use Trust Region Policy Optimization (TRPO) \citep{schulman_2017_trust} which aims to identify regions within which updates can be made with confidence that they will not harm the training of the policy. This was initially achieved by framing the policy as a constrained optimisation problem, but suffered from high computational costs due to it requiring second-order optimisation in order to work.
 
