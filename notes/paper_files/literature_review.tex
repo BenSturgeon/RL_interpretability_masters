@@ -36,20 +36,20 @@ Early RL methods operated in discrete state spaces where optimal value functions
 \end{align}
     
 
-However, visual environments such as Atari game environments have state spaces that would be computationally infeasible to solve with a lookup table (64×64×3 = 12,288 dimensional input with \(256^{12,288}\) possible states for 8-bit RGB images). This necessitates function approximation, which does not provide convergence guarantees, and causes the learned representations in our models to become opaque. This opacity is a further motivator for the need for mechanistic interpretability on models of the kind studied in our research.
+However, visual environments such as Atari game environments have state spaces that would be computationally infeasible to solve with a lookup table (64×64×3 = 12,288 dimensional input with \(256^{12,288}\) possible states for 8-bit RGB images)\cite{mnihPlayingAtariDeep2013}. This necessitates function approximation, which does not provide convergence guarantees, and causes the learned representations in our models to become opaque. This opacity is a further motivator for the need for mechanistic interpretability on models of the kind studied in our research.
 
 \subsection{Development of Deep RL}\label{subsec:development_deep_rl}
 
 \subsubsection{Value-Based Deep RL}\label{subsubsec:value_based_deep_rl}
-Deep Q-Networks (DQN)\citep{mnih_2015_humanlevel} achieved a landmark breakthrough by showing that Deep Q networks could achieve human level performance in 49 Atari games using the same algorithm, architecture, and set of training parameters by combining deep learning with RL. 
+Deep Q-Networks (DQN)\citep{mnih_2015_humanlevel} achieved a landmark breakthrough by showing that Deep Q networks could achieve human level performance in 29 out of 49 Atari games using the same algorithm, architecture, and set of training parameters by combining deep learning with RL. 
 
 The key innovations they contributed were:
 
-Experience replay buffers that store state transitions $(s, a, r, s')$ and are sampled uniformly at training time. This breaks correlation between observations that would normally disrupt neural network training. This allows the network to learn from the same observation repeatedly and prevents catastrophic forgetting.
+Experience replay buffers that store state transitions $(s, a, r, s')$ and are sampled uniformly at training time. This breaks correlation between observations that would cause the model to `chase its own tail' during training, due to the model getting into a feedback loop that causes it to overly sample a given region of the state space. Sampling from the replay buffer allows the network to learn from the same observation repeatedly and prevents catastrophic forgetting.
 
-The use of target networks $Q_{\theta^-}$ that are periodically copied from the main network $Q_\theta$ that provide stable targets for temporal difference (TD) learning. While the main network $Q_\theta$ updates every gradient step, the target $Q_{\theta^-}$ is overwritten by the main network periodically (typically every 10,000 steps), preventing the optimization target from changing too rapidly and reducing training stability.
+The use of target networks $Q_{\theta^-}$ that are periodically copied from the main network $Q_\theta$ that provide stable targets for temporal difference (TD) learning. While the main network $Q_\theta$ updates every gradient step, the target $Q_{\theta^-}$ is overwritten by the main network periodically (typically every 10,000 steps). This avoids the problem of constantly chasing a moving target, by freezing the optimisation target allowing the opportunity to make steady progress towards a stable optimisation target, until that target is updated again.
 
-These contributions provided sufficient stability for RL training to meet and surpass human performance on challenging Atari games, proving that CNNs could learn meaningful features from pixels. However, value based methods such as these struggle to learn stochastic policies and continuous action spaces, leading to an increased focus on policy gradient methods to push the state of the art.
+These contributions provided sufficient stability for RL training to meet and surpass human performance on challenging Atari games, proving that CNNs could learn meaningful features from pixels. However, value based methods such as these struggle to learn stochastic policies in continuous action spaces, leading to an increased focus on policy gradient methods to push the state of the art.
 
 \subsubsection{Policy Gradient Methods}\label{subsubsec:policy_gradient_methods}
 
@@ -116,9 +116,7 @@ PPO typically employs Generalized Advantage Estimation (GAE, discussed in\ref{su
 \subsubsection{CNN Architectures for Visual RL}\label{subsubsec:cnn_architectures}
 % Integration of deep learning with RL
 % Notable architectures and algorithms
-Deep Reinforcement Learning (DRL) combines deep neural networks with RL principles to learn effective policies in complex, high-dimensional environments. DRL models typically use convolutional neural network (CNN) layers to process visual input and feed the resulting features into fully-connected layers that output a policy.
-
-Following the success of\cite{mnih_2015_humanlevel} in showing that CNNs could be viable as feature detectors in deeper networks, architectural improvements occurred along several axes. Initial DQN implementations used a simple 3-layer CNN (8×8 and 4×4 filters with stride 4 and 2, followed by 3×3 with stride 1), sufficient for Atari's 84×84 pixel inputs\cite{mnih_2015_humanlevel}. However, more complex visual environments demanded deeper architectures with improved methods for scaling model capacity.
+The algorithms discussed above require neural network architectures capable of processing high-dimensional visual inputs. Initial DQN implementations used a simple 3-layer CNN, sufficient for Atari's 84×84 pixel inputs\cite{mnih_2015_humanlevel}. However, more complex visual environments demanded deeper architectures with new methods for scaling model capacity.
 
 A critical feature of deeper networks is that of residual connections\cite{he_2015_deep}, which allow for propagation of information deeper into the network. By learning residual functions $F(x)$ with respect to the input $x$, rather than learning the full transformation $H(x)$, the network can default to identity mappings ($F(x)=0$) when beneficial, allowing computational capacity to focus on learning meaningful deviations from the identity \citep{he_2016_identity}. This enabled training of 15+ layer networks without vanishing gradients.
 
@@ -126,7 +124,7 @@ To improve computational efficiency, most modern actor-critic approaches combine
 
 \subsubsection{IMPALA Models}\label{subsubsec:impala_models}
 
-IMPALA (Importance Weighted Actor Learner Architecture) was introduced by\cite{espeholt_2018_impala} as a scalable RL framework, but its convolutional encoder has since become a primary baseline for Procgen and Atari agents\cite{espeholt_2018_impala}. The encoder consists of three ``IMPALA blocks'', each containing:
+Among the various architectures developed for visual RL, the IMPALA encoder has emerged as a particularly effective baseline for challenging environments like Procgen. Originally introduced by\cite{espeholt_2018_impala} as a scalable RL framework, its convolutional encoder has since become a primary baseline for Procgen and Atari agents\cite{espeholt_2018_impala}. The encoder consists of three ``IMPALA blocks'', each containing:
 \begin{itemize}
     \item A $3\times3$ convolution with stride~1 followed by ReLU,\\[-0.8em]
     \item A second $3\times3$ convolution and ReLU,\\[-0.8em]
@@ -134,11 +132,11 @@ IMPALA (Importance Weighted Actor Learner Architecture) was introduced by\cite{e
 \end{itemize}
 Every block doubles the channel count (from $16\to32\to64\to128$ in the original), though in work such as that performed by\cite{mini_2023_understanding} the number of channels remains fixed. A final fully-connected layer produces a 256 dimension embedding that feeds into two heads, one which outputs the actions of the polcy, and the other producing estimated value.
 
-The training dynamics of RL systems can significantly impact the interpretability of the learned weights. For instance, \citet{engstrom2020implementation} show that doubling the rollout length (e.g., from 128 to 256 steps) stabilises gradients, which yields crisper gradient-based visualisations such as saliency maps. This finding was later confirmed by \cite{thatte2022insights} and has important consequences for potential MI work.
+The training dynamics of RL systems can significantly impact the interpretability of the learned weights. For instance, \citet{engstrom2020implementation} show that doubling the rollout length (e.g., from 128 to 256 steps) stabilises gradients, which yields crisper gradient-based visualisations such as saliency maps. This finding was later confirmed by\cite{thatte2022insights} and has important consequences for potential MI work.
 
 \subsubsection{Sparse Rewards and Credit Assignment}\label{subsubsec:sparse_rewards}
 
-Environments with sparse rewards pose fundamental challenges for RL training. In such environments, helpful actions and the final reward may be separated by hundreds of steps. This is typically called a credit assignment problem\cite{sutton_1999_policy}. With typical discount factors of $\gamma=0.99$, early actions in a 500-step episode receive gradient signals approximately $0.99^{500} \approx 0.007$ times weaker than actions near the conclusion of an episode. This means that early game strategies cannot be learned straightforwardly by direct reinforcement.
+Environments with sparse rewards pose fundamental challenges for RL training. In such environments, effective actions and the final reward may be separated by hundreds of steps. This is known as the credit assignment problem\cite{sutton_1999_policy}. With typical discount factors of $\gamma=0.99$, early actions in a 500-step episode receive gradient signals approximately $0.99^{500} \approx 0.007$ times weaker than actions near the conclusion of an episode. This means that early game strategies cannot be learned straightforwardly by direct reinforcement.
 
 The challenge is worsened by the enormous number of possible action sequences. In a 300-step episode with 15 possible actions, there exist $15^{300}$ potential trajectories. Because the chances of success are so low with a random walk, learning from early training at all can be extremely challenging, and what little signal there is, is hard to learn from.
 
