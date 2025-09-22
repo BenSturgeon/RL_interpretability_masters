@@ -5,7 +5,7 @@
 \label{sec:env_model}
     \subsection{The Procgen Heist Environment}
     \label{subsec:heist_env}
-    The Procgen Heist environment, from the suite of procedurally generated environments by \citet{cobbe_leveraging_2020}, was chosen for this research. The agent's objective is to navigate a maze to collect a gem, which may require first collecting up to three keys (in the fixed order of blue, green, red) to open corresponding locks. The environment's procedural generation varies the maze layout and the number of key-lock pairs present in each episode, from zero to three.
+    The Procgen Heist environment, from the suite of procedurally generated environments by \citet{cobbe_2020_leveraging}, was chosen for this research. The agent's objective is to navigate a maze to collect a gem, which may require first collecting up to three keys (in the fixed order of blue, green, red) to open corresponding locks. The environment's procedural generation varies the maze layout and the number of key-lock pairs present in each episode, from zero to three.
 
     This environment provides a sparse reward signal, with a reward of +10 for reaching the gem and 0 otherwise. This design, coupled with the variable difficulty, establishes a natural curriculum that allows agents to succeed with random exploration in simpler levels before developing a more sophisticated policy.
 
@@ -15,13 +15,14 @@
 
     \subsection{Model Architecture}
     \label{subsec:model_arch}
-    Following the precedent set by \citet{hilton_understanding_2020} for creating more interpretable models, this research primarily utilized a simplified version of the standard IMPALA architecture \citep{espeholt_impala_2018}. The model consists of four convolutional blocks followed by a fully connected layer. Each convolutional block contains a convolution operation and a pooling layer. This design features fewer convolutional layers and more dense layers than the original IMPALA network, a trade-off made to enhance interpretability without a significant loss in performance. While key findings were validated on a standard IMPALA-based architecture to ensure generality, the results presented in this thesis predominantly use this simplified architecture. 
+    Following the precedent set by \citet{hilton_2020_understanding} for creating more interpretable models, this research primarily utilized a simplified version of the standard IMPALA architecture \citep{espeholt_2018_impala}. The model consists of four convolutional blocks followed by a fully connected layer. Each convolutional block contains a convolution operation and a pooling layer. This design features fewer convolutional layers and more dense layers than the original IMPALA network, a trade-off made to enhance interpretability without a significant loss in performance. While key findings were validated on a standard IMPALA-based architecture to ensure generality, the results presented in this thesis predominantly use this simplified architecture. 
     
     \subsection{Model Training}
     \label{subsec:model_training}
     The policy models were trained using Proximal Policy Optimization (PPO) with an open-source implementation based on PFRL, specifically designed for Procgen environments. We also made use of Envpool to accelerate the speed of our training while keeping the actual training dynamics unchanged\cite{weng2022envpool}. Training was conducted until convergence, which in this case was when no statistical improvement was observed for 10000 update steps. The primary model was trained for approximately 600 million steps. 
 
     To explore the effects of training dynamics on the final learned representations, experiments were run with different training configurations. These variations primarily involved altering the batch geometry through four main hyperparameters: the number of parallel environments, the number of steps per rollout, the mini-batch size, and the number of epochs.
+
 
     In the primary configuration reported in this thesis, we used a setup of ($N_{\text{env}}=64$, $N_{\text{step}}=256$, $\texttt{batch\_size}=8$, $n_{\text{epoch}}=3$). In this geometry, the rollout buffer contains $N_{\text{env}}N_{\text{step}}=16\,384$ transitions. This is reshaped into $8$ mini-batches, each containing $B_{\text{mb}}=2\,048$ samples. The optimizer performs $8\times 3 = 24$ gradient steps per PPO update, processing a total of $16\,384\times 3 = 49\,152$ sample-updates per cycle. This configuration was chosen to balance stable learning from large batches with reasonable training time per update.
 
@@ -31,7 +32,7 @@
 \label{sec:interp_techniques}
     \subsection{Sparse Autoencoder (SAE) Training}
     \label{subsec:sae_training}
-    SAEs were trained on the CNN layers of the Procgen model. Each model followed the 1×1-conv recipe of \citet{gorton_missing_2024} with an expansion factor of~4 and an L1 warm-up schedule. Training ran for 6\,M steps, during which time variance-explained would rapidly exceed ~0.98 and policy reward recovered to within 98\,\% of baseline. A compressed variant, with conv4a reduced to 20 channels, was also trained to test robustness under capacity constraints. Table~\ref{tab:sae-params-methodology} lists the expansion factors and L1 coefficients for all layers.
+    SAEs were trained on the CNN layers of the compressed IMPALA model. Each model followed the 1×1-conv recipe of \citet{gorton_2024_missing} with an L1 warm-up schedule. Training ran for 6\,M steps, during which time variance-explained would rapidly exceed 0.99\% and policy reward recovered to within 99\% of baseline. A compressed variant, with conv4a reduced to 20 channels, was also trained to test robustness under capacity constraints. Table~\ref{tab:sae-params-methodology} lists the expansion factors and L1 coefficients for all layers. 5 SAEs were trained for each layer, as a means of verifying the robustness of our results.
 
     \begin{table}[H] % Consider moving table definition to main.tex preamble or a separate style file
     \caption{Expansion factors and L1 Coefficients for the different SAEs (from Paper 1)}
@@ -74,18 +75,17 @@
         \includegraphics[width=0.25\linewidth]{figures/filter29_layer9_no_title.png}
         \end{tabular}
         
-        \caption{Visualization of the. maze and neural network activations in different layers. Top row (left to right): 
+        \caption{Visualization of the maze and neural network activations in different layers. Top row (left to right): 
         observation input, layer 1 channel 10, layer 2 channel 10, and activation colorbar. 
         Bottom row: layer 8 channel 29 and layer 9 channel 29. In the top row filters we observe a minimal activation around the regions of the blue key and lock and in the bottom row we see maximal activations around the blue key. This is a replication of the approach used by\cite{mini_2023_understanding} in order to get an initial sense of the clarity with which entities could be seen in activations.}
         \label{fig:filter_visualizations}
     \end{figure}
 
-    \subsection{Steering Vectors and Activation Interventions}
+    \subsection{Activation steering}
     \label{subsec:steering_interventions}
         \subsubsection{Steering Vector Calculation}
         \label{subsubsec:steering_vector_calc}
-        % Content from Paper 2: "Discovering Goals..."
-        As demonstrated in \cite{mini_understanding_2023}, objective steering vectors are computed. For a given maze \(m\), layer \(l\), and objective \(k\) at position \(x_k\), with all objectives \(\sum_{i} x_{i}\) and agent starting position \(x^{\text{start}}_{\text{agent}}\), the steering vector is:
+        As demonstrated in \cite{mini_2023_understanding}, objective steering vectors are computed. For a given maze \(m\), layer \(l\), and objective \(k\) at position \(x_k\), with all objectives \(\sum_{i} x_{i}\) and agent starting position \(x^{\text{start}}_{\text{agent}}\), the steering vector is:
         \[ 
         \text{SteeringVector}_k^{l} (m,  x_{k}) = \text{Activ}^{l}(m, \sum_{i} x_{i}, x^{\text{start}}_{\text{agent}}) - \text{Activ}^{l}(m, (\sum_{i} x_{i}) - x_{k}, x^{\text{start}}_{\text{agent}})
         \]
@@ -95,15 +95,8 @@
         \]
         where \(\alpha\) is an intervention coefficient. A negative \(\alpha\) steers the model away from objective \(k\).
 
-        \subsubsection{Activation Manipulation and Patching}
+        \subsubsection{Application of steering vectors}
         \label{subsubsec:activation_manipulation}
-        For scaled-up steering experiments, a specific entity was placed into the environment. The network was intervened upon by setting all its values to 0 and setting a specific region of a channel to a specified value. A parameter sweep over a range of values (typically 0 to 3) was performed. Episode lengths were kept short.
-        This approach was scaled by running a static intervention across every channel in the SAE, measuring deviation to the targeted area. For each entity-channel combination, 100 trials were run with activation value incrementing: activation value = trial number \(\times\) (max range / number of trials). The results of this sweep were then analyzed to determine if different entities were successfully targeted at systematically different activation levels, testing the hypothesis of activation-level multiplexing.
-        
-
-        
-        A box maze (see Figure \ref{fig:intervention-experiment} in Paper 1) was used to provide a clear decision point.
-
         For direct model control using activation patching, an activation vector from the environment for a given entity and layer was extracted. A specific channel's activation values were edited to indicate an entity should be in a specific position, and this patched steering vector was added back into the model's activations. Over 1000 activation patching experiments were performed across different channels and layers, with intervention coefficients from -2.0 to 2.0 in increments of 0.1, each with 100 episodes.
 
     \subsection{Analysis of Channel Properties}
@@ -120,11 +113,11 @@
     
     We used SAEs as the primary analytical tool to distinguish between these possibilities. The hypothesis was that if the model was learning abstract concepts like `blue key' or `blue lock' a properly trained SAE should be able to isolate these concepts into distinct, interpretable features. After training the SAEs, we analyzed their latent representations using the steering and ablation techniques described previously. The key objective was to search for individual SAE channels that generalized across a class of related entities—for example, a single channel that could be used to steer the agent towards any of the keys, or if instead entire channels would be dedicated to specific keys and locks, or perhaps only keys or only locks. The discovery of channels that encoded all types of entities would provide strong evidence that the model learns general, goal-oriented features, rather than simply having widespread polysemanticity.
 
-    \subsubsection{Steering effects per individual channels}
+    \subsubsection{Steering effects for individual channels}
     \label{subsubsec:steering_interventions}
     To reveal what parts of the network might be responsible for attending to specific entities in the environment we developed an intervention based experiment that could then be run for base models as well as SAEs trained on a given layer. 
     
-    The method involves placing a specific entity into an artificially generated environment using a maze with the shape visible in figure\ref{fig:intervention-experiment}. This design was chosen because it was challenging enough that the agent would need to retain its navigational abilities to reach either the entity or target intervention zone, while providing a clear decision point where the agent needs to choose between pursuing the original entity or our artificial target zone.
+    The method involves placing a specific entity into an artificially generated environment using a maze with the shape visible in figure\ref{fig:intervention-experiment}. This design was chosen because it was challenging enough that the agent would need to retain its navigational abilities to reach either the entity or target intervention zone, while providing a clear decision point where the agent needs to choose between pursuing the original entity or our artificial target zone. We test this intervention across all the locks and keys in the environment as well as the gem. 
     
     The intervention involves masking the channel to 0 and setting a target region of the channel to a specified value. In this experiment, a sweep is performed over a range of values from 0 to the maximum observed value that we observed in the layer given 10000 random sample inputs from the environment multiplied by a value of 1.25. This ensures we remain within the distribution of values expected for the layer. By intervening on the network in this way we can clearly demonstrate which channels are capable of steering with different entities at particular intervention strengths. We kept the length of the episodes to 20 timesteps so that the agent would either be able to reach the target intervention zone, or the actual entity, but not both to ensure result clarity.
 
@@ -134,7 +127,7 @@
     \]
     where \(V_{\text{max}}\) is 1.25 times the maximum activation observed for the layer. This allowed us to measure the success rate of steering as a function of activation strength and to identify whether channels influence navigation only within specific value ranges.
 
-
+    We test this approach across all layers in the environment. Because conv4a yielded the most promising layer due to its naturally fairly sparse representations we performed additional experiments across 28 model checkpoints over a single base model training run in increments of 3000 update steps from 3000 to 60000. We observe model convergence to maximum rewards at around 20000 steps, and thus many of the later checkpoints are variations of different equally high scoring policies. 
 
     \begin{figure}[t]
     \centering
@@ -158,6 +151,8 @@
         \caption{The forked maze environment used for steering experiments. The agent starts at the top and must choose between navigating to the original entity (a key, in this case) on the left, or to the artificially targeted region on the right.}
         \label{fig:fork_maze_for_paper}
         \end{figure}
+
+    \
 
 \section{Experimental Design and Evaluation Metrics}
 \label{sec:experimental_design_eval}
