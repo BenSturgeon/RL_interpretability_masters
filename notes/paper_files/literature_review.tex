@@ -218,6 +218,11 @@ In spite of the above, there are likely real limits to what we can expect from t
 % Different approaches to interpretability
 Interpretability in machine learning refers to the extent to which a human can understand the cause and effect of a model's decisions. It is crucial for debugging, ensuring fairness, building trust, and verifying reliability, especially in high-stakes applications.
 
+\subsection{Circuits}
+The larger circuits framework by\cite{olah_2020_zoom} provides methods to understand how neural networks combine simple features into complex representations. Their work on polysemantic `units' (neurons responding to multiple distinct features) is particularly relevant when an agent must represent multiple objectives\cite{elhage2022superposition}.
+% TODO expand circuits work
+
+\subsection{Superposition}
 One significant challenge that arises when doing MI is that representations of concepts within neurons are often not clean singular representations, but instead those representations may be smeared across multiple neurons or have multiple representations encoded within a single neuron. The latter case is typically called polysemanticity. This refers to the tendency of individual neurons or channels to fire for multiple, seemingly unrelated features. This was first publicly observed in the `curve-circuits' analyses of Inception V1, where single units responded to several distinct curve orientations \citep{cammarata2020curve}.  
 
 This phenomenon is now understood as a consequence of superposition. Because deep layers have limited dimensionality, networks compress many latent directions into overlapping linear combinations, so a neuron's activation mixes several underlying features \citep{olah_2020_zoom, elhage2022superposition}. This typically happens with features that are unlikely to fire under the same input distribution, such as car doors and hummingbird wings\cite{olah_feature_2017}.  While efficient for representation learning, polysemanticity poses significant challenges for mechanistic interpretability, making neuron-level ablations or visualisations hard to attribute to a single concept.  
@@ -342,19 +347,27 @@ Many existing interpretability techniques were developed for supervised settings
 
 \subsection{Causal Methods in Interpretability}\label{subsec:causal}
 %todo:
-% discuss systematic ablation
-% discuss ROME paper
-% Discuss activation patching
-% Discuss causal scrubbing
+
+Many of the techniques discussed earlier, such as activation steering (Section~\ref{subsubsec:steering_interventions}), can serve dual roles as both post-hoc explanation tools and causal testing methods when applied systematically. This section focuses on additional causal techniques and frameworks for rigorous causal claims in interpretability research. These techniques actively modify the operations of the network, testing whether specific components are genuinely responsible for behaviors of interest\citep{pearl__causality}.
+
+Modern systematic ablation has evolved through several generations. Zero ablation, the simplest approach, sets components to zero but can lead to out-of-distribution behaviours since networks rarely encounter zero values during training. Mean ablation, which replaces components with their average values across a sample dataset, better preserves activation statistics but may incompletely remove information if the mean itself carries useful information. Recent work\cite{li_2024_optimal} constants that are computationally determined to minimise the expected loss on the task, reducing the amount of distributional shift in the final outcome.
+
+Work on finding induction heads in neural networks\cite{olsson_2022_incontext} is a prime example of rigorous systematic ablation. In this work they thoroughly demonstrated causality via targeted removal. Their task setup involved identifying how LMs were able to successfully complete simple A-B pattern matching, meaning that when a pattern of B following from A was observed the model should repeat this pattern when a later example of A was shown. When induction heads were ablated in small models, in-context learning collapsed from near-perfect to near-random on the task of A-B pattern matching. This showed that induction heads were essential for this task.
+
+For agents with spatial convolutional representations, targeted synthetic interventions can directly test the functions of parts of the network by intervening on their values directly.\cite{mini_2023_understanding} demonstrated that clamping a single activation in a channel that typically identified the location of the cheese (channel 55) to a large positive value at a specific location in the maze could steer the agent to that location, as if that was the final goal of the maze. This provided direct causal evidence that this channel had an unusual ability to steer the direction of the agent.
+
+These causal techniques provide the foundation for the experimental methodology employed in this thesis. Systematic ablation is used to test the necessity of individual SAE channels for navigation (Section~\ref{subsec:ablation_studies}), while activation interventions combined with behavioral testing establish sufficiency of specific channels for steering agent behavior (Section~\ref{subsec:steering_interventions}). Together, these approaches move beyond observation to establish genuine causal mechanisms underlying goal representation in RL agents.
+
 
 \section{Interpretability in Reinforcement Learning}\label{sec:rl_interpretability}
+% TODO discuss koch2021objective
+
+
 Interpretability in RL presents unique challenges due to the agent's interaction with an environment, the fact that specific outputs of the model might be extremely semantically distant from the contents of a given activation, and because we can only infer the meaning of a given observation of an activation within the model, we can't directly glean it as we could a word extracted from the embedding space of a language model.
 
 As illustrated once more in Fig~\ref{fig:environment-overview}, even a seemingly simple maze can embed multiple, dynamically changing goals whose representations the agent must learn to use effectively.
 
 Work by\cite{betley_2023_localizing} found a specific circuit in the convolutional layers of the Impala model that activated strongly when the direction to go was `up' and didn't activate when the goal was in a similar spot but the agent would need to go in a different direction. This indicates that much of the `planning' was already handled in the CNN layers, suggesting it should be possible to train probes that can detect the exact direction the agent needs to move towards.
-
-The larger circuits framework by\cite{olah_2020_zoom} provides methods to understand how neural networks combine simple features into complex representations. Their work on polysemantic `units' (neurons responding to multiple distinct features) is particularly relevant when an agent must represent multiple objectives\cite{elhage2022superposition}.
 
 Work exploring the Procgen Coinrun environment builds on saliency based methods\ref{subsec:post_hoc} to calculate an attribution within the model weights themselves. By measuring the contribution of a given convolutional feature map to the value function, it becomes possible to determine if a particular feature that the model is observing is likely to have a positive or negative effect on the success of the model, based on whether the collected gradient multipled by the activation score is positive or negative. This advances previous saliency mapping methods by linking the gradients to specific features within the model, rather than pixels in the input\cite{hilton_2020_understanding}.
 
@@ -387,6 +400,7 @@ The Procgen suite of environments consist of 16 different environments that rely
 The Procgen Heist environment, the focus of the presented research, requires an agent to collect up to 3 keys and 3 locks before reaching the final goal, a gem\cite{cobbe_2020_leveraging}. The order in which the keys need to be collected is always the same (blue, green, red). The environment is procedurally generated and might generate with any combination of no keys, or 1--3 keys, as can be seen in\ref{fig:environment-overview}. The size of the maze will also change depending on how many objects are included. The environment provides sparse rewards, only giving out a score of 10 if the agent makes it all the way to the final goal and 0 otherwise. This establishes a natural curriculum for the agent and gives it a reasonable chance of reaching the end with a random walk before it starts to develop an actual policy.
 
 This environment was selected due to the necessity for the agent to pursue multiple objectives within a single episode, likely influencing the development of generalizable maze-navigation circuits. It is a sparse learning environment.
+
 
 \section{Understanding and Controlling a Maze Solving Policy Network}\label{sec:Understanding}
 Previous work by\cite{mini_2023_understanding} demonstrated the ability to manipulate an agent's navigation in a simple maze environment with an intervention to a single channel in the network, providing the primary motivation for this work with the intent of extending these techniques to more complex multi-objective settings. The work specifically used an agent which had been trained in a modified version of the environment where the cheese was only ever added to the top right of the environment, and then deployed the agent into settings where the cheese could spawn at any location in the maze. This meant that there was a tension between the agent's natural tendency to want to go to the top right of the environment and to go the cheese location.
