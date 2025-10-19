@@ -28,19 +28,36 @@ We observe that extremely high correlation between activation patterns exists in
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/violin_35k_simple.pdf}
-    \caption{Trajectory patterns showing distinct activation patterns across different entities in layer conv4a at checkpoint 35k.}
+    \caption{Violin plots comparing the distribution of inter-entity correlations between conv3a and conv4a layers. Each violin shows the distribution of mean correlations within channels for that layer. For each channel, correlations are computed by: (1) calculating pairwise correlations between entity trajectories within a rollout, (2) averaging across all entity pairs, and (3) averaging over 10 rollouts.}
     \label{fig:correlations_violin}
     \end{figure}
     
-\subsection{Two Different Mazes}
 
 \subsection{Activation patterns over rollouts}
+We carried out further experiments to observe how activation patterns evolved over the course of a rollout, as different entitities were collected. To do this we simply captured activations over the course of a rollout in both the custom maze environments, and unmodified mazes. We then took the mean of the activations in a given channel and tracked it over the timesteps in the rollout. This gave rise to clear patterns where activations would typically jump upwards as each key was collected, with the size of the jump decreasing as each one was collected. These were particularly obvious with the most high variance channels, with the effect being present not ubiquitous amongst the other channels. Results of a randomly selected rollout shown in ~\ref{fig:activation_tracking}.
 
+Interestingly, in the cross maze where it was possible to access all the keys from the beginning the model would choose to target the green key first in about 12\% of cases. In these instances we would still see a similar jump in activations as we saw in the case of the blue key, indicating that this phenomena is primarily tied to the number of entities observed, and not necessarily targeting a specific entity.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/standard_maze_35k_activation_tracking.pdf}
+    \caption{Plot showing the mean activation values captured across all timesteps in an unmodified rollout in the 6 channels that had the greatest variance over the course of the rollout. The shaded regions indicate the current `next target', the entity that it would logically pursue next in solving the maze. Note the upward jumps in activations at the points between shaded regions, indicating contact with an entity.}
+    \label{fig:activation_tracking}
+\end{figure}
 
 \section{Activation Offsets Achieve Steering}
+A surprising finding was that merely by adjusting the activation ranges within channels by a static offset we could reliably achieve coherent steering towards different entities than what it would target by default. Results of rates of initial pickup over different rollouts are presented in Figure~\ref{fig:activation_offset_results}. We observe complete shifts in entity targeting, with baseline rates of targeting shifting from \textbf{93\% blue key targeting (at 0.0 offset, with a peak of 95\% at $-0.2$ offset)} to switch to targeting the green key at \textbf{$+1.6$ offset}, and peaking in green targeting at \textbf{$+4.8$ offset with a 94\% collection rate}. We also observe a transition to targeting red more than blue at \textbf{$-4.6$ offset} and peak red key collection of \textbf{52\% at $-5.8$ offset}. There is also a significant uptick in green key collection rates in the negative range, with a local maxima of \textbf{$-2.8$ for green key collection rates (27\%)}, before dropping as rates of red key collection increase as the offset becomes more negative.
 
+We also observe that rates of not collecting any entity during the rollout increase as we approach the positive and negative offset extremes, which is expected considering that the large offsets would be likely to interfere with the functioning of the network. However, the overall collection rate remains fairly high, and the environment includes many cases where navigating around corners is required to reach keys, meaning important navigational functions within the network continue to function.
 
+We find similar results with conv3a, though with a much smaller interval before repeating patterns emerge. A further repeat continues with conv2a, with an even smaller interval. Of particular note in the conv2a example is the very clear repeating pattern that emerges beyond a certain offset range. We also repeat observe this result on different checkpoints, with different success rates but with the same overall patterns. Figures for conv3a and conv2a are included in Appendix~\ref{app:additional_offset_results}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/offset_sweep_conv4a_expanded_checkpoint_35001_full_range.pdf}
+    \caption{Activation offset experiment results. This shows the degree to which modifying the activations by a simple offset value would induce steering towards different entities in the environment, with different offset range providing reliable if imperfect redirection towards the green key and red key. A run ends immediately upon contact with an entity, and is considered `none' if no entity is collected over 100 timesteps. }
+    \label{fig:activation_offset_results}
+\end{figure}
 
 
 \section{SAE Training}
@@ -52,16 +69,21 @@ We observe that extremely high correlation between activation patterns exists in
 \subsection{Quantitative Steering Results}
 
 
-We apply our incremental steering experiments across all channels in conv3a and conv4a and find a large number of channels which successfully steer the agent away from a given entity. We present our results from conv4a here as its effective value ranges were more sparse and provided clearer results.
+We apply our incremental steering experiments across all channels in conv3a and conv4a and find a large number of channels which successfully steer the agent away from a given entity. We present our results from layer conv4a in Figure~\ref{fig:steering-dot-plot}. For conv3a a similar phenomena is observed but with far more channels and many more effective steering values. We add black dotted lines to demarcate the value range within the $99.9$th percentile of activations calculated over 50 rollouts. This demonstrates that for many channels, the steering is far outside of their normal activation range, indicating that the steering functions as a kind of superstimulus and is likely not part of normal functioning for the network. 
+
+A possible explanation for why the ranges have an upper limit beyond which they stop working is that the activation is so strong that it disrupts normal functioning of the network, meaning that the agent fails to reach the artificially activated region.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_13.png}
-\caption{To determine the frequency with which a given channel can be used to steer the model away from a given entity, we create an artificial maze and place an artificial activation at a given point of the maze. We determine a successful intervention based on whether the agent makes contact with the region we specify. Each colored dot above represents a successful intervention with the specified entity as the target for the agent to move towards. Intervention success is partially localized to specific activation value ranges based on entity. This sample is from channel conv4a.}
+\includegraphics[width=0.9\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_14_ood_p99.9_step_35001.pdf}
+\caption{To determine the frequency with which a given channel can be used to steer the model away from a given entity, we create an artificial maze in a `Q' shape and place an artificial activation at a point to the right, and a given entity from the maze on the left. We declare an intervention to be successful based on whether the agent makes contact with the region around the artificial activation. Each colored dot in the above plot represents a successful suppression of the policy's normal target. Intervention success is partially localized to specific activation value ranges that vary based on the entity. We include black dotted lines to demarcate the activation value at the $99.9$th percentile of activations for a given channel, to give a sense for where interventions are outside the normal distribution of activations. This sample is from channel conv4a.}
 \label{fig:steering-dot-plot}
 \end{figure}
-The most striking aspect of our results is the fact that particular value ranges worked for specific entities, illustrating how the channel seemed to signal the presence of a particular entity through the amplitude of the activation within a channel.  
 
-We trained SAEs on these layers and found they exhibit similar multiplexing structures, confirming this is a robust strategy rather than the result of polysemanticity.
+
+The most striking aspect of our results is the fact that particular value ranges worked for specific entities, illustrating how the channel seemed to successfully distract the agent when in the presence of a particular entity through the amplitude of the activation within a channel. The successful distraction may mean that channel is particularly attuned to that entity, and having it activate elsewhere overwrites its typical normal function, but we believe that jumping to that conclusion may be be pre-emptive. 
+
+The primary value of this finding is in providing further support for the way in which individual channels seem to multiplex the targeting of specific entities with varying activation strengths. We trained SAEs on these layers and found they exhibit similar multiplexing structures, confirming this is a robust strategy rather than simply the result of polysemanticity.
 
 \subsection{Steering with Dead Channels (SAE)}
 \label{subsec:dead_channel_steering}
@@ -69,7 +91,7 @@ We trained SAEs on these layers and found they exhibit similar multiplexing stru
 One of the most surprising findings from the SAE intervention experiments was that a large number of the channels that were effective for steering the agent were `dead channels'. These are channels that exhibited no activation under normal operating conditions of the model. It was confirmed that these channels remained inactive over 100 rollouts. 
 
 
-\section{}
+\section{Probe results}
 
 
 
@@ -78,10 +100,10 @@ One of the most surprising findings from the SAE intervention experiments was th
 \subsection{Channel Ablation Studies}
 
 \begin{figure}[t]
-\centering
-\includegraphics[width=1\textwidth]{figures/clean_heatmap_no_header.png}
-\caption{Heatmap showing entity collection counts when only a single channel is active (all others ablated). The vertical axis shows different entity types (gem, blue\_key, green\_key, red\_key), while the horizontal axis shows channel indices. Brighter colors (yellow) indicate higher collection success rates. }
-\label{fig:ablation-heatmap}
+    \centering
+    \includegraphics[width=1\textwidth]{figures/clean_heatmap_no_header.png}
+    \caption{Heatmap showing entity collection counts when only a single channel is active (all others ablated). The vertical axis shows different entity types (gem, blue key, green key, red key), while the horizontal axis shows channel indices. Brighter colors (yellow) indicate higher collection success rates. }
+    \label{fig:ablation-heatmap}
 \end{figure}
 
 Our ablation analysis reveals that the ability to navigate is surprisingly redundantly encoded throughout the network. The heatmap in Figure \ref{fig:ablation-heatmap} shows the results in full. We observe that all channels have some success with reaching the entities some of the time with the best performing channels achieving success rates greater than 40\% for certain entities, while others have lower than 10\% success rates between entities. We also see that some channels show similar performance across entities, while others are significantly better at particular entities. 
@@ -97,39 +119,59 @@ Second, we discovered that the intervention signals actually interfere with the 
 
 \begin{table}[h]
     \centering
-    \caption{Effect of targeted ablations on entity collection rates. Bold values indicate performance improvements or minimal degradation compared to baseline.}
+    \caption{Effect of targeted ablations on entity collection rates (n=400 trials per condition). Bold values indicate performance improvements or minimal degradation compared to baseline.}
     \label{tab:ablation_results}
     \begin{tabular}{lcccc}
     \toprule
     Condition & Gem & Blue Key & Green Key & Red Key \\
     \midrule
-    Baseline & \textbf{74.2\%} & 97.8\% & 95.2\% & 82.2\% \\
-    Ablation (Zero Target) & 45.0\% & 69.6\% & 55.9\% & 43.1\% \\
-    Intervention (All Keys) & 64.8\% & \textbf{99.8\%} & \textbf{97.8\%} & \textbf{83.2\%} \\
-    Combined (Both) & 32.1\% & 71.9\% & 50.7\% & 37.1\% \\
-    Inverse (Preserve Target) & 31.8\% & 61.8\% & 43.6\% & 32.5\% \\
-    Random (Control) & 44.1\% & 74.9\% & 63.1\% & 48.9\% \\
+    Baseline (No Ablation) & \textbf{74.5\%} & 98.5\% & 95.0\% & 80.0\% \\
+    Redundant Navigation Channels & 45.0\% & 69.6\% & 55.9\% & 43.1\% \\
+    Infrastructure Channels & 27.3\% & 70.2\% & 34.5\% & 26.5\% \\
+    Intervention Spans & 64.8\% & \textbf{99.8\%} & \textbf{97.8\%} & \textbf{83.2\%} \\
+    Navigation + Intervention Spans & 32.1\% & 71.9\% & 50.7\% & 37.1\% \\
+    Preserve Only Intervention Spans & 31.8\% & 61.8\% & 43.6\% & 32.5\% \\
+    Random Ablation (Control) & 44.1\% & 74.9\% & 63.1\% & 48.9\% \\
     \bottomrule
     \end{tabular}
-    \end{table}
-To better understand the importance of the intervention space in explaining network performance, we performed inverse ablations where we preserved only the intervention spans for each entity. With the updated measurements, inverse performance is 31.8\% (gem), 61.8\% (blue), 43.6\% (green), and 32.5\% (red), all below the corresponding random-control rates of 44.1\%, 74.9\%, 63.1\%, and 48.9\%. Therefore, intervention spans alone are not sufficient to drive collection and do not outperform a random-control baseline. The intervention spans appear to encode some entity information but rely on other navigation circuitry to be effective.
+\end{table}
+
+
+To better understand the role of the intervention spans in explaining network performance, we performed inverse ablations where we preserved only the intervention spans for each entity. With the updated measurements, inverse performance is 31.8\% (gem), 61.8\% (blue), 43.6\% (green), and 32.5\% (red), all below the corresponding random-control rates of 44.1\%, 74.9\%, 63.1\%, and 48.9\%. Therefore, intervention spans alone are not sufficient to drive collection and do not outperform a random-control baseline. The intervention spans appear to encode some entity information but rely on other navigation circuitry to be effective.
+
+\subsection{Infrastucture Channels for Each Entity}
+\label{subsec:discovering_infrastructure_results}
+We additionally share our findings on the different collection rates in the empty environment used in the ablation study as a result of ablating single channels. We ablated the resulting top 10 infrastructure channels for each entity based on the results of the single channel intervention experiment described in~\ref{subsec:discovering_infrastructure} and found that certain important Infrastucture Channels were shared between entities, but also found some specialisation amongst them. 
+
+In particular, channel 25 was a critical channel which had a significant impact on collection rates for all entities in the fork maze experiments, reducing collection rates by 18\% on average.
+
+The results shown in~\ref{tab:infrastructure_ablation} demonstrate the results of ablating the top 10 infrastucture channels for each entity type in the empty maze environment. We observe that that ablating the channels identified as critical for gem collection had a far greater impact on the collection rates of other entities than removing their respective critical top 10 infrastucture channels. This may be the result of a greater share of the core navigational functionality being encoded in the gem infrastructure channels than in the key infrastructure channels. Interestingly collection of the blue key was more greatly affected by the ablation of the red key's channels than by the ablation of its own infrastucture channels.
+
+\begin{table}[h]
+    \centering
+    \caption{Effect of ablating top 10 infrastructure channels for each entity on collection rates (n=400 trials per condition). Bold values indicate the largest performance decreases for each entity type.}
+    \label{tab:infrastructure_ablation}
+    \begin{tabular}{lcccc}
+    \toprule
+    Condition & Gem & Blue Key & Green Key & Red Key \\
+    \midrule
+    Baseline & 74.5\% & 98.5\% & 95.0\% & 80.0\% \\
+    \midrule
+    Single Channel (Gem) & \textbf{27.3\%} & 70.2\% & 34.5\% & 26.5\% \\
+    Single Channel (Blue Key) & 32.5\% & \textbf{80.2\%} & 52.8\% & 38.0\% \\
+    Single Channel (Green Key) & 23.2\% & 97.5\% & \textbf{90.5\%} & 51.7\% \\
+    Single Channel (Red Key) & 49.8\% & 55.2\% & 49.2\% & \textbf{46.0\%} \\
+    \bottomrule
+    \end{tabular}
+    
+    \vspace{0.5em}
+    \small
+    \textit{Note: The diagonal shows on-target effects: Gem (-47.2\%), Blue Key (-18.3\%), Green Key (-4.5\%), Red Key (-34.0\%). Gem infrastructure channels affect all entities catastrophically, while Green Key channels display high variance in their impact.}
+\end{table}
 
 
 
-
-
-\section{Activation-Level Entity Encoding (SAE)}
-\label{sec:activation_level_encoding}
-    % % Content from Paper 1
-    % A key finding from the SAE analysis was that certain critical steering channels, specifically channels 44 and 75 in an SAE, encoded different entities at different activation strengths. This indicates a sophisticated mechanism for multiplexing information within a single channel, rather than requiring separate dedicated channels for each entity type.
-
-    % By examining the distribution of successful interventions for different entity types (see Figure \ref{fig:steering-distribution} from Paper 1), it was observed that these interventions occurred at distinct activation values within the same channel. For example, in channel 44, successful steering toward the blue key typically required lower activation values (around 0.5-0.7 in the paper's example, though Figure 4 suggests 1.4-1.8 for blue key vs 0.5-1.0 for gem), while steering toward the red key needed higher values (e.g., 1.5-2.0). This activation-level encoding mechanism allows a single channel to represent multiple entity types, enabling efficient information encoding within a minimal set of active channels (Paper 1).
-
-    %TODO: This is old content, and needs to be updated but the subject of the content is worth keeping
 
 
 \section{Summary of Key Findings}
 \label{sec:results_summary_key_findings}
-    The experimental results provide several key insights into the workings of the RL agent and the effects of SAEs. SAEs were successfully trained to reconstruct activations with high fidelity and minimal impact on task performance, while offering clearer feature visualizations, particularly through max activating patches. Both base models and SAE-enhanced models were steerable via activation interventions in convolutional layers, with SAEs sometimes offering more targeted control and revealing layer-specific roles in goal processing.
-
-    Quantitative analysis highlighted the persistence of polysemanticity in some layers even after SAE training, though SAEs could also reduce it in others. A surprising finding was the steerability afforded by dead channels in SAEs. Ablation studies underscored the concentration of navigational capabilities into a few key SAE channels, which also showed specialization for different entities or stages of the task. Critically, some SAE channels were found to encode multiple entities within a single channel by utilizing different activation strengths—a sophisticated form of information multiplexing. In contrast, the base model exhibited more widespread polysemanticity across its channels. These findings collectively advance our understanding of how RL agents represent and pursue goals, and how tools like SAEs can help to uncover these mechanisms.
