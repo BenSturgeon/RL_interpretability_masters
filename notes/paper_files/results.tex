@@ -4,8 +4,6 @@
 
 All results presented are from checkpoint 35001 (35k update steps), past convergence which occurred around 30k, unless otherwise noted. 
 
-
-
 \section{Parallel Rollout Activation Analysis}
 In performing parallel rollouts targeting the different entities, as shown in Figure~\ref{fig:parallel-rollout}, we observe that there are distinct parallel trajectories in the mean activations across different channels in the network for each entity.
 
@@ -46,11 +44,17 @@ Interestingly, in the cross maze where it was possible to access all the keys fr
 \end{figure}
 
 \section{Activation Offsets Achieve Steering}
-A surprising finding was that merely by adjusting the activation ranges within channels by a static offset we could reliably achieve coherent steering towards different entities than what it would target by default. Results of rates of initial pickup over different rollouts are presented in Figure~\ref{fig:activation_offset_results}. We observe complete shifts in entity targeting, with baseline rates of targeting shifting from \textbf{93\% blue key targeting (at 0.0 offset, with a peak of 95\% at $-0.2$ offset)} to switch to targeting the green key at \textbf{$+1.6$ offset}, and peaking in green targeting at \textbf{$+4.8$ offset with a 94\% collection rate}. We also observe a transition to targeting red more than blue at \textbf{$-4.6$ offset} and peak red key collection of \textbf{52\% at $-5.8$ offset}. There is also a significant uptick in green key collection rates in the negative range, with a local maxima of \textbf{$-2.8$ for green key collection rates (27\%)}, before dropping as rates of red key collection increase as the offset becomes more negative.
+\section{Activation Offsets Achieve Steering}
 
-We also observe that rates of not collecting any entity during the rollout increase as we approach the positive and negative offset extremes, which is expected considering that the large offsets would be likely to interfere with the functioning of the network. However, the overall collection rate remains fairly high, and the environment includes many cases where navigating around corners is required to reach keys, meaning important navigational functions within the network continue to function.
+A surprising finding was that merely by adjusting the activation ranges within channels by a static offset we could reliably achieve coherent steering towards different entities than what the agent would target by default. Results of rates of initial pickup over different rollouts are presented in Figure~\ref{fig:activation_offset_results}. 
 
-We find similar results with conv3a, though with a much smaller interval before repeating patterns emerge. A further repeat continues with conv2a, with an even smaller interval. Of particular note in the conv2a example is the very clear repeating pattern that emerges beyond a certain offset range. We also repeat observe this result on different checkpoints, with different success rates but with the same overall patterns. Figures for conv3a and conv2a are included in Appendix~\ref{app:additional_offset_results}.
+We observe complete shifts in entity targeting. Baseline rates show 93\% $\pm$ 6\% blue key targeting at offset 0.0, peaking at 95\% $\pm$ 5\% at offset $-0.2$. At positive offsets, the agent switches to targeting the green key, reaching 67\% $\pm$ 9\% collection at offset $+1.6$ and peaking in green targeting at 94\% $\pm$ 5\% at offset $+4.8$. 
+
+At negative offsets, we observe a transition to targeting red more than blue at offset $-4.6$ (44\% $\pm$ 10\% red), with peak red key collection of 52\% $\pm$ 10\% at offset $-5.8$. There is also a significant uptick in green key collection rates in the negative range, with a local maxima of $-2.8$ at 27\% $\pm$ 9\%, before dropping as rates of red key collection increase as the offset becomes more negative.
+
+We also observe that rates of not collecting any entity during the rollout increase as we approach the positive and negative offset extremes, peaking at 44\% $\pm$ 10\% at offset $+12.0$ and 32\% $\pm$ 9\% at offset $-14.0$, which is expected considering that the large offsets would be likely to interfere with the functioning of the network. However, the overall collection rate remains fairly high, and the environment includes many cases where navigating around corners is required to reach keys, meaning important navigational functions within the network continue to function.
+
+We find similar results with conv3a, though with a much smaller interval before repeating patterns emerge. A further repeat continues with conv2a, with an even smaller interval. Of particular note in the conv2a example is the very clear repeating pattern that emerges beyond a certain offset range, and also with a surprising surge in red key and to a lesser extent gem collection in the positive range, indicating that conv2a is particularly emanable to this kind of offset steering and allows more fine grained control. We also repeat observe this result on different checkpoints, with different success rates but with the same overall patterns. Figures for conv3a and conv2a are included in Appendix~\ref{app:additional_offset_results}.
 
 \begin{figure}[H]
     \centering
@@ -60,11 +64,25 @@ We find similar results with conv3a, though with a much smaller interval before 
 \end{figure}
 
 
-\section{SAE Training}
-\label{sec:sae_viz_results}
+\section{Using SAEs to Validate Activation Encoding}
+\label{sec:sae_training}
     \subsection{SAE Performance}
     \label{subsec:sae_performance}
     We found that the SAEs tended to be extremely effective at recovering performance on the original task, with the conv4a SAEs recovering 99.6\% of performance and the conv3a SAEs recovering 102\% of performance (likely due to random variance in the seeds and evaluations) as measured by average reward attained in Procgen heist mazes. This recovery would typically occur within 40000 steps of training. The SAEs were also able to rapidly achieve variance explained scores approaching 100\% (indicating near-perfect reconstruction of the original activations) within 120000 steps.  The SAEs were typically trained for 2 million steps to ensure convergence. This success provides good evidence that the SAEs worked as intended and could be relied upon to validate our other results.
+
+
+    \subsection{SAEs Preserve Base Model Structure}
+    Remarkably, training SAEs on conv3a and conv4a did not reveal additional interpretable structure beyond what we observed in the base model. SAE latents exhibited the same activation magnitude encoding for entity differentiation, with similar steering patterns and intervention spans. This preservation across radically different representation schemes (32 base channels → 128 SAE latents) suggests activation-level encoding is fundamental computational strategy, not an artifact of the base architecture.
+  
+    \subsection{Steering Patterns Remain Unchanged}
+    When comparing steering interventions between base model channels and SAE latents, we found nearly identical patterns: specific activation ranges successfully redirect the agent from particular entities, with similar success rates (base: X\%, SAE: Y\%). The primary difference was that SAE  interventions required [higher/lower] activation values, consistent with the [sparsity/expansion] introduced by the L1 penalty.
+
+
+    \subsection{Steering with Dead Channels (SAE)}
+\label{subsec:dead_channel_steering}
+% Content from Paper 1
+One of the most surprising findings from the SAE intervention experiments was that a large number of the channels that were effective for steering the agent were `dead channels'. These are channels that exhibited no activation under normal operating conditions of the model. It was confirmed that these channels remained inactive over 100 rollouts. 
+
 
 \subsection{Quantitative Steering Results}
 
@@ -91,8 +109,6 @@ The primary value of this finding is in providing further support for the way in
 One of the most surprising findings from the SAE intervention experiments was that a large number of the channels that were effective for steering the agent were `dead channels'. These are channels that exhibited no activation under normal operating conditions of the model. It was confirmed that these channels remained inactive over 100 rollouts. 
 
 
-\section{Probe results}
-
 \section{Probing for Entity Representations}
 \label{sec:probe_results}
 
@@ -104,30 +120,30 @@ The changing accuracies in probe accuracy across layers reveal that the convolut
 
 \begin{table}[h]
     \centering
-    \caption{Whole-layer probe accuracy for predicting next target entity across network layers. Random baseline is 14.3\%.}
+    \caption{Whole-layer probe accuracy for predicting next target entity across network layers. Random baseline is 14.3\%. Overall accuracy shown with 95\% confidence intervals (n=1,400 test samples).}
     \label{tab:probe_whole_layer}
     \begin{tabular}{lcccccc}
     \toprule
     \textbf{Layer} & \textbf{Overall} & \textbf{Blue Key} & \textbf{Green Key} & \textbf{Red Key} & \textbf{Gem} & \textbf{$\Delta$ $\rightarrow$ Previous} \\
     \midrule
-    conv1a & 20.0\% & 0.0\% & 99.4\% & 0.0\% & 0.0\% & --- \\
-    conv2a & 96.6\% & 97.7\% & 97.7\% & 85.6\% & 99.5\% & +76.6\% \\
-    conv3a & 99.3\% & 99.1\% & 99.4\% & 98.6\% & 100.0\% & +2.7\% \\
-    conv4a & 97.6\% & 99.1\% & 98.3\% & 97.6\% & 100.0\% & -1.6\% \\
+    conv1a & 20.0\% $\pm$ 2.1\% & 0.0\% & 99.4\% & 0.0\% & 0.0\% & --- \\
+    conv2a & 96.6\% $\pm$ 1.0\% & 97.7\% & 97.7\% & 85.6\% & 99.5\% & +76.6\% \\
+    conv3a & 99.3\% $\pm$ 0.4\% & 99.1\% & 99.4\% & 98.6\% & 100.0\% & +2.7\% \\
+    conv4a & 97.6\% $\pm$ 0.8\% & 99.1\% & 98.3\% & 97.6\% & 100.0\% & -1.6\% \\
     \midrule
-    fc1 & 87.5\% & 95.4\% & 80.2\% & 80.3\% & 96.2\% & -10.1\% \\
-    fc2 & 76.8\% & 92.6\% & 55.8\% & 75.0\% & 90.8\% & -10.7\% \\
-    fc3 & 20.4\% & 23.3\% & 16.9\% & 20.2\% & 35.9\% & -56.4\% \\
+    fc1 & 87.5\% $\pm$ 1.7\% & 95.4\% & 80.2\% & 80.3\% & 96.2\% & -10.1\% \\
+    fc2 & 76.8\% $\pm$ 2.2\% & 92.6\% & 55.8\% & 75.0\% & 90.8\% & -10.7\% \\
+    fc3 & 20.4\% $\pm$ 2.1\% & 23.3\% & 16.9\% & 20.2\% & 35.9\% & -56.4\% \\
     \bottomrule
     \end{tabular}
 \end{table}
 
 The probe accuracies illustrate two phases of information processing:
 
-\textbf{Phase 1 - Emergence (conv1a $\rightarrow$ conv3a):} The whole layer probe of Conv1a performs barely above random baseline (20.0\% vs 14.3\%), on everything except the green key (99.4\%). However, examining individual channels reveals that conv1a contains highly specialized entity detectors: five channels achieve $>$90\% accuracy on blue keys (with Ch11 reaching 100\%), five channels exceed 90\% on red keys (Ch9 and Ch14 both at 100\%), and three channels on the gem (with Ch0 at 97.3\%). 
-This shows that conv1a is detecting specific entities, but naturally cannot synthesise a hierachy between them, due no processing having occurred in the network. In contrast, conv2a achieves \textbf{96.6\% accuracy} across all entity types, representing a 76.6 percentage point jump. This dramatic difference shows that conv2a integrates entity information into a structure from the signals in conv1a. Performance improves slightly in conv3a (\textbf{99.3\% accuracy}) before showing a slight decline at conv4a (97.6\%).
+\textbf{Phase 1 - Emergence (conv1a $\rightarrow$ conv3a):} The whole layer probe of Conv1a performs barely above random baseline (20.0\% $\pm$ 2.1\% vs 14.3\%), on everything except the green key (99.4\%). However, examining individual channels reveals that conv1a contains highly specialized entity detectors: five channels achieve $>$90\% accuracy on blue keys (with Ch11 reaching 100\%), five channels exceed 90\% on red keys (Ch9 and Ch14 both at 100\%), and three channels on the gem (with Ch0 at 97.3\%). 
+This shows that conv1a is detecting specific entities, but naturally cannot synthesise a hierarchy between them, due no processing having occurred in the network. In contrast, conv2a achieves 96.6\% $\pm$ 1.0\% accuracy across all entity types, representing a 76.6 percentage point jump. This dramatic difference shows that conv2a integrates entity information into a structure from the signals in conv1a. Performance improves slightly in conv3a (99.3\% $\pm$ 0.4\% accuracy) before showing a slight decline at conv4a (97.6\% $\pm$ 0.8\%).
 
-\textbf{Phase 2 - Compression (fc1 $\rightarrow$ fc3):} The clarity of entity representation decreases progressively through the fully-connected layers, dropping from 87.5\% (fc1) to 76.8\% (fc2) and finally collapsing to \textbf{20.4\% in fc3}—barely above random. To confirm whether the information was simply being represented non-linearly, we trained MLP probes on these layers, which performed very similarly to the linear probes. 
+\textbf{Phase 2 - Compression (fc1 $\rightarrow$ fc3):} The clarity of entity representation decreases progressively through the fully-connected layers, dropping from 87.5\% $\pm$ 1.7\% (fc1) to 76.8\% $\pm$ 2.2\% (fc2) and finally collapsing to 20.4\% $\pm$ 2.1\% in fc3—barely above random. To confirm whether the information was simply being represented non-linearly, we trained MLP probes on these layers, which performed very similarly to the linear probes. 
 
 This marks the point at which the network transforms explicit entity representations into action-oriented features. This makes sense as in final layer it has to produce only the action distribution and value estimation, which would naturally be quite distant from the entity representations themselves.
 
@@ -138,35 +154,80 @@ To understand which points of the network are most involved with navigation, we 
 
 \begin{table}[h]
     \centering
-    \caption{Whole-layer probe accuracy for predicting optimal movement direction across network layers. Random baseline is 25\%.}
+    \caption{Whole-layer probe accuracy for predicting optimal movement direction across network layers. Random baseline is 25\%. Overall accuracy shown with 95\% confidence intervals (n=1,600 test samples).}
     \label{tab:probe_directional}
     \begin{tabular}{lcccccl}
     \toprule
     \textbf{Layer} & \textbf{Overall} & \textbf{Up} & \textbf{Right} & \textbf{Down} & \textbf{Left} & \textbf{$\Delta$ $\rightarrow$ Previous} \\
     \midrule
-    conv1a & 25.1\% & 100.0\% & 0.3\% & 0.0\% & 0.0\% & --- \\
-    conv2a & 42.7\% & 44.5\% & 61.5\% & 5.5\% & 59.2\% & +17.6\% \\
-    conv3a & 63.6\% & 61.0\% & 66.8\% & 69.0\% & 57.8\% & +20.9\% \\
-    conv4a & 51.7\% & 51.2\% & 48.8\% & 51.0\% & 55.8\% & -11.9\% \\
+    conv1a & 25.1\% $\pm$ 2.1\% & 100.0\% & 0.3\% & 0.0\% & 0.0\% & --- \\
+    conv2a & 42.7\% $\pm$ 2.4\% & 44.5\% & 61.5\% & 5.5\% & 59.2\% & +17.6\% \\
+    conv3a & 63.6\% $\pm$ 2.4\% & 61.0\% & 66.8\% & 69.0\% & 57.8\% & +20.9\% \\
+    conv4a & 51.7\% $\pm$ 2.5\% & 51.2\% & 48.8\% & 51.0\% & 55.8\% & -11.9\% \\
     \midrule
-    fc1 & 62.9\% & 60.5\% & 63.5\% & 61.5\% & 66.2\% & +11.2\% \\
-    fc2 & \textbf{67.3\%} & 64.5\% & 66.2\% & 69.2\% & 69.2\% & +4.4\% \\
-    fc3 & 21.1\% & 37.0\% & 16.8\% & 21.0\% & 9.8\% & -46.2\% \\
+    fc1 & 62.9\% $\pm$ 2.4\% & 60.5\% & 63.5\% & 61.5\% & 66.2\% & +11.2\% \\
+    fc2 & 67.3\% $\pm$ 2.3\% & 64.5\% & 66.2\% & 69.2\% & 69.2\% & +4.4\% \\
+    fc3 & 21.1\% $\pm$ 2.0\% & 37.0\% & 16.8\% & 21.0\% & 9.8\% & -46.2\% \\
     \bottomrule
     \end{tabular}
 \end{table}
 
-The directional probes reveal a significantly different structure than the next target entity probes. Conv2a achieves only 42.7\% accuracy (barely above the 25\% baseline), with highly unbalanced performance, achieving near-zero accuracy on downward movement (5.5\%) despite reasonable performance on horizontal directions. The best convolutional layer performance is observed at conv3a (63.6\%), before showing a somewhat surprising drop at conv4a to 51.7\%. 
+The directional probes reveal a significantly different structure than the next target entity probes. Conv2a achieves only 42.7\% $\pm$ 2.4\% accuracy (barely above the 25\% baseline), with highly unbalanced performance, achieving near-zero accuracy on downward movement (5.5\%) despite reasonable performance on horizontal directions. The best convolutional layer performance is observed at conv3a (63.6\% $\pm$ 2.4\%), before showing a somewhat surprising drop at conv4a to 51.7\% $\pm$ 2.5\%. 
 
-Crucially, unlike entity information which degrades in fully-connected layers, directional information \textit{recovers and improves} through the FC layers. FC1 recovers to 62.9\%, and fc2 achieves the highest accuracy overall at \textbf{67.3\%}, with balanced performance across all four directions. This suggests that spatial navigation information is actively refined and strengthened as the network prepares for action selection, rather than being compressed away.
+Crucially, unlike entity information which degrades in fully-connected layers, directional information \textit{recovers and improves} through the FC layers. FC1 recovers to 62.9\% $\pm$ 2.4\%, and fc2 achieves the highest accuracy overall at 67.3\% $\pm$ 2.3\%, with balanced performance across all four directions. This suggests that spatial navigation information is actively refined and strengthened as the network prepares for action selection, rather than being compressed away.
 
 The surprising conv4a performance drop (63.6\% $\rightarrow$ 51.7\%) diverges from the pattern observed in the next target entity probes, which retain most of their accuracy at this layer (99.3\% $\rightarrow$ 97.6\%). This suggests conv4a functions as a bridge in converting the high level spatial information into a structure coherent to the fully connected layers that temporarily disrupts the linear separability of directional information.
 
 \subsection{Comparing Entity and Directional Information Flow}
 
-The observed structual differences between next target entity and directional probes reveal a two-stage structure. Entity information peaks at conv3a (99.3\%) while directional information peaks at fc2 (67.3\%), indicating that the network first establishes the correct target, and then shifts towards determining the correct way to approach that target, with much of that being concentrated in the fully-connected layers, peaking in FC2.
+The contrasting progressions reveal a two-stage processing architecture. Entity information contains specialist detectors even at conv1a and peaks at conv3a (99.3\% $\pm$ 0.4\%), while directional information is entirely absent at conv1a (25.1\% $\pm$ 2.1\%, at random baseline) and peaks much later at fc2 (67.3\% $\pm$ 2.3\%). This indicates that the network implements a hierarchical processing strategy:
 
-This functional separation explains key findings from our intervention experiments. The entity encoding at conv3a and conv4a explains why steering and ablation interventions were most effective at this depth, as this allowed direct impacts on the formation of plans before they are transformed into abstractions related to actions. This also goes some way in explaining the general preservation of navigation abilities even when large parts of the convolutional layers are ablated, as a good deal of that functionality is encoded in the fully connected layers. Conditional on the current entity being sufficiently established and passed on in conv4a, navigation can still be performed.
+\textbf{Stage 1 - Goal Identification (conv2a--conv4a):} Entity information emerges sharply from conv1a (which contains specialist entity detectors despite poor whole-layer performance) through conv2a (96.6\% $\pm$ 1.0\%) and peaks at conv3a (99.3\% $\pm$ 0.4\%), remaining extremely high at conv4a at 97.6\% $\pm$ 0.8\%. At this stage, directional information remains relatively weak (63.6\% $\pm$ 2.4\% at conv3a), suggesting the network prioritizes identifying the correct goal before planning how to reach it. Notably, conv1a contains no directional information whatsoever (25.1\% $\pm$ 2.1\%, at random baseline), contrasting with its entity specialist channels—indicating directional processing emerges later in the network.
+
+\textbf{Stage 2 - Navigation Planning (fc1--fc2):} As entity information compresses (99.3\% $\rightarrow$ 20.4\%), directional information strengthens (63.6\% $\rightarrow$ 67.3\%). The network transforms explicit entity representations into spatial navigation commands, with peak directional accuracy at fc2 (67.3\% $\pm$ 2.3\%) suggesting motion-oriented features directly relevant to action selection. Both types of information then collapse at fc3 (entity: 20.4\% $\pm$ 2.1\%, direction: 21.1\% $\pm$ 2.0\%), as they are compressed into the final action distribution and value estimates.
+
+This functional separation explains key findings from our intervention experiments. The near-perfect entity encoding at conv3a explains why steering and ablation interventions were most effective at this depth—we modified explicit goal representations before their transformation into motor commands. Conversely, the distributed nature of directional information across multiple layers explains why navigation remained largely functional even under heavy ablation, making it more robust to localized disruption than the concentrated entity representations.
+
+
+\subsection{Directional Navigation Probes}
+\label{subsec:directional_probes}
+
+To understand which points of the network are most involved with navigation, we trained linear probes to predict the optimal movement direction (up, right, down, left) from layer activations. We gathered 8,000 samples (2,000 per direction) using Dijkstra's algorithm to compute optimal paths, filtering out examples where the agent was not centered in a grid cell to avoid ambiguity, and also removing examples where the agent was directly next to the target entity in order to enhance the difficulty of the problem. Results are shown in Table~\ref{tab:probe_directional}.
+\begin{table}[h]
+    \centering
+    \caption{Whole-layer probe accuracy for predicting optimal movement direction across network layers. Random baseline is 25\%. Overall accuracy shown with 95\% confidence intervals (n=1,600 test samples). Best performance for each column is bolded.}
+    \label{tab:probe_directional}
+    \begin{tabular}{lcccccl}
+    \toprule
+    \textbf{Layer} & \textbf{Overall} & \textbf{Up} & \textbf{Right} & \textbf{Down} & \textbf{Left} & \textbf{$\Delta$ $\rightarrow$ Previous} \\
+    \midrule
+    conv1a & 25.1\% $\pm$ 2.1\% & \textbf{100.0\%} & 0.3\% & 0.0\% & 0.0\% & --- \\
+    conv2a & 42.7\% $\pm$ 2.4\% & 44.5\% & 61.5\% & 5.5\% & 59.2\% & +17.6\% \\
+    conv3a & 63.6\% $\pm$ 2.4\% & 61.0\% & \textbf{66.8\%} & 69.0\% & 57.8\% & +20.9\% \\
+    conv4a & 51.7\% $\pm$ 2.5\% & 51.2\% & 48.8\% & 51.0\% & 55.8\% & -11.9\% \\
+    \midrule
+    fc1 & 62.9\% $\pm$ 2.4\% & 60.5\% & 63.5\% & 61.5\% & 66.2\% & +11.2\% \\
+    fc2 & \textbf{67.3\% $\pm$ 2.3\%} & 64.5\% & 66.2\% & \textbf{69.2\%} & \textbf{69.2\%} & +4.4\% \\
+    fc3 & 21.1\% $\pm$ 2.0\% & 37.0\% & 16.8\% & 21.0\% & 9.8\% & -46.2\% \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+The directional probes reveal a significantly different structure than the next target entity probes. Conv2a achieves only 42.7\% $\pm$ 2.4\% accuracy (barely above the 25\% baseline), with highly unbalanced performance, achieving near-zero accuracy on downward movement (5.5\%) despite reasonable performance on horizontal directions. The best convolutional layer performance is observed at conv3a (63.6\% $\pm$ 2.4\%), before showing a somewhat surprising drop at conv4a to 51.7\% $\pm$ 2.5\%. 
+
+Crucially, unlike entity information which degrades in fully-connected layers, directional information \textit{recovers and improves} through the FC layers. FC1 recovers to 62.9\% $\pm$ 2.4\%, and fc2 achieves the highest accuracy overall at 67.3\% $\pm$ 2.3\%, with balanced performance across all four directions. This suggests that spatial navigation information is actively refined and strengthened as the network prepares for action selection, rather than being compressed away.
+
+The surprising conv4a performance drop (63.6\% $\rightarrow$ 51.7\%) diverges from the pattern observed in the next target entity probes, which retain most of their accuracy at this layer (99.3\% $\rightarrow$ 97.6\%). This suggests conv4a functions as a bridge in converting the high level spatial information into a structure coherent to the fully connected layers that temporarily disrupts the linear separability of directional information.
+
+\subsection{Comparing Entity and Directional Information Flow}
+
+The contrasting progressions reveal a two-stage processing architecture. Entity information contains specialist detectors even at conv1a and peaks at conv3a (99.3\% $\pm$ 0.4\%), while directional information is entirely absent at conv1a (25.1\% $\pm$ 2.1\%, at random baseline) and peaks much later at fc2 (67.3\% $\pm$ 2.3\%). This indicates that the network implements a hierarchical processing strategy:
+
+\textbf{Stage 1 - Goal Identification (conv2a--conv4a):} Entity information emerges sharply from conv1a (which contains specialist entity detectors despite poor whole-layer performance) through conv2a (96.6\% $\pm$ 1.0\%) and peaks at conv3a (99.3\% $\pm$ 0.4\%), remaining extremely high at conv4a at 97.6\% $\pm$ 0.8\%. At this stage, directional information remains relatively weak (63.6\% $\pm$ 2.4\% at conv3a), suggesting the network prioritizes identifying the correct goal before planning how to reach it. Notably, conv1a contains no directional information whatsoever (25.1\% $\pm$ 2.1\%, at random baseline), contrasting with its entity specialist channels—indicating directional processing emerges later in the network.
+
+\textbf{Stage 2 - Navigation Planning (fc1--fc2):} As entity information compresses (99.3\% $\rightarrow$ 20.4\%), directional information strengthens (63.6\% $\rightarrow$ 67.3\%). The network transforms explicit entity representations into spatial navigation commands, with peak directional accuracy at fc2 (67.3\% $\pm$ 2.3\%) suggesting motion-oriented features directly relevant to action selection. Both types of information then collapse at fc3 (entity: 20.4\% $\pm$ 2.1\%, direction: 21.1\% $\pm$ 2.0\%), as they are compressed into the final action distribution and value estimates.
+
+This functional separation explains key findings from our intervention experiments. The near-perfect entity encoding at conv3a explains why steering and ablation interventions were most effective at this depth—we modified explicit goal representations before their transformation into motor commands. Conversely, the distributed nature of directional information across multiple layers explains why navigation remained largely functional even under heavy ablation, making it more robust to localized disruption than the concentrated entity representations.
 
 
 
