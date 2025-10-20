@@ -93,6 +93,82 @@ One of the most surprising findings from the SAE intervention experiments was th
 
 \section{Probe results}
 
+\section{Probing for Entity Representations}
+\label{sec:probe_results}
+
+To determine where the network encodes information about which entity to target next, we trained linear probes on activations from each layer. We gathered 14,000 balanced samples across seven entity types (blue/green/red keys and locks, plus gem) and trained multi-class classifiers with a 90/10 train-test split. This approach reveals at which layer the network most explicitly represents the current goal.
+
+\subsection{Convolutional Layers Encode Entities}
+
+The changing accuracies in probe accuracy across layers reveal that the convolutional layers seem to dominate in the selection of which entity to target, while the fully connected layers rapidly transition to translating information into actions. Table~\ref{tab:probe_whole_layer} shows whole-layer probe accuracies from the input through to the final hidden layer.
+
+\begin{table}[h]
+    \centering
+    \caption{Whole-layer probe accuracy for predicting next target entity across network layers. Random baseline is 14.3\%.}
+    \label{tab:probe_whole_layer}
+    \begin{tabular}{lcccccc}
+    \toprule
+    \textbf{Layer} & \textbf{Overall} & \textbf{Blue Key} & \textbf{Green Key} & \textbf{Red Key} & \textbf{Gem} & \textbf{$\Delta$ $\rightarrow$ Previous} \\
+    \midrule
+    conv1a & 20.0\% & 0.0\% & 99.4\% & 0.0\% & 0.0\% & --- \\
+    conv2a & 96.6\% & 97.7\% & 97.7\% & 85.6\% & 99.5\% & +76.6\% \\
+    conv3a & 99.3\% & 99.1\% & 99.4\% & 98.6\% & 100.0\% & +2.7\% \\
+    conv4a & 97.6\% & 99.1\% & 98.3\% & 97.6\% & 100.0\% & -1.6\% \\
+    \midrule
+    fc1 & 87.5\% & 95.4\% & 80.2\% & 80.3\% & 96.2\% & -10.1\% \\
+    fc2 & 76.8\% & 92.6\% & 55.8\% & 75.0\% & 90.8\% & -10.7\% \\
+    fc3 & 20.4\% & 23.3\% & 16.9\% & 20.2\% & 35.9\% & -56.4\% \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+The probe accuracies illustrate two phases of information processing:
+
+\textbf{Phase 1 - Emergence (conv1a $\rightarrow$ conv3a):} The whole layer probe of Conv1a performs barely above random baseline (20.0\% vs 14.3\%), on everything except the green key (99.4\%). However, examining individual channels reveals that conv1a contains highly specialized entity detectors: five channels achieve $>$90\% accuracy on blue keys (with Ch11 reaching 100\%), five channels exceed 90\% on red keys (Ch9 and Ch14 both at 100\%), and three channels on the gem (with Ch0 at 97.3\%). 
+This shows that conv1a is detecting specific entities, but naturally cannot synthesise a hierachy between them, due no processing having occurred in the network. In contrast, conv2a achieves \textbf{96.6\% accuracy} across all entity types, representing a 76.6 percentage point jump. This dramatic difference shows that conv2a integrates entity information into a structure from the signals in conv1a. Performance improves slightly in conv3a (\textbf{99.3\% accuracy}) before showing a slight decline at conv4a (97.6\%).
+
+\textbf{Phase 2 - Compression (fc1 $\rightarrow$ fc3):} The clarity of entity representation decreases progressively through the fully-connected layers, dropping from 87.5\% (fc1) to 76.8\% (fc2) and finally collapsing to \textbf{20.4\% in fc3}—barely above random. To confirm whether the information was simply being represented non-linearly, we trained MLP probes on these layers, which performed very similarly to the linear probes. 
+
+This marks the point at which the network transforms explicit entity representations into action-oriented features. This makes sense as in final layer it has to produce only the action distribution and value estimation, which would naturally be quite distant from the entity representations themselves.
+
+\subsection{Directional Navigation Probes}
+\label{subsec:directional_probes}
+
+To understand which points of the network are most involved with navigation, we trained linear probes to predict the optimal movement direction (up, right, down, left) from layer activations. We gathered 8,000 samples (2,000 per direction) using Dijkstra's algorithm to compute optimal paths, filtering out examples where the agent was not centered in a grid cell to avoid ambiguity, and also removing examples where the agent was directly next to the target entity in order to enhance the difficulty of the problem. Results are shown in Table~\ref{tab:probe_directional}.
+
+\begin{table}[h]
+    \centering
+    \caption{Whole-layer probe accuracy for predicting optimal movement direction across network layers. Random baseline is 25\%.}
+    \label{tab:probe_directional}
+    \begin{tabular}{lcccccl}
+    \toprule
+    \textbf{Layer} & \textbf{Overall} & \textbf{Up} & \textbf{Right} & \textbf{Down} & \textbf{Left} & \textbf{$\Delta$ $\rightarrow$ Previous} \\
+    \midrule
+    conv1a & 25.1\% & 100.0\% & 0.3\% & 0.0\% & 0.0\% & --- \\
+    conv2a & 42.7\% & 44.5\% & 61.5\% & 5.5\% & 59.2\% & +17.6\% \\
+    conv3a & 63.6\% & 61.0\% & 66.8\% & 69.0\% & 57.8\% & +20.9\% \\
+    conv4a & 51.7\% & 51.2\% & 48.8\% & 51.0\% & 55.8\% & -11.9\% \\
+    \midrule
+    fc1 & 62.9\% & 60.5\% & 63.5\% & 61.5\% & 66.2\% & +11.2\% \\
+    fc2 & \textbf{67.3\%} & 64.5\% & 66.2\% & 69.2\% & 69.2\% & +4.4\% \\
+    fc3 & 21.1\% & 37.0\% & 16.8\% & 21.0\% & 9.8\% & -46.2\% \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+The directional probes reveal a significantly different structure than the next target entity probes. Conv2a achieves only 42.7\% accuracy (barely above the 25\% baseline), with highly unbalanced performance, achieving near-zero accuracy on downward movement (5.5\%) despite reasonable performance on horizontal directions. The best convolutional layer performance is observed at conv3a (63.6\%), before showing a somewhat surprising drop at conv4a to 51.7\%. 
+
+Crucially, unlike entity information which degrades in fully-connected layers, directional information \textit{recovers and improves} through the FC layers. FC1 recovers to 62.9\%, and fc2 achieves the highest accuracy overall at \textbf{67.3\%}, with balanced performance across all four directions. This suggests that spatial navigation information is actively refined and strengthened as the network prepares for action selection, rather than being compressed away.
+
+The surprising conv4a performance drop (63.6\% $\rightarrow$ 51.7\%) diverges from the pattern observed in the next target entity probes, which retain most of their accuracy at this layer (99.3\% $\rightarrow$ 97.6\%). This suggests conv4a functions as a bridge in converting the high level spatial information into a structure coherent to the fully connected layers that temporarily disrupts the linear separability of directional information.
+
+\subsection{Comparing Entity and Directional Information Flow}
+
+The observed structual differences between next target entity and directional probes reveal a two-stage structure. Entity information peaks at conv3a (99.3\%) while directional information peaks at fc2 (67.3\%), indicating that the network first establishes the correct target, and then shifts towards determining the correct way to approach that target, with much of that being concentrated in the fully-connected layers, peaking in FC2.
+
+This functional separation explains key findings from our intervention experiments. The entity encoding at conv3a and conv4a explains why steering and ablation interventions were most effective at this depth, as this allowed direct impacts on the formation of plans before they are transformed into abstractions related to actions. This also goes some way in explaining the general preservation of navigation abilities even when large parts of the convolutional layers are ablated, as a good deal of that functionality is encoded in the fully connected layers. Conditional on the current entity being sufficiently established and passed on in conv4a, navigation can still be performed.
+
+
 
 
 \section{Expanded ablation studies}
@@ -137,7 +213,7 @@ Second, we discovered that the intervention signals actually interfere with the 
 \end{table}
 
 
-To better understand the role of the intervention spans in explaining network performance, we performed inverse ablations where we preserved only the intervention spans for each entity. With the updated measurements, inverse performance is 31.8\% (gem), 61.8\% (blue), 43.6\% (green), and 32.5\% (red), all below the corresponding random-control rates of 44.1\%, 74.9\%, 63.1\%, and 48.9\%. Therefore, intervention spans alone are not sufficient to drive collection and do not outperform a random-control baseline. The intervention spans appear to encode some entity information but rely on other navigation circuitry to be effective.
+To better understand the role of the intervention spans in explaining network performance, we performed inverse ablations where we preserved only the intervention spans for each entity. With the updated measurements, inverse performance is 31.8\% (gem), 61.8\% (blue), 43.6\% (green), and 32.5\% (red), all below the corresponding random-control rates of 44.1\%, 74.9\%, 63.1\%, and 48.9\%. Intervention spans alone are not sufficient to drive collection and do not outperform a random-control baseline. The intervention spans appear to encode some entity information but rely on other navigation circuitry to be effective.
 
 \subsection{Infrastucture Channels for Each Entity}
 \label{subsec:discovering_infrastructure_results}
@@ -145,9 +221,11 @@ We additionally share our findings on the different collection rates in the empt
 
 In particular, channel 25 was a critical channel which had a significant impact on collection rates for all entities in the fork maze experiments, reducing collection rates by 18\% on average.
 
-The results shown in~\ref{tab:infrastructure_ablation} demonstrate the results of ablating the top 10 infrastucture channels for each entity type in the empty maze environment. We observe that that ablating the channels identified as critical for gem collection had a far greater impact on the collection rates of other entities than removing their respective critical top 10 infrastucture channels. This may be the result of a greater share of the core navigational functionality being encoded in the gem infrastructure channels than in the key infrastructure channels. Interestingly collection of the blue key was more greatly affected by the ablation of the red key's channels than by the ablation of its own infrastucture channels.
+The results shown in~\ref{tab:infrastructure_ablation} demonstrate the results of ablating the top 10 infrastucture channels for each entity type in the empty maze environment. We observe that that ablating the channels identified as critical for gem collection had a far greater impact on the collection rates of other entities than removing their respective critical top 10 infrastucture channels. 
 
-\begin{table}[h]
+This may be the result of a greater share of the core navigational functionality being encoded in the gem infrastructure channels than in the key infrastructure channels. Interestingly collection of the blue key was more greatly affected by the ablation of the red key's channels than by the ablation of its own infrastucture channels.
+
+\begin{table}[H]
     \centering
     \caption{Effect of ablating top 10 infrastructure channels for each entity on collection rates (n=400 trials per condition). Bold values indicate the largest performance decreases for each entity type.}
     \label{tab:infrastructure_ablation}
@@ -168,6 +246,7 @@ The results shown in~\ref{tab:infrastructure_ablation} demonstrate the results o
     \small
     \textit{Note: The diagonal shows on-target effects: Gem (-47.2\%), Blue Key (-18.3\%), Green Key (-4.5\%), Red Key (-34.0\%). Gem infrastructure channels affect all entities catastrophically, while Green Key channels display high variance in their impact.}
 \end{table}
+
 
 
 
