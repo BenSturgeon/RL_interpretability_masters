@@ -1,13 +1,18 @@
 \documentclass[12pt,a4paper]{report}
 \usepackage[english]{babel}
-\usepackage{natbib}
-\usepackage{url}
 \usepackage[utf8]{inputenc}
+\usepackage{url}
+\usepackage{csquotes}
+% Switched from natbib to biblatex for better date field handling
+\usepackage[style=authoryear-comp,natbib=true,backend=biber,maxbibnames=99]{biblatex}
+\addbibresource{references.bib}
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{amsthm}
 \usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{tabularx,makecell,array}
 % \graphicspath{{images/}}
 \usepackage{parskip}
 \usepackage{fancyhdr}
@@ -26,7 +31,7 @@
 \newtheorem{example}[theorem]{Example}
 \newtheorem{remark}[theorem]{Remark}
 
-\title{UCT RL interp masters}
+\title{Disentangling Sequential Goal Representations in the Procgen-Heist Environment}
 \author{Benjamin Sturgeon}
 \date{May 2025}
 
@@ -126,15 +131,276 @@ Sparse AutoEncoders (SAEs) have proven to be useful tools in understanding Large
 \input{conclusion.tex}
 
 % Bibliography
-% Ensure your .bib file is correctly named and in the right path for this to work.
-% You might need to create a consolidated .bib file from your papers.
-\bibliographystyle{plainnat} 
-\bibliography{references} % Assuming references.bib is in the same directory as main.tex or a standard LaTeX search path
+% Using biblatex instead of natbib for better handling of date fields
+\printbibliography
 
 % Appendices
 \appendix
 % Example: \input{notes/paper_files/appendix_a.tex}
-% \chapter{Appendix Title}
+\chapter{Appendix Title}
+
+
+\appendix
+\section{Technical Appendices}
+
+\appendix
+\section{Model Architecture Details}
+\label{app:model_architecture}
+
+
+ImpalaCNN architecture:
+\begin{figure}[H]
+\centering
+    \includegraphics[width=0.98\textwidth]{figures/diagram (2).pdf}
+\caption{The convolutional neural network architecture used in our experiments. We use a modified version of the Impala CNN with 5 convolutional layers rather than the original 15 layers, which provides better interpretability without compromising performance.}
+\label{fig:network-architecture}
+\end{figure}
 % Your appendix content goes here
+
+
+
+\section{Activation offset results}
+\label{app:additional_offset_results}
+
+
+\begin{figure}[H]
+    \centering
+        \includegraphics[width=0.98\textwidth]{figures/offset_sweep_conv3a_expanded_checkpoint_35001_full_range.pdf}
+    \caption{Full range activation offset sweep for conv3a layer at checkpoint 35001. Each subplot shows entity collection success rates across different activation offset values for a specific channel. This wide-range sweep reveals the broad activation ranges over which different channels can successfully steer the agent toward specific entities.}
+    \label{fig:offset_steering_conv3a_full}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+            \includegraphics[width=0.98\textwidth]{figures/offset_sweep_conv3a_expanded_checkpoint_35001_-3to3_step0.03.pdf}
+        \caption{Narrow range activation offset sweep for conv3a layer at checkpoint 35001, focusing on offset values from -3 to +3 with step size 0.03. This fine-grained sweep provides higher resolution detail of entity collection rates in the critical activation range where steering behavior transitions occur.}
+        \label{fig:offset_steering_conv3a-3+3}
+        \end{figure}
+\begin{figure}[H]
+\centering
+    \includegraphics[width=0.98\textwidth]{figures/offset_sweep_conv2a_expanded_checkpoint_35001_-15to15_step0.1.pdf}
+\caption{Wide range activation offset sweep for conv2a layer at checkpoint 35001, testing offset values from -15 to +15 with step size 0.1. This broader sweep examines the extent to which earlier convolutional layers can be steered across a wide range of activation offsets.}
+\label{fig:offset_steering_conv2a-15+15}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+        \includegraphics[width=0.98\textwidth]{figures/offset_sweep_conv2a_expanded_checkpoint_35001_-1to1_step0.01.pdf}
+    \caption{Narrow range activation offset sweep for conv2a layer at checkpoint 35001, focusing on offset values from -1 to +1 with step size 0.01. This high-resolution sweep examines fine-grained steering behavior in the conv2a layer's most sensitive activation range.}
+    \label{fig:offset_steering_conv2a-1+1}
+    \end{figure}
+
+\begin{figure}[H]
+    \centering
+        \includegraphics[width=0.98\textwidth]{figures/offset_sweep_conv1a_expanded_checkpoint_35001_-3to3_step0.03.pdf}
+    \caption{Activation offset sweep for conv1a layer at checkpoint 35001, testing offset values from -3 to +3 with step size 0.03. This sweep examines steering capabilities in the earliest convolutional layer, which operates closest to the raw input observations.}
+    \label{fig:offset_steering_conv1a-3+3}
+    \end{figure}
+
+\section{Mean Activation Per Channel During Rollout}
+\label{app:rollout_activation_analysis}
+
+\begin{figure}[H]
+    \centering
+        \includegraphics[width=0.98\textwidth]{figures/standard_all_channels_35k_no_locks.pdf}
+    \caption{Figure showing the mean activation per channel across all channels in the same rollout as presented in Figure~\ref{fig:activation_tracking}. We see that the pattern of increasing activation strength over the course of an episode with sharp jumps at the collection of different entities is shared across many but not all channels, with a few showing very consistent activation strengths from beginning to end. In general mean activations remain below 0 for all channels, indicating that a great deal of the neurons across channels are negative a majority of the time. }
+    \label{fig:activation_rollout_all_channels}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+        \includegraphics[width=0.98\textwidth]{figures/simple_cross_maze_35k_no_locks_rollout_green_first_seed13.pdf}
+    \caption{ Plot showing the mean activation values captured across all timesteps in an unmodified rollout in the 6 channels that had the greatest variance over the course of the rollout. The shaded regions indicate the current `next target', the entity that it would logically pursue next in solving the maze. In this rollout in the cross maze environment, the agent targeted the green key first. A similar uptick in positive values can be observed at the moment of green key collection, though the larger uptick in mean activations typically associated with the blue key can be observed at the moment of blue key collection as well.}
+    \label{fig:activation_rollout_green_first}
+\end{figure}
+
+\section{Channel-Level Probe Results}
+\label{app:channel_probe_results}
+
+This section presents detailed per-channel probe accuracies for multi-class entity classification across convolutional layers. All probes were trained using logistic regression on individual channel activations to predict the next entity the agent will navigate toward (7-way classification: blue key, green key, red key, blue lock, green lock, red lock, gem). Lock entities are omitted from these tables for brevity, though they were included in the overall accuracy calculations. Random baseline performance is 14.3\%.
+
+\subsection{Conv1a Layer - All Channels}
+
+Table~\ref{tab:conv1a_channels} shows probe results for all 16 channels in the Conv1a layer. This layer exhibits the highest variance in channel performance, with the best channel (Ch0) achieving 97.1\% overall accuracy while the worst (Ch5) achieves only 14.7\%. Three channels (Ch0, Ch11, Ch12) demonstrate strong generalist performance across all entity types, suggesting they encode rich multi-entity representations.
+
+\begin{table}[H]
+\centering
+\caption{Conv1a layer per-channel probe accuracies. All 16 channels shown. Bold indicates highest accuracy in each column.}
+\label{tab:conv1a_channels}
+\begin{tabular}{ccccccc}
+\toprule
+Channel & Overall & Blue Key & Green Key & Red Key & Gem \\
+\midrule
+0 & \textbf{97.1\%} & 97.7\% & 94.8\% & 98.1\% & \textbf{97.3\%} \\
+1 & 17.7\% & 0.0\% & 0.0\% & 79.3\% & 45.1\% \\
+2 & 65.1\% & 90.7\% & 14.5\% & 94.7\% & 90.2\% \\
+3 & 20.3\% & 0.0\% & 3.5\% & 0.0\% & 50.5\% \\
+4 & 17.2\% & 98.1\% & 0.0\% & 0.0\% & 4.4\% \\
+5 & 14.7\% & 0.0\% & 0.0\% & 0.0\% & 0.0\% \\
+6 & 21.9\% & 28.4\% & 0.0\% & 54.8\% & 0.0\% \\
+7 & 16.1\% & 0.0\% & 0.0\% & 94.7\% & 0.0\% \\
+8 & 21.1\% & 0.0\% & 61.6\% & 0.0\% & 53.8\% \\
+9 & 14.9\% & 0.0\% & 0.0\% & \textbf{100.0\%} & 0.0\% \\
+10 & 17.1\% & 0.0\% & 43.6\% & 76.0\% & 0.0\% \\
+11 & 94.7\% & \textbf{100.0\%} & \textbf{98.3\%} & 90.4\% & 88.6\% \\
+12 & 91.6\% & 99.5\% & 94.8\% & 88.5\% & 89.7\% \\
+13 & 20.3\% & 0.0\% & 0.0\% & 54.3\% & 0.0\% \\
+14 & 15.2\% & 2.3\% & 0.0\% & \textbf{100.0\%} & 0.0\% \\
+15 & 17.7\% & 0.0\% & 0.0\% & 0.0\% & 48.4\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Conv2a Layer - Top 10 Channels}
+
+Table~\ref{tab:conv2a_top10} presents the top 10 performing channels in Conv2a (out of 32 total). This layer shows dramatically improved performance compared to Conv1a, with the best channel (Ch4) achieving near-perfect 99.4\% accuracy. The top channel achieves perfect accuracy on three entity types (blue lock, green lock, red lock, gem), suggesting highly disentangled representations.
+
+\begin{table}[H]
+\centering
+\caption{Conv2a layer top 10 channels by overall accuracy (out of 32 total channels). Bold indicates highest accuracy in each column.}
+\label{tab:conv2a_top10}
+\begin{tabular}{ccccccc}
+\toprule
+Channel & Overall & Blue Key & Green Key & Red Key & Gem \\
+\midrule
+4 & \textbf{99.4\%} & 98.1\% & 98.8\% & \textbf{99.0\%} & \textbf{100.0\%} \\
+27 & 98.9\% & 98.6\% & \textbf{99.4\%} & 96.6\% & \textbf{100.0\%} \\
+1 & 95.2\% & 98.6\% & 96.5\% & 94.2\% & 98.9\% \\
+25 & 93.9\% & 97.2\% & 94.8\% & 88.0\% & 96.2\% \\
+14 & 90.4\% & 88.8\% & 94.2\% & 83.2\% & \textbf{100.0\%} \\
+31 & 90.2\% & 92.6\% & 88.4\% & 86.1\% & 95.1\% \\
+5 & 88.4\% & 92.1\% & 86.1\% & 75.0\% & 96.7\% \\
+29 & 87.6\% & 95.4\% & 89.5\% & 77.9\% & 96.2\% \\
+18 & 86.4\% & 88.4\% & 84.3\% & 77.4\% & \textbf{100.0\%} \\
+16 & 85.5\% & \textbf{95.8\%} & 77.9\% & 70.7\% & 91.9\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Conv3a Layer - Top 10 Channels}
+
+Table~\ref{tab:conv3a_top10} shows the top 10 channels in Conv3a (out of 32 total). Interestingly, this layer shows lower per-channel performance than Conv2a (best: 82.9\% vs 99.4\%), despite whole-layer probes achieving 99.3\% accuracy. This suggests Conv3a relies more heavily on distributed representations across multiple channels rather than individual specialist channels.
+
+\begin{table}[H]
+\centering
+\caption{Conv3a layer top 10 channels by overall accuracy (out of 32 total channels). Bold indicates highest accuracy in each column.}
+\label{tab:conv3a_top10}
+\begin{tabular}{ccccccc}
+\toprule
+Channel & Overall & Blue Key & Green Key & Red Key & Gem \\
+\midrule
+19 & \textbf{82.9\%} & \textbf{89.8\%} & \textbf{79.1\%} & \textbf{80.8\%} & 90.2\% \\
+20 & 82.7\% & 77.2\% & \textbf{79.1\%} & 80.3\% & 88.6\% \\
+9 & 78.6\% & 77.7\% & \textbf{79.1\%} & 76.4\% & 90.2\% \\
+4 & 78.4\% & 83.7\% & 75.0\% & 72.1\% & 83.7\% \\
+6 & 76.4\% & 84.7\% & 72.1\% & 73.1\% & 85.3\% \\
+25 & 76.2\% & 79.1\% & 72.1\% & 62.5\% & \textbf{97.8\%} \\
+23 & 75.6\% & 87.9\% & 66.9\% & 71.2\% & 85.3\% \\
+2 & 74.4\% & 77.7\% & 66.3\% & 74.0\% & 86.4\% \\
+3 & 74.1\% & 72.1\% & 69.2\% & 70.2\% & 89.7\% \\
+21 & 73.9\% & 79.5\% & 61.6\% & 70.7\% & 87.5\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Conv4a Layer - Top 10 Channels}
+
+Table~\ref{tab:conv4a_top10} presents the top 10 channels in Conv4a (out of 32 total). This is the final convolutional layer before the fully connected layers. Notably, even the best channel (Ch18, 68.1\%) shows substantially lower performance than individual channels in earlier layers, despite whole-layer probes achieving 97.6\% accuracy. This indicates that Conv4a representations are highly distributed and no single channel carries sufficient information for accurate classification.
+
+\begin{table}[H]
+\centering
+\caption{Conv4a layer top 10 channels by overall accuracy (out of 32 total channels). Bold indicates highest accuracy in each column.}
+\label{tab:conv4a_top10}
+\begin{tabular}{ccccccc}
+\toprule
+Channel & Overall & Blue Key & Green Key & Red Key & Gem \\
+\midrule
+18 & \textbf{68.1\%} & 83.3\% & 45.4\% & \textbf{70.7\%} & \textbf{88.0\%} \\
+8 & 67.1\% & \textbf{86.5\%} & 50.0\% & 59.1\% & 73.4\% \\
+17 & 64.9\% & 83.3\% & 55.2\% & 57.7\% & 78.3\% \\
+28 & 63.0\% & 82.3\% & 51.2\% & 52.4\% & 79.9\% \\
+10 & 62.0\% & 68.8\% & 55.2\% & 58.2\% & 78.8\% \\
+0 & 61.9\% & 78.6\% & \textbf{56.4\%} & 55.3\% & 66.3\% \\
+21 & 61.9\% & 71.2\% & 44.8\% & 61.5\% & 69.0\% \\
+4 & 61.8\% & 74.4\% & 47.1\% & 52.4\% & 81.5\% \\
+26 & 60.4\% & 74.0\% & 39.5\% & 51.4\% & 69.0\% \\
+16 & 59.4\% & 82.3\% & 45.4\% & 56.3\% & 64.7\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Summary of Channel-Level Findings}
+
+Several patterns emerge from the channel-level probe analysis:
+
+\begin{enumerate}
+\item \textbf{Layer hierarchy}: Conv1a contains a small number of highly informative generalist channels (Ch0, Ch11, Ch12) alongside many specialist channels that encode only specific entities. Conv2a shows improved overall performance with multiple high-performing generalist channels. Conv3a and Conv4a show increasingly distributed representations where individual channels carry less information. 
+
+\item \textbf{Distributed vs sparse coding}: The gap between whole-layer and best single-channel performance grows substantially in deeper layers (Conv3a: 99.3\% whole vs 82.9\% best channel; Conv4a: 97.6\% whole vs 68.1\% best channel), indicating a shift from sparse coding in early layers to distributed coding in later layers.
+
+\item \textbf{Entity-specific patterns}: Some channels in Conv1a show extreme specialization (e.g., Ch9 and Ch14 achieve 100\% on red key but near 0\% on other entities), while Conv2a channels tend toward more balanced multi-entity performance.
+\end{enumerate}
+
+
+\section{Intervention spans across checkpoints}
+\label{app:evolution_of_interventions}
+
+Figures \ref{fig:intervention_40k}--\ref{fig:intervention_60k} illustrate the representational drift observed across checkpoints 40k-60k. Despite stable task performance, the specific channels exhibiting steering behavior and their associated activation ranges shift dramatically between checkpoints, demonstrating that the network continuously explores equivalent solutions within a broad basin of the loss landscape.
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_7_ood_p99.9_step_40001.pdf}
+\caption{Steering intervention success rates for conv4a layer at checkpoint 40k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
+\label{fig:intervention_40k}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_11_ood_p99.9_step_45001.pdf}
+\caption{Steering intervention success rates for conv4a layer at checkpoint 45k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
+\label{fig:intervention_45k}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_21_ood_p99.9_step_50001.pdf}
+\caption{Steering intervention success rates for conv4a layer at checkpoint 50k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
+\label{fig:intervention_50k}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_29_ood_p99.9_step_55001.pdf}
+\caption{Steering intervention success rates for conv4a layer at checkpoint 55k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
+\label{fig:intervention_55k}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_11_ood_p99.9_step_60001.pdf}
+\caption{Steering intervention success rates for conv4a layer at checkpoint 60k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
+\label{fig:intervention_60k}
+\end{figure}
+
+\section{SAE Intervention Results}
+\label{app:sae_interventions}
+
+The following figures show steering intervention success rates for SAE latents both trained on the 35000 step checkpoint. Unlike the base model channels (which have 32 dimensions per layer), the SAE uses a 4x expansion factor, resulting in 128 latents per layer. These figures demonstrate that sparse autoencoder latents can also be successfully steered to influence agent behavior toward specific entities. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations during standard gameplay. Figures shown have a threshold for inclusion of $\geq 200$ successes for readability.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv3a_top_41_ood_p99.9.pdf}
+\caption{SAE latent steering intervention success rates for conv3a layer, showing the top 41 most successful latents with a cutoff threshold of $\geq 200$ successes. Of particular note is the large number of steering successes in general in conv3a and also the significant overlap between different sections, including within similar activation regions, displaying relatively less of the multiplexing phenomena relative to elsewhere.}
+\label{fig:sae_intervention_conv3a_41}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_37_ood_p99.9.pdf}
+\caption{SAE latent steering intervention success rates for conv4a layer, showing the top 37 most successful latents with a cutoff threshold $\geq 200$ successes. Conv4a SAE shows significantly sharper multiplexing than any other example, in particular latent 92 shows almost perfect delineation of entities. Latent 23 also contains an unusual capacity for steering the blue key in particular, indicating that some blue key specialisation may have been learned, though we caution against making strong conclusions from the steering alone due to the complex nature of the network.}
+\label{fig:sae_intervention_conv4a_37}
+\end{figure}
+
 
 \end{document}
