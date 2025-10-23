@@ -100,6 +100,12 @@ I empower the university to reproduce for the purpose of research either the who
 \addcontentsline{toc}{chapter}{Abstract}
 In this work we provide an extensive analysis into the operations of a maze solving reinforcement learning agent trained in the Procgen Heist environment. We target this model because it provided a unique combination of complexity and procedural generation and had a clear sequence of goals that would need to be delineated. By focusing on an agent that has to target multiple similar entities we hope to answer questions about how each of these entities might be processed by the network. Our main finding is that the network enforces entity targeting primarily by the magnitude of the activation values of the channels in the convolutional layers of the network, and prove that with a simple constant offset to the values in the channels we are able to redirect the agent to target different entities while preserving navigational capabilities (94\% green key selection from a baseline 93\% blue key selection). We also demonstrate a clear 2 stage targeting pipeline where the model first establishes the target in early convolutional layers (99.3\% entity classification accuracy), and then shifts to processing direction and navigation in the fully-connected layers at the end of the network (67.3\% directional accuracy). These findings demonstrate that amplitude-based multiplexing is a fundamental strategy for encoding multiple goals in RL agents, and provide a novel approach for better understanding neural network operations.
 
+
+\vspace{1em}
+\noindent\rule{\textwidth}{0.5pt}
+\small\noindent Part of this work has been accepted to the NeurIPS 2025 Mechanistic Interpretability Workshop. Available at: \url{https://openreview.net/forum?id=KwxgxWsjE3}
+
+
 \clearpage
 
 % Acknowledgments
