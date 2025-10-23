@@ -18,7 +18,7 @@ We found that in most cases we could clearly observe clean parallel trajectories
 \includegraphics[width=0.9\textwidth]{figures/raw_trajectories_35k_conv4a_highest_variance.pdf}
 \caption{Trajectory patterns showing distinct activation patterns across different entities in layer conv4a at checkpoint 35k.}
 \label{fig:trajectory-patterns-conv4a}
-\end{figure} %TODO update with the modified figure, potentially including both lowest correlation and the highest variance plots
+\end{figure}
 
 
 We observe that extremely high correlation between activation patterns exists in both conv3a and conv4a, with conv3a showing an average correlation of 0.956 (range: 0.837-0.995). However, while conv4a has comparable average correlation (0.931), it contains a subset of channels with substantially lower correlations (range: 0.401-0.995), suggesting these channels encode temporal dynamics rather than simple offset patterns and play an unusual role in entity targeting. The full results are shown in the mean inter-entity correlations averaged over 10 rollouts in Figure~\ref{fig:correlations_violin}.
@@ -33,17 +33,17 @@ We observe that extremely high correlation between activation patterns exists in
     
 
 \subsection{Activation patterns over rollouts}
-We carried out further experiments to observe how activation patterns evolved over the course of a rollout, as different entitities were collected. To do this we simply captured activations over the course of a rollout in both the custom maze environments, and unmodified mazes. We then took the mean of the activations in a given channel and tracked it over the timesteps in the rollout. This gave rise to clear patterns where activations would typically jump upwards as each key was collected, with the size of the jump decreasing as each one was collected. These were particularly obvious with the most high variance channels, with the effect being present not ubiquitous amongst the other channels. Results of a randomly selected rollout shown in Figure~\ref{fig:activation_tracking}.
+We carried out further experiments to observe how activation patterns evolved over the course of a rollout, as different entities were collected. To do this we simply captured activations over the course of a rollout in both the custom maze environments, and unmodified mazes. We then took the mean of the activations in a given channel and tracked it over the timesteps in the rollout. This gave rise to clear patterns where activations would typically jump upwards as each key was collected, with the size of the jump decreasing as each one was collected. These were particularly obvious with the most high variance channels, with the effect being present not ubiquitous amongst the other channels. Results of a randomly selected rollout shown in Figure~\ref{fig:activation_tracking}.
 
 Another recurring pattern in the activation trajectory was the pinching effect seen in Figure~\ref{fig:activation_tracking}, wherein the activations suddenly converge to a similar value across entities. This is likely because the network has learned that regardless of the entity involved, if the player is one step away from the entity then it always makes sense to go directly to that entity, as in the normal course of a rollout there is no scenario in which it can be directly beside an entity while it would be incorrect to collect that entity, except in the case of locks. 
 
-Interestingly, in the cross maze where it was possible to access all the keys from the beginning the model would choose to target the green key first in about 12\% of cases. In these instances we would still see the positive jump in activations as we saw in the case of the blue key, indicating that this phenomena is primarily tied to the number of entities observed, and not necessarily targeting a specific entity. An exa
+Interestingly, in the cross maze where it was possible to access all the keys from the beginning the model would choose to target the green key first in about 12\% of cases. In these instances we would still see the positive jump in activations as we saw in the case of the blue key, indicating that this phenomena is primarily tied to the number of entities observed, and not necessarily targeting a specific entity. 
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.98\textwidth]{figures/standard_maze_35k_activation_tracking.pdf}
     \caption{Plot showing the mean activation values captured across all timesteps in an unmodified rollout in the 6 channels that had the greatest variance over the course of the rollout. The shaded regions indicate the current `next target', the entity that it would logically pursue next in solving the maze. Note the upward jumps in activations at the points between shaded regions, indicating contact with an entity.}
-    \label{fig:activation_tracking_all}
+    \label{fig:activation_tracking}
 \end{figure}
 
 \section{Activation Offsets Achieve Steering}
@@ -77,24 +77,9 @@ We also investigate whether the colours in the background have a significant imp
 \end{figure}
 
 
-\section{Using SAEs to Validate Activation Encoding}
-\label{sec:sae_training}
-    \subsection{SAE Performance}
-    \label{subsec:sae_performance}
-    We found that the SAEs tended to be extremely effective at recovering performance on the original task, with the conv4a SAEs recovering 99.6\% of performance and the conv3a SAEs recovering 102\% of performance (likely due to random variance in the seeds and evaluations) as measured by average reward attained in Procgen heist mazes. This recovery would typically occur within 40000 steps of training. The SAEs were also able to rapidly achieve variance explained scores approaching 100\% (indicating near-perfect reconstruction of the original activations) within 120000 steps.  The SAEs were typically trained for 2 million steps to ensure convergence. This success provides good evidence that the SAEs worked as intended and could be relied upon to validate our other results.
-
-
-    \subsection{SAEs Preserve Base Model Structure}
-    Training SAEs on conv3a and conv4a did not reveal additional interpretable structure beyond what we observed in the base model. SAE latents exhibited the same activation magnitude encoding for entity differentiation, with variations in the intervention spans. This preservation across radically different representation schemes suggests activation-level encoding was fundamental to the operations of the network and not simply the result of compression into a sparse basis.
-
-
-    \subsection{Steering with Dead Channels (SAE)}
-\label{subsec:dead_channel_steering}
-One of the most surprising findings from the SAE intervention experiments was that a large number of the channels that were effective for steering the agent were `dead channels'. These are channels that exhibited no activation under normal operating conditions of the model. It was confirmed that these channels remained inactive over 100 rollouts. 
-
 
 \subsection{Quantitative Steering Results}
-
+\label{subsec:quantitative_steering}
 
 We apply our incremental steering experiments across all channels in conv3a and conv4a and find a large number of channels which successfully steer the agent away from a given entity. We present our results from layer conv4a in Figure~\ref{fig:steering-dot-plot}. For conv3a a similar phenomena is observed but with far more channels and many more effective steering values. We add black dotted lines to demarcate the value range within the $99.9$th percentile of activations calculated over 50 rollouts. This demonstrates that for many channels, the steering is far outside of their normal activation range, indicating that the steering functions as a kind of superstimulus and is likely not part of normal functioning for the network. 
 
@@ -112,9 +97,25 @@ The most striking aspect of our results is the fact that particular value ranges
 
 The primary value of this finding is in providing further support for the way in which individual channels seem to multiplex the targeting of specific entities with varying activation strengths. We trained SAEs on these layers and found they exhibit similar multiplexing structures, confirming this is a robust strategy rather than simply the result of polysemanticity.
 
-\subsection{Steering with Dead Channels (SAE)}
+\section{Using SAEs to Validate Activation Encoding}
+\label{sec:sae_training}
+    \subsection{SAE Performance}
+    \label{subsec:sae_performance}
+    We found that the SAEs tended to be extremely effective at recovering performance on the original task, with the conv4a SAEs recovering 99.6\% of performance and the conv3a SAEs recovering 102\% of performance (likely due to random variance in the seeds and evaluations) as measured by average reward attained in Procgen heist mazes. This recovery would typically occur within 40000 steps of training. The SAEs were also able to rapidly achieve variance explained scores approaching 100\% (indicating near-perfect reconstruction of the original activations) within 120000 steps.  The SAEs were typically trained for 2 million steps to ensure convergence. This success provides good evidence that the SAEs worked as intended and could be relied upon to validate our other results.
+
+
+    \subsection{SAEs Preserve Base Model Structure}
+    Training SAEs on conv3a and conv4a did not reveal additional interpretable structure beyond what we observed in the base model. SAE latents exhibited the same activation magnitude encoding for entity differentiation, with variations in the intervention spans. This preservation across radically different representation schemes suggests activation-level encoding was fundamental to the operations of the network and not simply the result of compression into a sparse basis.
+
+    Our primary method for using SAEs to ensure that we hadn't simply found polysemanticity in the network was to use the same quantitative steering approach described in~\ref{subsec:quantitative_steering} applied to all of the latents in an SAE. If it was in fact natural to encode the different entities into different channels then we would likely have observed a different mechanism emerging where each channel had a specific entity for which it was responsible. Instead, we observe broadly the same patterns with channels successfully steering away from many entities, with a similar offset pattern. Figures illusrating this can be observed for conv3a and conv4a SAEs in Appendix~\ref{app:sae_interventions}.
+
+
+
+\subsubsection{Steering with Dead Channels (SAE)}
 \label{subsec:dead_channel_steering}
-One of the most surprising findings from the SAE intervention experiments was that a large number of the channels that were effective for steering the agent were `dead channels'. These are channels that exhibited no activation under normal operating conditions of the model. It was confirmed that these channels remained inactive over 100 rollouts. 
+One of the most surprising findings from the SAE intervention experiments was that a large number of the channels that were effective for steering the agent were `dead channels'. These are channels that exhibited no activation under normal operating conditions of the model. It was confirmed that these channels remained inactive over 100 rollouts.
+
+
 
 
 \section{Probing for Entity Representations}
@@ -175,47 +176,6 @@ To understand which points of the network are most involved with navigation, we 
     \midrule
     fc1 & 62.9\% $\pm$ 2.4\% & 60.5\% & 63.5\% & 61.5\% & 66.2\% & +11.2\% \\
     fc2 & 67.3\% $\pm$ 2.3\% & 64.5\% & 66.2\% & 69.2\% & 69.2\% & +4.4\% \\
-    fc3 & 21.1\% $\pm$ 2.0\% & 37.0\% & 16.8\% & 21.0\% & 9.8\% & -46.2\% \\
-    \bottomrule
-    \end{tabular}
-\end{table}
-
-The directional probes reveal a significantly different structure than the next target entity probes. Conv2a achieves only 42.7\% $\pm$ 2.4\% accuracy (barely above the 25\% baseline), with highly unbalanced performance, achieving near-zero accuracy on downward movement (5.5\%) despite reasonable performance on horizontal directions. The best convolutional layer performance is observed at conv3a (63.6\% $\pm$ 2.4\%), before showing a somewhat surprising drop at conv4a to 51.7\% $\pm$ 2.5\%. 
-
-Crucially, unlike entity information which degrades in fully-connected layers, directional information \textit{recovers and improves} through the FC layers. FC1 recovers to 62.9\% $\pm$ 2.4\%, and fc2 achieves the highest accuracy overall at 67.3\% $\pm$ 2.3\%, with balanced performance across all four directions. This suggests that spatial navigation information is actively refined and strengthened as the network prepares for action selection, rather than being compressed away.
-
-The surprising conv4a performance drop (63.6\% $\rightarrow$ 51.7\%) diverges from the pattern observed in the next target entity probes, which retain most of their accuracy at this layer (99.3\% $\rightarrow$ 97.6\%). This suggests conv4a functions as a bridge in converting the high level spatial information into a structure coherent to the fully connected layers that temporarily disrupts the linear separability of directional information.
-
-\subsection{Comparing Entity and Directional Information Flow}
-
-The contrasting progressions reveal a two-stage processing architecture. Entity information contains specialist detectors even at conv1a and peaks at conv3a (99.3\% $\pm$ 0.4\%), while directional information is entirely absent at conv1a (25.1\% $\pm$ 2.1\%, at random baseline) and peaks much later at fc2 (67.3\% $\pm$ 2.3\%). This indicates that the network implements a hierarchical processing strategy:
-
-\textbf{Stage 1 - Goal Identification (conv2a--conv4a):} Entity information emerges sharply from conv1a (which contains specialist entity detectors despite poor whole-layer performance) through conv2a (96.6\% $\pm$ 1.0\%) and peaks at conv3a (99.3\% $\pm$ 0.4\%), remaining extremely high at conv4a at 97.6\% $\pm$ 0.8\%. At this stage, directional information remains relatively weak (63.6\% $\pm$ 2.4\% at conv3a), suggesting the network prioritizes identifying the correct goal before planning how to reach it. Notably, conv1a contains no directional information whatsoever (25.1\% $\pm$ 2.1\%, at random baseline), contrasting with its entity specialist channels—indicating directional processing emerges later in the network.
-
-\textbf{Stage 2 - Navigation Planning (fc1--fc2):} As entity information compresses (99.3\% $\rightarrow$ 20.4\%), directional information strengthens (63.6\% $\rightarrow$ 67.3\%). The network transforms explicit entity representations into spatial navigation commands, with peak directional accuracy at fc2 (67.3\% $\pm$ 2.3\%) suggesting motion-oriented features directly relevant to action selection. Both types of information then collapse at fc3 (entity: 20.4\% $\pm$ 2.1\%, direction: 21.1\% $\pm$ 2.0\%), as they are compressed into the final action distribution and value estimates.
-
-This functional separation explains key findings from our intervention experiments. The near-perfect entity encoding at conv3a explains why steering and ablation interventions were most effective at this depth—we modified explicit goal representations before their transformation into motor commands. Conversely, the distributed nature of directional information across multiple layers explains why navigation remained largely functional even under heavy ablation, making it more robust to localized disruption than the concentrated entity representations.
-
-
-\subsection{Directional Navigation Probes}
-\label{subsec:directional_probes}
-
-To understand which points of the network are most involved with navigation, we trained linear probes to predict the optimal movement direction (up, right, down, left) from layer activations. We gathered 8,000 samples (2,000 per direction) using Dijkstra's algorithm to compute optimal paths, filtering out examples where the agent was not centered in a grid cell to avoid ambiguity, and also removing examples where the agent was directly next to the target entity in order to enhance the difficulty of the problem. Results are shown in Table~\ref{tab:probe_directional}.
-\begin{table}[h]
-    \centering
-    \caption{Whole-layer probe accuracy for predicting optimal movement direction across network layers. Random baseline is 25\%. Overall accuracy shown with 95\% confidence intervals (n=1,600 test samples). Best performance for each column is bolded.}
-    \label{tab:probe_directional}
-    \begin{tabular}{lcccccl}
-    \toprule
-    \textbf{Layer} & \textbf{Overall} & \textbf{Up} & \textbf{Right} & \textbf{Down} & \textbf{Left} & \textbf{$\Delta$ $\rightarrow$ Previous} \\
-    \midrule
-    conv1a & 25.1\% $\pm$ 2.1\% & \textbf{100.0\%} & 0.3\% & 0.0\% & 0.0\% & --- \\
-    conv2a & 42.7\% $\pm$ 2.4\% & 44.5\% & 61.5\% & 5.5\% & 59.2\% & +17.6\% \\
-    conv3a & 63.6\% $\pm$ 2.4\% & 61.0\% & \textbf{66.8\%} & 69.0\% & 57.8\% & +20.9\% \\
-    conv4a & 51.7\% $\pm$ 2.5\% & 51.2\% & 48.8\% & 51.0\% & 55.8\% & -11.9\% \\
-    \midrule
-    fc1 & 62.9\% $\pm$ 2.4\% & 60.5\% & 63.5\% & 61.5\% & 66.2\% & +11.2\% \\
-    fc2 & \textbf{67.3\% $\pm$ 2.3\%} & 64.5\% & 66.2\% & \textbf{69.2\%} & \textbf{69.2\%} & +4.4\% \\
     fc3 & 21.1\% $\pm$ 2.0\% & 37.0\% & 16.8\% & 21.0\% & 9.8\% & -46.2\% \\
     \bottomrule
     \end{tabular}
@@ -326,7 +286,7 @@ This may be the result of a greater share of the core navigational functionality
 
 Our investigation reveals three fundamental insights into how neural networks implement goal-directed behavior in complex environments:
 
-\textbf{1. Activation Magnitude Encodes Entity Identity.} Our heist network learns to encode targeting information through systematic variations in activation strength rather than dedicating separate channels to each entity. Parallel rollouts show consistent activation offsets between entities (correlation 0.931 in conv4a), with complete behavioral redirection achievable through uniform offset adjustments—shifting from 93\% blue key collection at baseline to 94\% green key at +4.8 offset.
+\textbf{1. Activation Magnitude Encodes Entity Identity.} Our heist network learns to encode targeting information through systematic variations in activation strength rather than dedicating separate channels to each entity. Parallel rollouts show consistent activation offsets between entities (correlation 0.931 in conv4a), with complete behavioral redirection achievable through uniform offset adjustments—shifting from 93\% blue key collection at baseline to 94\% green key at +4.8 offset. The fact that the network has this strong baseline preference for the blue key, with occasional deviations to the green key validates our hypothesis regarding a deeply learned hierarchical structure.
 This magnitude-based encoding persists across layers and even through SAE decomposition, confirming it represents a fundamental computational strategy rather than an architectural artifact.
 
 \textbf{2. Two-Phase Processing Architecture Separates Goal Selection from Navigation.} Probe experiments reveal distinct information processing stages: entity determination occurs in convolutional layers (peaking at 99.3\% accuracy in conv3a) while navigation planning happens in fully-connected layers (peaking at 67.3\% directional accuracy in fc2). Conv4a serves as a critical bridge, maintaining entity information while reformatting spatial representations. This separation explains why steering interventions succeed at conv3a/4a—we intervene precisely where goals crystallize, before transformation into distributed action plans.

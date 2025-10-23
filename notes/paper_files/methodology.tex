@@ -20,7 +20,7 @@
     When training our model we use a simple PPO implementation from an open source implementation designed to train Procgen models called Procgen-pfrl. We used the easy distribution of the environment due to compute limitations. We tested model training over a number of different batch sizes and distributions. The model checkpoints used to derive our main findings were trained with standard hyperparameters: learning rate 5e-4, 64 parallel environments collecting 256 steps each (16,384 total steps per update), processed in batches of 8 over 3 epochs for 800 million steps. The training dynamics were significantly impacted by changes to batch size often completely collapsing training performance, but over the course of 5 runs with separate seeds with the parameters above we were able to replicate similar model dynamics in each case. 
     \subsection{Model Training}
     \label{subsec:model_training}
-    The policy models were trained using Proximal Policy Optimization (PPO) with an open-source implementation based on PFRL, specifically designed for Procgen environments. We also made use of Envpool to accelerate the speed of our training while keeping the actual training dynamics unchanged\cite{weng2022envpool}. Training was conducted until convergence, which in this case was when no statistical improvement was observed for 10000 update steps. The primary model was trained for approximately 600 million steps. 
+    The policy models were trained using Proximal Policy Optimization (PPO) with an open-source implementation based on PFRL, specifically designed for Procgen environments. We also made use of Envpool to accelerate the speed of our training while keeping the actual training dynamics unchanged\cite{weng2022envpool}. Training was conducted until convergence, which in this case was when no statistical improvement was observed for 10000 update steps. The primary model was trained for approximately 800 million steps or 60000 steps. 
 
     To explore the effects of training dynamics on the final learned representations, experiments were run with different training configurations. These variations primarily involved altering the batch geometry through four main hyperparameters: the number of parallel environments, the number of steps per rollout, the mini-batch size, and the number of epochs.
 
@@ -34,7 +34,7 @@
 
 \subsection{Feature Visualization}
     \label{subsec:feature_viz}
-    A useful initial approach involved simply creating direct visualiations of the convolutional layers of the model. This involved simply taking a given layer and applying a colour spectrum according to the strength of the activations within that region of the grid. This approach, following~\cite{mini_2023_understanding}, provided a direct view of which spatial regions triggered strong positive or negative responses in different channels. Figure~\ref{fig:filter_visualizations} shows an example of this visualization technique applied to multiple layers.
+    A useful initial approach involved simply creating direct visualisations of the convolutional layers of the model. This involved simply taking a given layer and applying a colour spectrum according to the strength of the activations within that region of the grid. This approach, following~\cite{mini_2023_understanding}, provided a direct view of which spatial regions triggered strong positive or negative responses in different channels. Figure~\ref{fig:filter_visualizations} shows an example of this visualization technique applied to multiple layers.
 
 
     \begin{figure}[ht]
@@ -193,13 +193,15 @@
     \label{subsec:discovering_infrastructure}
     While the above experiment reveals the degree to which individual channels can retain navigational capabilities, it is not necessarily the case that these individual channels are the most essential to the successful navigation of the network under normal circumstances. Channels which performed badly at independent navigation might simply be highly dependent on other channels in order to functon.
 
-    To establish which channels were critical to the overall functioning of the network, we performed a similar experiment to the one described in~\ref{subsec:discovering_independent_navigation} but instead of ablating all channels but one, we ablated only one channel to observe the impact on the collection rates of different entitities. We repeated this for every channel in conv4a for n=400 rollouts in the fork maze shown in~\ref{fig:ablation-mazes}. We describe these channels as Infrastucture Channels in later experiments.
+    To establish which channels were critical to the overall functioning of the network, we performed a similar experiment to the one described in~\ref{subsec:discovering_independent_navigation} but instead of ablating all channels but one, we ablated only one channel to observe the impact on the collection rates of different entities. We repeated this for every channel in conv4a for n=400 rollouts in the fork maze shown in~\ref{fig:ablation-mazes}. We describe these channels as Infrastucture Channels in later experiments.
 
     The metric by which we ordered these channels was on how great the negative impact was on the collection rates for different entities, because channels that did little to reduce collection rates for a given entity were likely to be less important for that entity.
 
-\section{Expanded ablation experiments} %TODO add a discussion of ablating only the single channels
-%TODO expand on the specifics of how each target entity in the experiments had a specific focus on the channels relevant to it
-To derive further insights from our earlier results, we ablate regions of the network based on their success in modifying model behavior in the previous experiments. Our experiment uses a modified maze which removes all walls, and has the keys and gem randomly distributed in the corners of the maze.
+\section{Expanded ablation experiments}\label{sec:expanded_ablation_methodology}
+
+To derive further insights from our earlier results, we ablate regions of the network based on their success in modifying model behavior in the previous experiments. Our experiment uses a modified maze which removes all walls, and has the keys and gem randomly distributed in the corners of a square, shown on the right in Figure~\ref{fig:ablation-mazes}.
+
+In these experiments, the choice of targets for ablation was tailored to the entity in question. For example, in the case of the redundant navigation channels experiments, when we say that the top 10 channels were used for a given entity, we mean that for the blue key results, the 10 channels that had the highest blue key collection rates were chosen. This applies for each of the categories of experiment, though naturally the selection criteria vary according to what was intended with a specific intervention.
 
 We perform six targeted ablations based on our steering and navigation findings:
 
@@ -207,9 +209,9 @@ We perform six targeted ablations based on our steering and navigation findings:
 
 \textbf{Ablation 2 (Redundant Navigation channels):} We ablate the top 10 channels that had the highest collection rates for a given entity in our independent navigation study, setting these channels to zero while leaving the rest unchanged.
 
-\textbf{Ablation 3 (Infrastructure channel Ablation):} We ablate the top 10 infrastructure channels that had the lowest collection rates for a given entity in our single channel ablation study, setting these channels to zero while leaving the rest unchanged.
+\textbf{Ablation 3 (Infrastructure channel Ablation):} We ablate the top 10 infrastructure channels that, when ablated, caused the lowest collection rates for a given entity, setting these channels to zero while leaving the rest unchanged.
 
-\textbf{Ablation 4 (Combined):} We ablate both the navigations that had the best collection rates for a given entity channels and the intervention spans for a given entity simultaneously.
+\textbf{Ablation 4 (Combined):} We ablate both the navigation channels that had the best collection rates for a given entity and the intervention spans for a given entity simultaneously.
 
 \textbf{Ablation 5 (Inverse):} We preserve only the intervention spans that successfully steered the agent in the presence of entity $e$, ablating everything else. This tests whether these spans alone are sufficient for navigation.
 
@@ -246,5 +248,5 @@ We trained 4-way classifiers with the same architecture and training procedure a
 
 \section{Summary}
 \label{sec:method_summary_revised}
-This chapter detailed the methodologies employed to investigate goal representation and control in a deep reinforcement learning agent. It began with a description of the Procgen Heist environment and the model architectures used. Key interpretability techniques were then outlined, including the training of Sparse Autoencoders, feature visualization methods, the calculation and application of steering vectors for activation interventions, and systematic ablation studies. Finally, the experimental design and the quantitative and qualitative metrics used for evaluation were presented, providing a framework for understanding the results discussed in the subsequent chapter.
+This chapter detailed the methodologies employed to investigate goal representation and control in a deep reinforcement learning agent. It began with a description of the Procgen Heist environment and the model architectures used. Key interpretability techniques were then outlined, including the training of SAEs, feature visualization methods, the calculation and application of steering vectors for activation interventions, and systematic ablation studies. Finally, the experimental design and the quantitative and qualitative metrics used for evaluation were presented, providing a framework for understanding the results discussed in the subsequent chapter.
 
