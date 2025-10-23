@@ -1,54 +1,26 @@
 \chapter{Conclusion}\label{ch:conclusion}
 
 \section{Summary of the Research}\label{sec:research_summary}
-% Brief recap of the entire thesis
-% Main problem addressed and approach taken
-This thesis investigated the internal representations and goal-directed behavior of deep reinforcement learning agents, specifically focusing on a model trained on the multi-objective Procgen Heist environment. The research employed mechanistic interpretability techniques, including the training and analysis of Sparse Autoencoders (SAEs) on the agent's convolutional layers, feature visualization, activation steering, and channel ablation studies. The primary aim was to understand how such agents represent complex, sequential goals and how tools like SAEs can assist in disentangling and interpreting these representations. Building on previous work that demonstrated control of RL agents via activation manipulation, this research extended these methods to a more complex setting and explored the utility of SAEs in revealing finer-grained details of neural computation within RL agents.
+
+This work investigated how deep reinforcement learning agents internally represent and pursue sequential goals in the procedurally generated Procgen Heist environment. Using mechanistic interpretability techniques such as linear probes, activation interventions, parallel rollout analysis, and sparse autoencoders, we investigated the core mechanism behind how our network learned to encode goal structures in this multi-objective task and whether interpretability tools developed for language models translate to RL agents.
 
 \section{Key Findings and Contributions}
 \label{sec:contributions}
-% Most important results and their significance
-% Original contributions to the field
 
-    The principal findings and contributions of this research are as follows:
+We primarily demonstrate the unusual and previously undocumented phenomena of the network encoding specific entities using activation ranges to track state variables. We show this through the clear parallel trajectories of activations as demonstrated by the parallel rollout experiments that have an extremely high correlation (r=0.931 in conv4a), demonstrating that the process being used to target each entity remains constant while the value strength shifts significantly. Most surprisingly we are able to get clear and consistent shifts in behaviour that maintain core network functions with only a simple constant offset to all channel weights, a remarkably strong result for such a simple intervention. This highlights a significiant gap in current approaches to MI research, which focuses primarily on identifying which parts of the network are responsible for a certain activation, but fails to consider how varying activation strengths may shift network behaviour. 
 
-    % From Paper 1 Conclusion
-    \begin{itemize}
-        \item Successfully trained Sparse Autoencoders (SAEs) on the CNN layers of the Heist model, recovering more than 98\% of the original task performance.
-        \item Demonstrated that precise steering of the agent towards different entities could be achieved by intervening on single channels in multiple layers (`conv3a`, `conv4a`) of both the base model and SAE-enhanced models.
-        \item Revealed that while some channels appeared to track specific entities and also affect steering, other SAE channels were highly efficient at tracking/navigation during ablations but could not unilaterally modify the agent's trajectory, indicating specialized roles within the SAE.
-        \item Uncovered the surprising property that a large number of "dead channels" in the SAEs (channels with no activation during normal operation) could nonetheless be used to successfully steer the agent. This was explained as an artifact of the SAE's decoder architecture retaining learned weights.
-        \item Found that the model was still capable of navigating to different keys even when only a single SAE channel was active, highlighting a high degree of functional compression.
-        \item Discovered that certain critical steering channels within the SAEs did not simply represent single entities, but rather encoded different entities at different activation strengths, revealing a sophisticated mechanism for multiplexing information within a single channel.
-    \end{itemize}
+We further identified a bimodal structure in the network regarding target entity identification early in the network, and a surge in correctly identifying the correct direction to travel later in the network. Entity information crystallizes to 99.3\% probe accuracy in conv2a before collapsing to 20.4\% in fc3, while directional information is not as strong in early layers but strengthens to 67.3\% in fc2. This reveals that convolutional layers determine where things are in the maze before the FC layers determine how to arrive there. This explains why our interventions in the convolutional layers are able to succeed before targets have crystallized.
 
-    % From Paper 2 (implicit in its summary/contributions)
-    Additional key insights include:
-    \begin{itemize}
-        \item Confirmation that steering vectors can be a valuable tool for identifying goal-tracking channels and for applying targeted control, even in more complex, multi-objective environments like Procgen Heist.
-        \item Observation that later convolutional layers in the base model (e.g., layer 8 in the simplified architecture) tend to exhibit more specialized behavior related to goal representation compared to earlier, more polysemantic layers.
-        \item Reinforcement of the idea that simplified model architectures can facilitate interpretability in RL agents, as suggested by \cite{hilton_understanding_2020}.
-    \end{itemize}
+We also found that SAEs, while of some use in validating our results, failed to provide a great deal of additional insight into the network that would have not been gained otherwise. This highlights the potential pitfalls of trying to apply promising tools before considering simple interventions and experiments that may lead to more insight.
 
-\section{Implications for Theory and Practice}
-\label{sec:impl_theory_practice}
-% How your work advances theoretical understanding
-% Practical applications of your research
-    The results presented have several implications. Theoretically, they demonstrate that SAEs can offer more precise steering and control than might be possible with the base model alone, by disentangling general goal signals into more specific, identity-aware features. The influence of these features can be conditional on the agent's policy, providing a targeted control mechanism.
-
-    Furthermore, this work illustrates how SAEs may compress specific functionalities into individual channels, and then encode further nuanced information (like entity identity) into the specific activation strength of those channels. This points towards more complex information processing strategies within neural networks than often assumed and has implications for understanding representational efficiency and the nature of learned features.
-
-    Practically, these findings may provide insight into the application of SAEs more broadly beyond language models, and help to shed light on the internal operations of reinforcement learning models. Understanding these mechanisms is a step towards building more reliable, predictable, and ultimately safer AI systems.
-
-\section{Recommendations}
-\label{sec:recommendations}
-% Suggestions for researchers and practitioners
-% Policy implications if relevant
-    Based on the findings, practitioners applying SAEs to RL agents should be aware of the potential for phenomena like dead channel steerability and activation-level encoding, as these may hold important clues to the model's function. Researchers are encouraged to further investigate the generalizability of these findings across different model architectures, RL environments, and SAE training configurations.
-    A key recommendation stemming from this work is to not solely rely on coarse measures of channel activity (e.g., simple activation vs. no activation) but to consider the possibility of information being encoded in the precise magnitude of activations, especially when using tools like SAEs that promote sparse and disentangled representations.
 
 \section{Final Remarks}
 \label{sec:final_remarks}
-% Closing thoughts on the research
-% Broader impact of the work
-    This research contributes to the growing field of mechanistic interpretability in reinforcement learning by providing a detailed analysis of goal representation and control in a complex environment. The application of Sparse Autoencoders has revealed nuanced ways in which information can be encoded and manipulated within an RL agent's neural network. The phenomena observed, such as entity multiplexing through activation strength and the functional relevance of dead channels, open up new avenues for understanding and potentially controlling sophisticated AI systems. Ultimately, continued exploration of these internal mechanisms is crucial for advancing our ability to develop AI that is not only capable but also transparent and trustworthy.
+
+This thesis demonstrates the practicality of unde rstanding such neural networks, though it also highlights some key bottlenecks in doing this at scale. In particular, many of the tools that have been developed to interpret such models were not able to capture key parts of the networks functioning. This highlights that there are still significant gaps in the way that we approach thinking about neural networks, and in particular networks trained with RL. It also highlights the importance of examining fundamental structures such as activation patterns and high level statistics as a simple first step in approaching such problems.
+
+The two-phase processing architecture, with convolutional layers determining the structure of the maze and positions of entities and fully-connected layers determining `how to get there', while not surprising as a structure matches what we might expect from such a network and provides tangible evidence of theoretical predictions. This provides the opportunity for hands on debugging and potential pathways to debugging issues and achieving precise and simple control of such models.
+
+Looking forward, activation-level encoding may extend beyond this specific environment and architecture. The conditions that encourage the development of these structures: repeated use of similar circuitry for structurally similar subtasks that require clear delineation, appear across many domains. If activation magnitude proves to be a general mechanism for information multiplexing under efficiency constraints, it would significantly impact how we build, interpret, and control neural networks. The simplicity and cheapness of applying this techniques makes it particularly appealing. 
+
+Given this potential, we hope that understanding this particular toy model may alter the way the reader thinks about neural networks and approaching understanding them, and that cracking the problem of the inner workings of such models may happen may be easier as a result.
