@@ -65,10 +65,11 @@
     \label{subsubsec:parallel_rollout}
     A key question that this research aimed to tackle is how the network determines which entity to target next, as there are many instances where there are multiple routes leading to different entities in the environment, and the sequence of collection is critical to success.
 
+    The purpose of this experiment was to determine to what extent the network relies on the mere activation range of the values in the network as part of determining which stage of the maze it is in, and which entities to target.
+
     To directly compare the model activations when targeting different entites, a simple toy maze environment was created that would test some basic capabilities in the model, specifically its ability to turn a corner and travel in a straight line towards a target. The maze took the shape of a T junction, with the agent started at the middle point, and with a blue key placed in the bottom right. A visual of the maze is provided in Figure~\ref{fig:parallel-rollout}. A rollout of the policy was then performed, but for each step of the rollout, the environmental state was modified to produce an observation with the gem, blue key, green key, and red key. By doing this at every step, 4 parallel rollouts with different entities were produced which allows for a perfectly controlled experiment from which we could observe the variations in activation patterns based only on the nature of the target entity. 
     
     With these rollouts we then tracked both the mean centered activation values for each entity, as well as the raw activation magnitudes across all channels in layers conv3a and conv4a. The mean-centering was performed by computing each channel's temporal mean across the entire trajectory and subtracting this mean from the activation at every timestep. This transformation centers each channel's activations around zero, removing baseline offsets between channels and making temporal dynamics comparable across channels with different baseline activation levels. Both raw and mean-centered activations were recorded to enable analysis of absolute activation strengths as well as relative temporal patterns. This design isolates the effect of entity type on the model's internal representations while holding agent position, maze geometry, and navigational requirements constant across all four parallel trajectories.
-    
 
     \begin{figure}[H]
         \centering
@@ -77,56 +78,38 @@
         \label{fig:parallel-rollout}
     \end{figure}
 
-    
-
     \subsubsection{Analysing activation changes over a rollout}
-    Because the previous experiment only includes a single entity, and not the full set of entities that the network would typically see, it provides limited insight into the activations during an actual rollout. To observe shifts in patterns that would be closer to the distribution of observations the network was trained on, and to capture how the presence of the other entities affects the activation patterns. To do this we used a simplified cross-maze environment (see Figure~\ref{fig:cross_maze}) containing the keys and the gem and no locks, and observing the differences in activations over the course of a rollout, while noting the timesteps at which different entities were collected. We used this environment because it provides little in the way of navigational challenges, and also makes it possible for the agent to go towards any of the entities, meaning we can test its natural preference ordering more simply. We also remove any confounders that may arise from specific maze patterns.
+    The previous experiment showed how activations vary when entities are changed but all other variables are held constant. However, it is limited in that it only contains a single entity at a time, while normally the environment will have multiple entities present. To observe whether activation ranges were meaningfully related to which entities were present we captured mean activations for given channels in a layer over the course of an episode in an unmodified maze. This allowed us to measure clear patterns would emerge between the activations of different channels, as different entities were collected.
 
-    \begin{figure}[H]
+    \begin{figure}[H] 
         \centering
-        \includegraphics[width=0.9\textwidth]{figures/cross_maze.png}
-        \caption{This illustrates the cross maze used for analysing the sequential entity collection activations. The positions of the entities is randomised in any given run in order to avoid creating a bias in the observed activation patterns.}
+
+        \includegraphics[width=0.9\textwidth]{figures/expanded_cross_maze_single.png}
+        \caption{This illustrates the 4 directional maze used for analysing which entity would be collected first when different activation offsets were applied. Within a given maze, the positions of the entities within a given arm of the maze would be randomised so as to produce greater permutations to allow meaningful statistical testing.}
         \label{fig:cross_maze}
     \end{figure}
 
-    \subsubsection{Determining the role of activation ranges in policy preferences}
-    To test whether different activation ranges could affect the network's choice of which entity to target, we conducted a controlled experiment. We measured activation ranges associated with specific entities from the parallel rollout experiments in~\ref{subsubsec:parallel_rollout}, then applied the offset between a default target entity (e.g. the blue key) and another entity (e.g. red key) to all activation values in a given channel. We calculated offsets on a per-seed basis, as different seeds showed significantly different activation ranges, likely due to variations in background color and spatial layouts.
-
-    We performed rollouts capturing mean activations across 400 unique maze seeds while swapping entities to generate observations of each entity type (blue key, green key, red key, gem). This yielded mean activation values for each channel in conv4a and conv3a when the agent was targeting each entity.
+    \subsubsection{Applying offsets to channels for entity steering}
+    To test whether different activation ranges could affect the network's choice of which entity to target, we performed a simple experiment in which we swept across a parameter $\alpha$, which represented a constant offset that we would add to all channels in a given layer simultaneously. We would then perform a rollout in a custom four armed maze environment, which can be seen in Figure~\ref{fig:cross_maze}. This maze contains the keys and the gem but no locks, and allows for placement of entities at multiple random points within the arms to allow for statistical variance between runs. We used this environment because it provides some navigational challenges, but also makes it possible for the agent to go towards any of the entities, meaning we can test observe its preferences. We also remove any confounders that may arise from specific maze structures.
     
-    After collecting these entity-specific activation patterns, we applied the offsets to test behavioral effects. We primarily used the blue key as baseline due to its natural position in the preference hierarchy. To steer toward a target entity, we added the per-channel, per-seed difference between blue key activations and the target entity's activations during new rollouts.
-    
-    To describe this formally: for a given maze seed $s$, channel $c$ in layer $l$, and entity $e$, the mean activation during entity-targeting rollouts is:
+    To determine the extent to which uniform activation offsets affect target selection, we performed a comprehensive sweep by simply adding a constant offset $\alpha$ to all channels in a given convolutional layer. 
+
+    To describe this formally: for a given maze seed $s$, channel $c$ in layer $l$, and at each timestep $t$, we modify the channel activation $h_t^{c,l}(s)$ as follows:
 
     \begin{equation}
-    \mu_s^{c,l}(e) = \frac{1}{T} \sum_{t=1}^{T} h_t^{c,l}(e, s)
+    \tilde{h}_t^{c,l} = h_t^{c,l}(s) + \alpha
     \end{equation}
 
-    where $h_t^{c,l}(e, s)$ is the channel activation at timestep $t$ and $T$ is the rollout length.
-
-    The per-seed, per-channel offset between entities $e_1$ and $e_2$ is:
-
-    \begin{equation}
-    \Delta_s^{c,l}(e_1 \to e_2) = \mu_s^{c,l}(e_2) - \mu_s^{c,l}(e_1)
-    \end{equation}
-
-    During offset transfer experiments, we modify activations as:
-
-    \begin{equation}
-    \tilde{h}_t^{c,l} = h_t^{c,l}(s) + \Delta_s^{c,l}(e_1 \to e_2)
-    \end{equation}
-
-    where $h_t^{c,l}(s)$ is the natural activation at timestep $t$ in seed $s$.
-
+    Here, $\alpha$ is the flat scalar offset applied. We performed parameter sweeps over $\alpha$ in the range $[-15, +15]$ in increments of $0.2$, with $n=100$ offset values per increment for conv4a. Some layers exhibited changes over a much narrower activation range such as conv3a and conv2a, and for these we performed sweeps in the range $[-3, +3]$ with increments of $0.03$.
 
     \subsection{Sparse Autoencoder (SAE) Training}
     \label{subsec:sae_training}
-    SAEs are a type of unsupervised learning technique that can be used to break down the most critical functions of a model into a more interpretable set of sparse latents, often by training an overcomplete basis on the original activations of a given layer of the network~\cite{bricken2023monosemanticity}. In this study, we apply this approach to the convolutional neural network (CNN) layers to disentangle model functionality. Our methodology for adapting SAEs to CNNs builds upon recent work by~\cite{gorton_2024_missing}, and we describe it in later sections.
+    SAEs are a type of unsupervised learning technique that can be used to break down the most critical functions of a model into a more interpretable set of sparse latents, often by training an overcomplete basis on the original activations of a given layer of the network~\cite{bricken2023monosemanticity}. In this study, we apply this approach to the convolutional neural network (CNN) layers to disentangle model functionality. Our methodology for adapting SAEs to CNNs builds upon recent work by~\citep{gorton_2024_missing}, and we describe it in later sections.
     
-    SAEs were trained on the CNN layers of the compressed IMPALA model. Each model followed the 1×1-conv recipe of \citet{gorton_2024_missing} with an L1 warm-up schedule. Training ran for 6\,M steps, during which time variance-explained would rapidly exceed 0.99\% and policy reward recovered to within 99\% of baseline. A compressed variant, with conv4a reduced to 20 channels, was also trained to test robustness under capacity constraints. Table~\ref{tab:sae-params-methodology} lists the expansion factors and L1 coefficients for all layers. 5 SAEs were trained for each layer, as a means of verifying the robustness of our results.
+    SAEs were trained on the CNN layers of the compressed IMPALA model. Each model followed the 1×1-conv recipe of\citep{gorton_2024_missing} with an L1 warm-up schedule. Training ran for 6\,M steps, during which time variance-explained would rapidly exceed 0.99\% and policy reward recovered to within 99\% of baseline. A compressed variant, with conv4a reduced to 20 channels, was also trained to test robustness under capacity constraints. Table~\ref{tab:sae-params-methodology} lists the expansion factors and L1 coefficients for all layers. 5 SAEs were trained for each layer, as a means of verifying the robustness of our results.
 
     \begin{table}[H] % Consider moving table definition to main.tex preamble or a separate style file
-    \caption{Expansion factors and L1 Coefficients for the different SAEs (from Paper 1)}
+    \caption{Expansion factors and L1 Coefficients for the different SAEs}
     \label{tab:sae-params-methodology} % Renamed label to avoid conflict
     \centering
     \begin{tabular}{@{}lcc@{}}
@@ -141,10 +124,6 @@
     \bottomrule
     \end{tabular}
     \end{table}
-
-
-
-    
 
     \subsection{Validating results with SAEs}
     \label{subsubsec:polysemanticity_investigation}
@@ -190,7 +169,7 @@
     \subsection{Discovering independent navigation channels}
     \label{subsec:discovering_independent_navigation}
 
-    To determine the role of certain channels in navigational capabilities, to contrast with entity targeting, a comprehensive ablation methodology was developed. For each channel in the network, we ran episodes with only that channel active while masking all other channels to zero. This allowed us to measure the isolated capability of each channel to support navigation to different entities in the environment. We recorded successful entity collection counts for each channel across  400 rollouts, providing a quantitative measure of each channel's specialization and capability. This methodology allows us identify which channels are sufficient for basic navigation. An example of the maze used is given in~\ref{fig:ablation-mazes}.
+    To determine the role of certain channels in navigational capabilities, to contrast with entity targeting, a comprehensive ablation methodology was developed. For each channel in the network, we ran episodes with only that channel active while masking all other channels to zero. This allowed us to measure the isolated capability of each channel to support navigation to different entities in the environment. We recorded successful entity collection counts for each channel across n=400 rollouts, providing a quantitative measure of each channel's specialization and capability. This methodology allows us identify which channels are sufficient for basic navigation. An example of the maze used is given in~\ref{fig:ablation-mazes}.
 
     Because the agent has a bias towards randomly walking in a given direction depending on the current policy, it is necessary to rotate the maze so that the direction it's biased towards is the one facing away from the entities. To mitigate this, for every channel a test was carried out to determine the bias direction and rotate the stem of the fork in this direction to avoid contamination of the results.
 
@@ -208,60 +187,62 @@
         \end{minipage}
         \caption{Maze configurations for ablation studies. (a) Fork maze tests individual channel navigation capability by requiring explicit path choices towards different entities and providing sufficient complexity that navigational abilities must be preserved. We orient the stem toward the model's inherent bias direction to minimize false positives. (b) Open maze with entities in corners tests the effect of ablating intervention spans without navigational constraints, ensuring only preferences regarding entity collection are observed.}
         \label{fig:ablation-mazes}
-        \end{figure}
+    \end{figure}
 
+    \subsection{Discovering critical infrastructural channels}
+    \label{subsec:discovering_infrastructure}
+    While the above experiment reveals the degree to which individual channels can retain navigational capabilities, it is not necessarily the case that these individual channels are the most essential to the successful navigation of the network under normal circumstances. Channels which performed badly at independent navigation might simply be highly dependent on other channels in order to functon.
 
+    To establish which channels were critical to the overall functioning of the network, we performed a similar experiment to the one described in~\ref{subsec:discovering_independent_navigation} but instead of ablating all channels but one, we ablated only one channel to observe the impact on the collection rates of different entitities. We repeated this for every channel in conv4a for n=400 rollouts in the fork maze shown in~\ref{fig:ablation-mazes}. We describe these channels as Infrastucture Channels in later experiments.
 
+    The metric by which we ordered these channels was on how great the negative impact was on the collection rates for different entities, because channels that did little to reduce collection rates for a given entity were likely to be less important for that entity.
 
-
-
-\section{Expanded ablation experiments}
+\section{Expanded ablation experiments} %TODO add a discussion of ablating only the single channels
+%TODO expand on the specifics of how each target entity in the experiments had a specific focus on the channels relevant to it
 To derive further insights from our earlier results, we ablate regions of the network based on their success in modifying model behavior in the previous experiments. Our experiment uses a modified maze which removes all walls, and has the keys and gem randomly distributed in the corners of the maze.
 
-We perform four targeted ablations based on our steering and navigation findings:
+We perform six targeted ablations based on our steering and navigation findings:
 
 \textbf{Ablation 1 (Intervention spans):} We zero out any activations within the value ranges that successfully steered the agent. Specifically, for entity $e$ and channel $c$, we set $h_{c,i,j} = 0$ whenever the activation falls within the successful steering range $\mathcal{S}_{e,c}$ identified in our intervention experiments.
 
-\textbf{Ablation 2 (Navigation channels):} We completely ablate the top 10 channels that had the highest collection rates for a given entity in our independent navigation study, setting these channels to zero while leaving the rest unchanged.
+\textbf{Ablation 2 (Redundant Navigation channels):} We ablate the top 10 channels that had the highest collection rates for a given entity in our independent navigation study, setting these channels to zero while leaving the rest unchanged.
 
-\textbf{Ablation 3 (Combined):} We ablate both the navigations that had the best collection rates for a given entity channels and the intervention spans for a given entity simultaneously.
+\textbf{Ablation 3 (Infrastructure channel Ablation):} We ablate the top 10 infrastructure channels that had the lowest collection rates for a given entity in our single channel ablation study, setting these channels to zero while leaving the rest unchanged.
 
-\textbf{Ablation 4 (Inverse):} We preserve only the intervention spans that successfully steered the agent in the presence of entity $e$, ablating everything else. This tests whether these spans alone are sufficient for navigation.
+\textbf{Ablation 4 (Combined):} We ablate both the navigations that had the best collection rates for a given entity channels and the intervention spans for a given entity simultaneously.
 
-\textbf{Ablation 5 (Random):} We randomly select 10 channels (equal to the number of navigation channels ablated) and completely ablate them as a baseline.
+\textbf{Ablation 5 (Inverse):} We preserve only the intervention spans that successfully steered the agent in the presence of entity $e$, ablating everything else. This tests whether these spans alone are sufficient for navigation.
+
+\textbf{Ablation 6 (Random):} We randomly select 10 channels (equal to the number of navigation channels ablated) and completely ablate them as a baseline.
 
 
-\section{Probing for abstractions}\label{sec:probing_methods}
+\section{Probing for Abstractions}\label{sec:probing_methods}
 To determine at which layer in the network different concepts were processed, we performed two different probing experiments, one which targeted the concept of which entity was currently the current correct target of the agent, and which direction did the agent needs to move in to reach its goal. 
 
 The key question we wanted to answer with this experiment was to determine at which point the greatest activity on processing the current next target was performed. Probes are an imperfect mechanism for this because they provide only correlational evidence, and there are ways that the information about which entity is the current target may be present without actually being involved in further processing of that information. They do at least show whether there are sufficient features that a distinction between the target classes can be made however, and this can inform important intuitions about the network.
 
-\subsection{Next entity probes}\label{subsec:next_entity_probes}
+\subsection{Next Entity Probes}\label{subsec:next_entity_probes}
 
-To investigate where the network encodes information about which entity to target next, we trained binary linear probes to predict the next target entity from layer activations.
+To investigate where the network encodes information about which entity to target next, we trained multi-class linear probes to predict the next target entity from layer activations.
 
-For determining the next entity, we gathered a large number of observations from many unmodified maze rollouts, capturing activations every 7 steps to ensure sufficient diversity was achieved. For each of seven entity types (blue key, green key, red key, gem, blue lock, green lock, red lock), we gathered 2000 observations where that entity was the agent's next target.
+For determining the next entity, we gathered a large number of observations from many unmodified maze rollouts, capturing activations every 7 steps to ensure sufficient diversity was achieved. For each of seven entity types (blue key, green key, red key, gem, blue lock, green lock, red lock), we gathered 2000 observations where that entity was the agent's next target, yielding 14,000 total samples balanced across entity types.
 
-For each entity type, we trained a binary classifier to predict whether that entity was the next target. The training set consisted of 4000 samples: 2000 positive examples (target entity) and 2000 negative examples (randomly sampled from other entity types). We used a 80/20 train-test split.
+We trained 7-way classifiers to predict which specific entity was the next target. We used a 90/10 train-test split.
 
 We trained two types of probes:
 \begin{itemize}
-    \item \textbf{Per-channel probes}: For each channel in layers conv2a-conv4a, 
-    we flattened the spatial activations and trained a linear classifier
-    \item \textbf{Per-layer probes}: For full layers (conv2a, conv3a, conv4a, 
-    fc1, fc2, fc3), we flattened all activations across all channels/neurons 
-    and trained a single linear classifier for each layer
+    \item \textbf{Per-channel probes}: For each channel in layers conv1a-conv4a, we flattened the spatial activations and trained linear classifiers on the flattened activations.
+    \item \textbf{Whole-layer probes}: For full layers (conv1a, conv2a, conv3a, conv4a, fc1, fc2, fc3), we flattened all activations across all channels/neurons and trained a linear classifier for each layer
 \end{itemize}
 
-All probes used logistic regression with L2 regularization, trained until 
-convergence using the Adam optimizer.
+All probes were linear classifiers trained with the Adam optimizer (learning rate 0.01) for 200 epochs.
 
 \subsection{Direction probes}\label{subsec:directional_probes}
-To establish which parts of the network were more involved with navigation, we trained additional binary linear probes designed to detect which direction the agent would need to go in order to reach the next target entity. This is a complex task because often the direction needed to travel in was significantly different than the position of the entity relative to the player.
+To establish which parts of the network were more involved with navigation, we trained multi-class linear probes to predict which direction the agent would need to move to reach the next target entity. This is a complex task because often the direction needed to travel in was significantly different than the position of the entity relative to the player.
 
-Building the training dataset involved using Djikstra's algorithm to calculate the most efficient route to the next entity and using the grid state to calculate which path would need to be taken, and produce the direction that would need to be taken in the most efficient route. For each cardinal direction we gathered 2000 observations, excluding examples where the agent was directly next to the target entity, or where the agent was too far from the edge of an actual grid square in the maze, ensuring that there was no ambiguity in the direction that needed to be taken.
+Building the training dataset involved using Dijkstra's algorithm to calculate the most efficient route to the next entity and using the grid state to calculate which path would need to be taken, and the optimal direction to take (which the policy would reliably choose). For each of the four cardinal directions we gathered 2000 observations and extracted model activations for each, excluding examples where the agent was directly next to the target entity, or where the agent was too far from the edge of an grid square in the maze, ensuring that there was no ambiguity in the direction that needed to be taken.
 
-We used the same approach as in~\ref{subsec:next_entity_probes} for our sample distribution and train-test split.
+We trained 4-way classifiers with the same architecture and training procedure as the entity probes.
 
 \section{Summary}
 \label{sec:method_summary_revised}
