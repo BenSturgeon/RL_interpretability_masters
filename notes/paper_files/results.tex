@@ -5,6 +5,7 @@
 All results presented are from checkpoint 35001 (35k update steps), past convergence which occurred around 30k, unless otherwise noted. 
 
 \section{Parallel Rollout Activation Analysis}
+\label{sec:parallel_rollouts}
 In performing parallel rollouts targeting the different entities, as shown in Figure~\ref{fig:parallel-rollout}, we observe that there are distinct parallel trajectories in the mean activations across different channels in the network for each entity.
 
 By observing which channels had the lowest and greatest offset between runs targeting different entities we could construct clear visual comparisons to determine whether the primary mechanism changing between entities was simply the mean activation, or if there was significant variance in which channels were activating. This would compare if the entity signal was captured via specific channels that would uniquely fire given the presence of an entity, or if the activation offset itself would carry the signal.
@@ -25,42 +26,54 @@ We observe that extremely high correlation between activation patterns exists in
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{figures/violin_35k_simple.pdf}
+    \includegraphics[width=0.98\textwidth]{figures/violin_35k_simple.pdf}
     \caption{Violin plots comparing the distribution of inter-entity correlations between conv3a and conv4a layers. Each violin shows the distribution of mean correlations within channels for that layer. For each channel, correlations are computed by: (1) calculating pairwise correlations between entity trajectories within a rollout, (2) averaging across all entity pairs, and (3) averaging over 10 rollouts.}
     \label{fig:correlations_violin}
     \end{figure}
     
 
 \subsection{Activation patterns over rollouts}
-We carried out further experiments to observe how activation patterns evolved over the course of a rollout, as different entitities were collected. To do this we simply captured activations over the course of a rollout in both the custom maze environments, and unmodified mazes. We then took the mean of the activations in a given channel and tracked it over the timesteps in the rollout. This gave rise to clear patterns where activations would typically jump upwards as each key was collected, with the size of the jump decreasing as each one was collected. These were particularly obvious with the most high variance channels, with the effect being present not ubiquitous amongst the other channels. Results of a randomly selected rollout shown in ~\ref{fig:activation_tracking}.
+We carried out further experiments to observe how activation patterns evolved over the course of a rollout, as different entitities were collected. To do this we simply captured activations over the course of a rollout in both the custom maze environments, and unmodified mazes. We then took the mean of the activations in a given channel and tracked it over the timesteps in the rollout. This gave rise to clear patterns where activations would typically jump upwards as each key was collected, with the size of the jump decreasing as each one was collected. These were particularly obvious with the most high variance channels, with the effect being present not ubiquitous amongst the other channels. Results of a randomly selected rollout shown in Figure~\ref{fig:activation_tracking}.
 
-Interestingly, in the cross maze where it was possible to access all the keys from the beginning the model would choose to target the green key first in about 12\% of cases. In these instances we would still see a similar jump in activations as we saw in the case of the blue key, indicating that this phenomena is primarily tied to the number of entities observed, and not necessarily targeting a specific entity.
+Another recurring pattern in the activation trajectory was the pinching effect seen in Figure~\ref{fig:activation_tracking}, wherein the activations suddenly converge to a similar value across entities. This is likely because the network has learned that regardless of the entity involved, if the player is one step away from the entity then it always makes sense to go directly to that entity, as in the normal course of a rollout there is no scenario in which it can be directly beside an entity while it would be incorrect to collect that entity, except in the case of locks. 
+
+Interestingly, in the cross maze where it was possible to access all the keys from the beginning the model would choose to target the green key first in about 12\% of cases. In these instances we would still see the positive jump in activations as we saw in the case of the blue key, indicating that this phenomena is primarily tied to the number of entities observed, and not necessarily targeting a specific entity. An exa
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{figures/standard_maze_35k_activation_tracking.pdf}
+    \includegraphics[width=0.98\textwidth]{figures/standard_maze_35k_activation_tracking.pdf}
     \caption{Plot showing the mean activation values captured across all timesteps in an unmodified rollout in the 6 channels that had the greatest variance over the course of the rollout. The shaded regions indicate the current `next target', the entity that it would logically pursue next in solving the maze. Note the upward jumps in activations at the points between shaded regions, indicating contact with an entity.}
-    \label{fig:activation_tracking}
+    \label{fig:activation_tracking_all}
 \end{figure}
 
 \section{Activation Offsets Achieve Steering}
-\section{Activation Offsets Achieve Steering}
-
-A surprising finding was that merely by adjusting the activation ranges within channels by a static offset we could reliably achieve coherent steering towards different entities than what the agent would target by default. Results of rates of initial pickup over different rollouts are presented in Figure~\ref{fig:activation_offset_results}. 
-
-We observe complete shifts in entity targeting. Baseline rates show 93\% $\pm$ 6\% blue key targeting at offset 0.0, peaking at 95\% $\pm$ 5\% at offset $-0.2$. At positive offsets, the agent switches to targeting the green key, reaching 67\% $\pm$ 9\% collection at offset $+1.6$ and peaking in green targeting at 94\% $\pm$ 5\% at offset $+4.8$. 
-
-At negative offsets, we observe a transition to targeting red more than blue at offset $-4.6$ (44\% $\pm$ 10\% red), with peak red key collection of 52\% $\pm$ 10\% at offset $-5.8$. There is also a significant uptick in green key collection rates in the negative range, with a local maxima of $-2.8$ at 27\% $\pm$ 9\%, before dropping as rates of red key collection increase as the offset becomes more negative.
-
-We also observe that rates of not collecting any entity during the rollout increase as we approach the positive and negative offset extremes, peaking at 44\% $\pm$ 10\% at offset $+12.0$ and 32\% $\pm$ 9\% at offset $-14.0$, which is expected considering that the large offsets would be likely to interfere with the functioning of the network. However, the overall collection rate remains fairly high, and the environment includes many cases where navigating around corners is required to reach keys, meaning important navigational functions within the network continue to function.
-
-We find similar results with conv3a, though with a much smaller interval before repeating patterns emerge. A further repeat continues with conv2a, with an even smaller interval. Of particular note in the conv2a example is the very clear repeating pattern that emerges beyond a certain offset range, and also with a surprising surge in red key and to a lesser extent gem collection in the positive range, indicating that conv2a is particularly emanable to this kind of offset steering and allows more fine grained control. We also repeat observe this result on different checkpoints, with different success rates but with the same overall patterns. Figures for conv3a and conv2a are included in Appendix~\ref{app:additional_offset_results}.
+\label{sec:offset_steering}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{figures/offset_sweep_conv4a_expanded_checkpoint_35001_full_range.pdf}
+    \includegraphics[width=0.98\textwidth]{figures/offset_sweep_conv4a_expanded_checkpoint_35001_full_range.pdf}
     \caption{Activation offset experiment results. This shows the degree to which modifying the activations by a simple offset value would induce steering towards different entities in the environment, with different offset range providing reliable if imperfect redirection towards the green key and red key. A run ends immediately upon contact with an entity, and is considered `none' if no entity is collected over 100 timesteps. }
     \label{fig:activation_offset_results}
+\end{figure}
+
+
+A surprising finding was that merely by adjusting the activation ranges within channels by a static offset we could reliably achieve coherent steering towards different entities than what the agent would target by default. Results of rates of initial pickup over different rollouts are presented in Figure~\ref{fig:activation_offset_results}. We also observe this result on different checkpoints, with different success rates for offset values but with similar patterns. 
+We find that steeering towards different entities by adjusting mean offset works across layers shows that it is endemic to the structure of the network, and not simply an isolated phenomena.
+
+We observe complete shifts in entity targeting. Baseline rates show 93\% $\pm$ 6\% blue key targeting at offset 0.0. At positive offsets, the agent switches to targeting the green key, peaking at 94\% $\pm$ 5\% at offset $+4.8$. At negative offsets, we observe peak red key collection of 52\% $\pm$ 10\% at offset $-5.8$. Rates of not collecting any entity increase at the extremes, but overall collection remains fairly high, meaning important navigational functions continue to function.
+
+Conv2a (shown in Figure~\ref{fig:activation_offset_results_conv2a_zoomed}) shows particularly amenable offset steering with fine grained control. Red key steering peaks at 75\% $\pm$ 5\% at offset $+0.30$, illustrating clear and strong steering. There is also a surprising surge in gem collection (12.2\% $\pm$ 3.2\% at offset $+0.40$). The precision of the technique is notably high in conv2a, likely due to it being the first layer where the next target is being established in the hierarchy as illustrated by Table~\ref{tab:probe_whole_layer}.
+
+Conv1a, despite having minimal entity probe accuracy (20.0\% overall), shows strong steering capabilities with a different distribution than that observed in the other layers. Unlike the overlapping, nuanced patterns in later layers, conv1a exhibits discrete zones: green dominates the negative range (60-73\% from -3.0 to -0.5), blue shows a sharp peak near the baseline (92\% at $+0.1$), and red controls the positive range (50-75\% from +0.5 to +3.0). Surprisingly we find the best gem steering in conv1a with 57\% gem collection at $+1.9$ offset—far exceeding conv2a (12\%) and conv4a (3\%). This suggests conv1a interventions is able to shift the normal bias towards collecting keys first, before target integration occurs. 
+
+We also investigate whether the colours in the background have a significant impact on which entities are selected for targeting, and we find in an n=1000 sample that there is no statistically significant relationship between the colours of the background and the choice of entity (p=0.21). Figures for conv3a, conv2a, and conv1a, including more precise sweeps over smaller regions are included in Appendix~\ref{app:additional_offset_results}.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/offset_sweep_conv2a_expanded_checkpoint_35001_-3to3_step0.03.pdf}
+    \caption{Activation offset experiment results. This shows the degree to which modifying the activations by a simple offset value would induce steering towards different entities in the environment, with different offset range providing reliable if imperfect redirection towards the green key and red key. A run ends immediately upon contact with an entity, and is considered `none' if no entity is collected over 100 timesteps. }
+    \label{fig:activation_offset_results_conv2a_zoomed}
 \end{figure}
 
 
@@ -72,15 +85,11 @@ We find similar results with conv3a, though with a much smaller interval before 
 
 
     \subsection{SAEs Preserve Base Model Structure}
-    Remarkably, training SAEs on conv3a and conv4a did not reveal additional interpretable structure beyond what we observed in the base model. SAE latents exhibited the same activation magnitude encoding for entity differentiation, with similar steering patterns and intervention spans. This preservation across radically different representation schemes (32 base channels → 128 SAE latents) suggests activation-level encoding is fundamental computational strategy, not an artifact of the base architecture.
-  
-    \subsection{Steering Patterns Remain Unchanged}
-    When comparing steering interventions between base model channels and SAE latents, we found nearly identical patterns: specific activation ranges successfully redirect the agent from particular entities, with similar success rates (base: X\%, SAE: Y\%). The primary difference was that SAE  interventions required [higher/lower] activation values, consistent with the [sparsity/expansion] introduced by the L1 penalty.
+    Training SAEs on conv3a and conv4a did not reveal additional interpretable structure beyond what we observed in the base model. SAE latents exhibited the same activation magnitude encoding for entity differentiation, with variations in the intervention spans. This preservation across radically different representation schemes suggests activation-level encoding was fundamental to the operations of the network and not simply the result of compression into a sparse basis.
 
 
     \subsection{Steering with Dead Channels (SAE)}
 \label{subsec:dead_channel_steering}
-% Content from Paper 1
 One of the most surprising findings from the SAE intervention experiments was that a large number of the channels that were effective for steering the agent were `dead channels'. These are channels that exhibited no activation under normal operating conditions of the model. It was confirmed that these channels remained inactive over 100 rollouts. 
 
 
@@ -105,7 +114,6 @@ The primary value of this finding is in providing further support for the way in
 
 \subsection{Steering with Dead Channels (SAE)}
 \label{subsec:dead_channel_steering}
-% Content from Paper 1
 One of the most surprising findings from the SAE intervention experiments was that a large number of the channels that were effective for steering the agent were `dead channels'. These are channels that exhibited no activation under normal operating conditions of the model. It was confirmed that these channels remained inactive over 100 rollouts. 
 
 
@@ -305,7 +313,7 @@ This may be the result of a greater share of the core navigational functionality
     
     \vspace{0.5em}
     \small
-    \textit{Note: The diagonal shows on-target effects: Gem (-47.2\%), Blue Key (-18.3\%), Green Key (-4.5\%), Red Key (-34.0\%). Gem infrastructure channels affect all entities catastrophically, while Green Key channels display high variance in their impact.}
+    \textit{Note: The diagonal shows on-target effects: Gem (-47.2\%), Blue Key (-18.3\%), Green Key (-4.5\%), Red Key (-34.0\%). Gem infrastructure channels affect all entities catastrophically, while key channels often have surprising and counter-intuitive impacts reducing their respective entities collection rates less than other entities.}
 \end{table}
 
 
@@ -315,3 +323,14 @@ This may be the result of a greater share of the core navigational functionality
 
 \section{Summary of Key Findings}
 \label{sec:results_summary_key_findings}
+
+Our investigation reveals three fundamental insights into how neural networks implement goal-directed behavior in complex environments:
+
+\textbf{1. Activation Magnitude Encodes Entity Identity.} Our heist network learns to encode targeting information through systematic variations in activation strength rather than dedicating separate channels to each entity. Parallel rollouts show consistent activation offsets between entities (correlation 0.931 in conv4a), with complete behavioral redirection achievable through uniform offset adjustments—shifting from 93\% blue key collection at baseline to 94\% green key at +4.8 offset.
+This magnitude-based encoding persists across layers and even through SAE decomposition, confirming it represents a fundamental computational strategy rather than an architectural artifact.
+
+\textbf{2. Two-Phase Processing Architecture Separates Goal Selection from Navigation.} Probe experiments reveal distinct information processing stages: entity determination occurs in convolutional layers (peaking at 99.3\% accuracy in conv3a) while navigation planning happens in fully-connected layers (peaking at 67.3\% directional accuracy in fc2). Conv4a serves as a critical bridge, maintaining entity information while reformatting spatial representations. This separation explains why steering interventions succeed at conv3a/4a—we intervene precisely where goals crystallize, before transformation into distributed action plans.
+
+\textbf{3. Layer Depth Determines Intervention Character.} Despite minimal probe accuracy (20.0\%), conv1a shows strong but chaotic steering with discrete entity zones and uniquely achieves 57\% gem collection—far exceeding later layers. Conv2a offers the finest control with ±0.5 offset precision, representing the optimal intervention point where representations first integrate. Conv3a/4a provide stable but coarser manipulation of crystallized representations. This progression from raw detection through integration to crystallization defines both the network's computational strategy and our ability to control it.
+
+These findings demonstrate that understanding where and how information is encoded—not just what is encoded—is crucial for interpreting and controlling neural network behavior.
