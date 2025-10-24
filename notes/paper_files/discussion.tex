@@ -1,6 +1,54 @@
 \chapter{Discussion}
 \label{ch:discussion}
 
+\section{Addressing Research Questions and Hypotheses}
+\label{sec:addressing_rq}
+
+Before interpreting our findings in detail, we first highlight the original research questions and hypotheses from Chapter~\ref{ch:introduction} and the extent to which they have been answered.
+
+\subsection{Hypothesis Testing}
+
+\begin{table}[h]
+\centering
+\caption{Hypothesis outcomes with key supporting evidence.}
+\label{tab:hypothesis_outcomes}
+\begin{tabular}{p{0.08\textwidth}p{0.35\textwidth}p{0.15\textwidth}p{0.45\textwidth}}
+\toprule
+\textbf{H\#} & \textbf{Hypothesis} & \textbf{Outcome} & \textbf{Key Evidence} \\
+\midrule
+H1 & Dedicated entity channels & \textbf{Partial} & Conv1a specialized, conv2-4a multiplex \\
+H2 & SAEs disentangle features & \textbf{Rejected} & SAEs preserve multiplexing structure \\
+H3 & Hierarchical preferences & \textbf{Confirmed} & Pickup rates for the blue key of 94\% and green key 6\% in cross maze\\
+H4 & SAEs successfully recover performance & \textbf{Confirmed} & 99.6-102\% recovery \\
+H5 & Layer specialization & \textbf{Confirmed} & Entity $\rightarrow$ direction transition proven \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+While some of our initial hypotheses proved correct, we were surprised by the discovery of the activation magnitude mechanism as a means of encoding goals. We also found that SAEs did not work as expected in this case, but as a result were able to validate some of our new results. We were also able to better characterise some of our initial ideas about how the network might work.
+
+\subsection{Research Questions}
+
+\begin{table}[h]
+\centering
+\caption{Research questions and their answers based on experimental evidence.}
+\label{tab:rq_outcomes}
+\renewcommand{\arraystretch}{1.5} % Adds 50% more vertical space
+\begin{tabular}{p{0.08\textwidth}p{0.35\textwidth}p{0.55\textwidth}}
+\toprule
+\textbf{RQ} & \textbf{Question} & \textbf{Answer} \\
+\midrule
+RQ1 & How are goals encoded? & Via activation magnitude multiplexing (Section~\ref{sec:parallel_rollouts}, \ref{sec:offset_steering}) \\
+RQ2 & How is the current target determined? & Two-phase: detection at conv1a $\rightarrow$  integration at conv2a-conv4a (Table~\ref{tab:probe_whole_layer}) \\
+RQ3 & Can SAEs clarify feature roles? & Yes, but only providing validation (Section~\ref{subsec:sae_structure}) \\
+RQ4 & Dedicated vs general channels? & Conv1a specialised conv2a-conv4a generalised (Appendix~\ref{app:channel_probe_results}) \\
+RQ5 & Why different steering success rates? & Redundant gem encodings allowed greater steering(Table~\ref{tab:intervention_results}) \\
+RQ6 & Do layers have specialized roles? & Yes: entity detection in conv layer, navigation in fc2 (Tables~\ref{tab:probe_whole_layer},~\ref{tab:probe_directional}) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
 \section{Interpretation of Results}
 \label{sec:interpretation}
 
