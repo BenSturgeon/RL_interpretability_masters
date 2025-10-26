@@ -16,7 +16,7 @@ Before interpreting our findings in detail, we first highlight the original rese
 \toprule
 \textbf{H\#} & \textbf{Hypothesis} & \textbf{Outcome} & \textbf{Key Evidence} \\
 \midrule
-H1 & Dedicated entity channels & \textbf{Partial} & Conv1a specialized, conv2-4a multiplex \\
+H1 & Dedicated entity channels & \textbf{Partial} & Conv1a specialised, conv2-4a multiplex \\
 H2 & SAEs disentangle features & \textbf{Rejected} & SAEs preserve multiplexing structure \\
 H3 & Hierarchical preferences & \textbf{Confirmed} & Pickup rates for the blue key of 94\% and green key 6\% in cross maze\\
 H4 & SAEs successfully recover performance & \textbf{Confirmed} & 99.6-102\% recovery \\
@@ -38,12 +38,12 @@ While some of our initial hypotheses proved correct, we were surprised by the di
 \toprule
 \textbf{RQ} & \textbf{Question} & \textbf{Answer} \\
 \midrule
-RQ1 & How are goals encoded? & Via activation magnitude multiplexing (Section~\ref{sec:parallel_rollouts}, \ref{sec:offset_steering}) \\
+RQ1 & How are goals encoded? & Via activation magnitude multiplexing across many channels (Section~\ref{sec:parallel_rollouts},~\ref{sec:offset_steering}) \\
 RQ2 & How is the current target determined? & Two-phase: detection at conv1a $\rightarrow$  integration at conv2a-conv4a (Table~\ref{tab:probe_whole_layer}) \\
 RQ3 & Can SAEs clarify feature roles? & Yes, but only providing validation (Section~\ref{subsec:sae_structure}) \\
 RQ4 & Dedicated vs general channels? & Conv1a specialised conv2a-conv4a generalised (Appendix~\ref{app:channel_probe_results}) \\
-RQ5 & Why different steering success rates? & Redundant gem encodings allowed greater steering(Table~\ref{tab:intervention_results}) \\
-RQ6 & Do layers have specialized roles? & Yes: entity detection in conv layer, navigation in fc2 (Tables~\ref{tab:probe_whole_layer},~\ref{tab:probe_directional}) \\
+RQ5 & Why different steering success rates across entities? & Redundant gem encodings allowed greater steering(Table~\ref{tab:ablation_results}) \\
+RQ6 & Do layers have specialised roles? & Yes: entity detection in conv layer, navigation in fc2 (Tables~\ref{tab:probe_whole_layer},~\ref{tab:probe_directional}) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -53,9 +53,9 @@ RQ6 & Do layers have specialized roles? & Yes: entity detection in conv layer, n
 \label{sec:interpretation}
 
 \subsection{Entity Encoding as A Core Mechanism}
-Our findings in Section~\ref{sec:parallel_rollouts} and \ref{sec:offset_steering} show that rather than than requiring separate channels for each entity type, the model has learned to use activation magnitude as an additional dimension for encoding information. 
+Our findings in Section~\ref{sec:parallel_rollouts} and~\ref{sec:offset_steering} show that rather than than requiring separate channels for each entity type, the model has learned to use activation magnitude as an additional dimension for encoding information. 
 
-The ability to completely redirect agent behavior through uniform activation offsets (93\% blue key collection shifting to 94\% green key collection in conv4) demonstrates this encoding is fundamental to the network's learned algorithm. This suggests that interventions on neural networks need to consider not just which channels to modify, but also to consider how activation strengths may flip conditions in the network, and in particular if different tasks might cause the network to shift into different regions of activation space by a constant offset in portions of the network.
+The ability to completely redirect agent behaviour through uniform activation offsets (93\% blue key collection shifting to 94\% green key collection in conv4) demonstrates this encoding is fundamental to the network's learned algorithm. This suggests that interventions on neural networks need to consider not just which channels to modify, but also to consider how activation strengths may flip conditions in the network, and in particular if different tasks might cause the network to shift into different regions of activation space by a constant offset in portions of the network.
 
 Due to the similarity of the task of tracking each key, it proves efficient to repurpose channels already capable of entity detection and allows the reuse of computational machinery with different `intensity settings', having them target each entity sequentially while indicating the specific entity through activation strength. This strategy likely emerges from efficiency pressures during training wherein the core navigation task is exactly the same, but can simply be repurposed to focus on different entities.
 
@@ -76,7 +76,7 @@ The majority of steerable SAE channels were `dead channels', channels that had 0
 \subsection{Solution Multiplicity and Representational Drift}
 A striking observation from our experiments was that intervention positions changed completely across different checkpoints even after convergence. Despite maintaining similar performance, the network continued exploring different encoding schemes within the solution space. This is largely due to the fact that we trained the model with an endless variety of maze variations rather than a fixed number, meaning it continued to adapt and change over time. This configuration was also the only one that led to successful training of our smaller model.
 
-This variety of solutions suggests that amplitude-based multiplexing is not a unique solution but rather one of many equivalent representations the network can adopt, and a pattern which is likely to emerge over the course of training. The continuous drift between encoding schemes post-convergence indicates the network exists on a `valley floor' of equally viable solutions, constantly reorganizing its internal representations while preserving behavioral performance. 
+This variety of solutions suggests that amplitude-based multiplexing is not a unique solution but rather one of many equivalent representations the network can adopt, and a pattern which is likely to emerge over the course of training. The continuous drift between encoding schemes post-convergence indicates the network exists on a `valley floor' of equally viable solutions, constantly reorganizing its internal representations while preserving behavioural performance. 
 
 We find a notable checkpoint at update step 30001 where no steerable channels at all are found for any entity, though we only found 1 example of this in the 60 checkpoints we tested, suggesting it might be less optimal than those with the stronger intervention configuration. 
 
@@ -122,17 +122,17 @@ This research, while providing several insights, is subject to certain limitatio
 
 Our work is currently limited by the fact that we test only on a single environment, as there are not many environments that have similar qualities such as the extreme generalization encouraged by Procgen, and the staged multi-goal configuration in Heist. To address this, future work could attempt this with MiniGrid environments, though a custom configuration that can establish similar diversity may be needed.
 
-It is also unclear to what extent the intervention channel multiplexing phenomena generalizes to other architectures, and we plan to test this in future work.
+It is also unclear to what extent the intervention channel multiplexing phenomena generalises to other architectures, and we plan to test this in future work.
 
 Our training methodology differs from standard practice in using unlimited procedurally generated environments rather than the typical 200-500 set of environments one would set. While this was necessary for successful training with our compressed architecture, it may affect the generalization of our findings to models trained under standard Procgen protocols. The unlimited environment diversity likely also contribute to the representational drift we observe, as the network continually trains on new environmental distributions.
 
-We also do not yet fully characterize the function of the steering spans, or if their steering translates to an actual unique role within the network's natural functioning. We plan to address this directly through a thorough application of probes that are trained to detect which entity is currently the next entity in order of pursuit by the network. Early work shows that the later convolutional layers do this very successfully, as well as the first fully connected layer. However, to truly understand the role of the intervention spans and navigation channels, it may be necessary to train probes on every channel and every row in the fully connected layer to determine their function. 
+We also do not yet fully characterise the function of the steering spans, or if their steering translates to an actual unique role within the network's natural functioning. We plan to address this directly through a thorough application of probes that are trained to detect which entity is currently the next entity in order of pursuit by the network. Early work shows that the later convolutional layers do this very successfully, as well as the first fully connected layer. However, to truly understand the role of the intervention spans and navigation channels, it may be necessary to train probes on every channel and every row in the fully connected layer to determine their function. 
 
-Intervention experiments, by their nature, can push the network into off-distribution activation states. While this is useful for causal testing, the agent's behavior under such strong artificial interventions do not represent its typical behaviour. We do not yet have a clear picture of precise circuitry under normal operating conditions. Additionally, the steering interventions were typically only applied with positive activations, but the mean channel activation analysis shown in Figure~\ref{fig:activation_tracking} reveals that for many channels the activations of the network are mostly negative. This means that a large portion of their activity is not being captured accurately in the interventions. We believe future work in understanding the role of the negative activations in the convolutional channels would lead to fruitful insights.
+Intervention experiments, by their nature, can push the network into off-distribution activation states. While this is useful for causal testing, the agent's behaviour under such strong artificial interventions do not represent its typical behaviour. We do not yet have a clear picture of precise circuitry under normal operating conditions. Additionally, the steering interventions were typically only applied with positive activations, but the mean channel activation analysis shown in Figure~\ref{fig:activation_tracking} reveals that for many channels the activations of the network are mostly negative. This means that a large portion of their activity is not being captured accurately in the interventions. We believe future work in understanding the role of the negative activations in the convolutional channels would lead to fruitful insights.
 
 Our approach of simply intervening in every channel with 400 different activation strengths is also an approach that would need to be approached more carefully, due to cost constraints, in larger models. 
 
-This research explored only a single environment (Procgen Heist) and architecture (5-conv, 2 FC layer Impala model) under specific training conditions. Whether activation-level encoding generalizes to other architectures, environments, and training regimes remains open. Our interventions often pushed networks into off-distribution states beyond normal ranges, and used positive activations despite many channels operating mostly in negative ranges, leaving many of the specific mechanisms of the network uncharacterized.
+This research explored only a single environment (Procgen Heist) and architecture (5-conv, 2 FC layer Impala model) under specific training conditions. Whether activation-level encoding generalises to other architectures, environments, and training regimes remains open. Our interventions often pushed networks into off-distribution states beyond normal ranges, and used positive activations despite many channels operating mostly in negative ranges, leaving many of the specific mechanisms of the network uncharacterised.
 
 \section{Future Work}\label{sec:future_work}
 
