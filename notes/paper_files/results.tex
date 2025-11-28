@@ -81,14 +81,14 @@ We also investigate whether the colours in the background have a significant imp
 \subsection{Quantitative Steering Results}
 \label{subsec:quantitative_steering}
 
-We apply our incremental steering experiments across all channels in conv3a and conv4a and find a large number of channels which successfully steer the agent away from a given entity. We present our results from layer conv4a in Figure~\ref{fig:steering-dot-plot}. For conv3a a similar phenomena is observed but with far more channels and many more effective steering values. We add black dotted lines to demarcate the value range within the $99.9$th percentile of activations calculated over 50 rollouts. This demonstrates that for many channels, the steering is far outside of their normal activation range, indicating that the steering functions as a kind of superstimulus and is likely not part of normal functioning for the network. 
+We apply our incremental steering experiments across all channels in conv3a and conv4a and find a large number of channels which successfully steer the agent away from a given entity. We present our results from layer conv4a in Figure~\ref{fig:steering-dot-plot}. For conv3a a similar phenomena is observed but with far more channels and many more effective steering values. We add black dotted lines to demarcate the 99.9th percentile activation threshold. This demonstrates that for many channels, the steering is far outside of their normal activation range, indicating that the steering functions as a kind of superstimulus and is likely not part of normal functioning for the network. 
 
 A possible explanation for why the ranges have an upper limit beyond which they stop working is that the activation is so strong that it disrupts normal functioning of the network, meaning that the agent fails to reach the artificially activated region.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.9\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_14_ood_p99.9_step_35001.pdf}
-\caption{To determine the frequency with which a given channel can be used to steer the model away from a given entity, we create an artificial maze in a `Q' shape and place an artificial activation at a point to the right, and a given entity from the maze on the left. We declare an intervention to be successful based on whether the agent makes contact with the region around the artificial activation. Each colored dot in the above plot represents a successful suppression of the policy's normal target. Intervention success is partially localized to specific activation value ranges that vary based on the entity. We include black dotted lines to demarcate the activation value at the $99.9$th percentile of activations for a given channel, to give a sense for where interventions are outside the normal distribution of activations. This sample is from channel conv4a.}
+\caption{To determine the frequency with which a given channel can be used to steer the model away from a given entity, we create an artificial maze in a `Q' shape and place an artificial activation at a point to the right, and a given entity from the maze on the left. We declare an intervention to be successful based on whether the agent makes contact with the region around the artificial activation. Each colored dot in the above plot represents a successful suppression of the policy's normal target. Intervention success is partially localized to specific activation value ranges that vary based on the entity. Black dotted lines indicate the 99.9th percentile activation threshold, showing where interventions are outside the normal distribution of activations. This sample is from channel conv4a.}
 \label{fig:steering-dot-plot}
 \end{figure}
 
@@ -129,7 +129,7 @@ To determine where the network encodes information about which entity to target 
 The changing accuracies in probe accuracy across layers reveal that the convolutional layers seem to dominate in the selection of which entity to target, while the fully connected layers rapidly transition to translating information into actions. Table~\ref{tab:probe_whole_layer} shows whole-layer probe accuracies from the input through to the final hidden layer.
 
 \begin{table}[h]
-    \centering
+    %\centering % Remove centering to "shift to the left"
     \caption{Whole-layer probe accuracy for predicting next target entity across network layers. Random baseline is 14.3\%. Overall accuracy shown with 95\% confidence intervals (n=1,400 test samples).}
     \label{tab:probe_whole_layer}
     \begin{tabular}{lcccccc}
@@ -224,22 +224,26 @@ In addition, key steering spans typically appear as regions within larger gem sp
 Second, we discovered that the intervention signals actually interfere with the collection of keys. Ablating navigation channels alone devastated key collection (45\% average), but additionally ablating intervention spans partially restored performance (53\% average). This suggests that the intervention spans, when present alongside disabled navigation channels, actively interfere with key collection. Removing both eliminates this interference. Ablating intervention spans alone had minimal impact on keys (even causing a slight improvement), indicating that these spans are not necessary for key collection and, in fact, become actively harmful when navigation is impaired.
 
 \begin{table}[h]
-    \centering
-    \caption{Effect of targeted ablations on entity collection rates (n=400 trials per condition). Bold values indicate performance improvements or minimal degradation compared to baseline.}
+    \caption{Effect of targeted ablations on entity collection rates (n=400 trials per condition). Bold values indicate performance improvements or minimal degradation compared to baseline. Values shown with 95\% confidence intervals.}
     \label{tab:ablation_results}
+    \centering
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \makebox[\textwidth][c]{
     \begin{tabular}{lcccc}
     \toprule
     Condition & Gem & Blue Key & Green Key & Red Key \\
     \midrule
-    Baseline (No Ablation) & \textbf{74.5\%} & 98.5\% & 95.0\% & 80.0\% \\
-    Redundant Navigation Channels & 45.0\% & 69.6\% & 55.9\% & 43.1\% \\
-    Infrastructure Channels & 27.3\% & 70.2\% & 34.5\% & 26.5\% \\
-    Intervention Spans & 64.8\% & \textbf{99.8\%} & \textbf{97.8\%} & \textbf{83.2\%} \\
-    Navigation + Intervention Spans & 32.1\% & 71.9\% & 50.7\% & 37.1\% \\
-    Preserve Only Intervention Spans & 31.8\% & 61.8\% & 43.6\% & 32.5\% \\
-    Random Ablation (Control) & 44.1\% & 74.9\% & 63.1\% & 48.9\% \\
+    Baseline (No Ablation) & \textbf{74.5\% $\pm$ 4.3\%} & 98.5\% $\pm$ 1.2\% & 95.0\% $\pm$ 2.1\% & 80.0\% $\pm$ 3.9\% \\
+    Redundant Navigation Channels & 45.0\% $\pm$ 4.9\% & 69.6\% $\pm$ 4.5\% & 55.9\% $\pm$ 4.9\% & 43.1\% $\pm$ 4.9\% \\
+    Infrastructure Channels & 27.3\% $\pm$ 4.4\% & 70.2\% $\pm$ 4.5\% & 34.5\% $\pm$ 4.7\% & 26.5\% $\pm$ 4.3\% \\
+    Intervention Spans & 64.8\% $\pm$ 4.7\% & \textbf{99.8\% $\pm$ 0.4\%} & \textbf{97.8\% $\pm$ 1.4\%} & \textbf{83.2\% $\pm$ 3.7\%} \\
+    Navigation + Intervention Spans & 32.1\% $\pm$ 4.6\% & 71.9\% $\pm$ 4.4\% & 50.7\% $\pm$ 4.9\% & 37.1\% $\pm$ 4.7\% \\
+    Preserve Only Intervention Spans & 31.8\% $\pm$ 4.6\% & 61.8\% $\pm$ 4.8\% & 43.6\% $\pm$ 4.9\% & 32.5\% $\pm$ 4.6\% \\
+    Random Ablation (Control) & 44.1\% $\pm$ 4.9\% & 74.9\% $\pm$ 4.3\% & 63.1\% $\pm$ 4.7\% & 48.9\% $\pm$ 4.9\% \\
     \bottomrule
     \end{tabular}
+    }
 \end{table}
 
 
@@ -256,22 +260,26 @@ The results shown in~\ref{tab:infrastructure_ablation} demonstrate the results o
 This may be the result of a greater share of the core navigational functionality being encoded in the gem infrastructure channels than in the key infrastructure channels. Interestingly collection of the blue key was more greatly affected by the ablation of the red key's channels than by the ablation of its own infrastucture channels.
 
 \begin{table}[H]
-    \centering
-    \caption{Effect of ablating top 10 infrastructure channels for each entity on collection rates (n=400 trials per condition). Bold values indicate the largest performance decreases for each entity type.}
+    \caption{Effect of ablating top 10 infrastructure channels for each entity on collection rates (n=400 trials per condition). Bold values indicate the largest performance decreases for each entity type. Values shown with 95\% confidence intervals.}
     \label{tab:infrastructure_ablation}
+    \centering
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \makebox[\textwidth][c]{
     \begin{tabular}{lcccc}
     \toprule
     Condition & Gem & Blue Key & Green Key & Red Key \\
     \midrule
-    Baseline & 74.5\% & 98.5\% & 95.0\% & 80.0\% \\
+    Baseline & 74.5\% $\pm$ 4.3\% & 98.5\% $\pm$ 1.2\% & 95.0\% $\pm$ 2.1\% & 80.0\% $\pm$ 3.9\% \\
     \midrule
-    Single Channel (Gem) & \textbf{27.3\%} & 70.2\% & 34.5\% & 26.5\% \\
-    Single Channel (Blue Key) & 32.5\% & \textbf{80.2\%} & 52.8\% & 38.0\% \\
-    Single Channel (Green Key) & 23.2\% & 97.5\% & \textbf{90.5\%} & 51.7\% \\
-    Single Channel (Red Key) & 49.8\% & 55.2\% & 49.2\% & \textbf{46.0\%} \\
+    Single Channel (Gem) & \textbf{27.3\% $\pm$ 4.4\%} & 70.2\% $\pm$ 4.5\% & 34.5\% $\pm$ 4.7\% & 26.5\% $\pm$ 4.3\% \\
+    Single Channel (Blue Key) & 32.5\% $\pm$ 4.6\% & \textbf{80.2\% $\pm$ 3.9\%} & 52.8\% $\pm$ 4.9\% & 38.0\% $\pm$ 4.8\% \\
+    Single Channel (Green Key) & 23.2\% $\pm$ 4.1\% & 97.5\% $\pm$ 1.5\% & \textbf{90.5\% $\pm$ 2.9\%} & 51.7\% $\pm$ 4.9\% \\
+    Single Channel (Red Key) & 49.8\% $\pm$ 4.9\% & 55.2\% $\pm$ 4.9\% & 49.2\% $\pm$ 4.9\% & \textbf{46.0\% $\pm$ 4.9\%} \\
     \bottomrule
     \end{tabular}
-    
+    }
+
     \vspace{0.5em}
     \small
     \textit{Note: The diagonal shows on-target effects: Gem (-47.2\%), Blue Key (-18.3\%), Green Key (-4.5\%), Red Key (-34.0\%). Gem infrastructure channels affect all entities catastrophically, while key channels often have surprising and counter-intuitive impacts reducing their respective entities collection rates less than other entities.}

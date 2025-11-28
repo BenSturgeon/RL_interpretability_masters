@@ -20,6 +20,7 @@
 \usepackage{hyperref}
 \usepackage{booktabs} % For professional quality tables (	oprule, \midrule, \bottomrule)
 \usepackage{float}    % For [H] float specifier (place exactly HERE)
+\usepackage[ruled,vlined]{algorithm2e} % For pseudocode
 \setlength{\headheight}{14.5pt} % Adjust headheight for fancyhdr
 
 % Define theorem environments
@@ -31,7 +32,7 @@
 \newtheorem{example}[theorem]{Example}
 \newtheorem{remark}[theorem]{Remark}
 
-\title{Disentangling Sequential Goal Representations in the Procgen-Heist Environment}
+\title{Disentangling Sequential Goal Representations in A Maze-solving Agent}
 \author{Benjamin Sturgeon}
 \date{May 2025}
 
@@ -44,36 +45,36 @@
 \pagestyle{fancy}
 \fancyhf{}
 \rhead{\theauthor}
-\lhead{\thetitle}
 \cfoot{\thepage}
 
 \begin{document}
 
 % Title page
 \begin{titlepage}
+\vspace*{-6cm}
 \centering
-\includegraphics[scale = 0.25]{figures/UCT logo circular blue large.png}\\[0.7 cm] % University Logo
-\textsc{\LARGE University of Cape Town}\\[1.5 cm] % University Name
-\textsc{\Large Department of Mathematics and Applied Mathematics}\\[0.5 cm] % Department Name
-\textsc{\large Master of Philosophy in Mathematics}\\[0.5 cm] % Degree Name
+\includegraphics[scale = 0.25]{figures/UCT logo circular blue large.png}\\[0.2 cm] % University Logo
+\textsc{\LARGE University of Cape Town}\\[0.4 cm] % University Name
+\textsc{\Large Department of Mathematics and Applied Mathematics}\\[0.2 cm] % Department Name
+\textsc{\large Master of Philosophy in Mathematics}\\[0.2 cm] % Degree Name
 \rule{\linewidth}{0.2 mm} \\[0.4 cm]
 { \huge \bfseries \thetitle}\\
-\rule{\linewidth}{0.2 mm} \\[1.2 cm]
+\rule{\linewidth}{0.2 mm} \\[0.7 cm]
 \begin{minipage}{0.4\textwidth}
-\begin{flushleft} 
+\begin{flushleft}
 \large \emph{Author:}\\
 \theauthor
 \end{flushleft}
 \end{minipage}~
 \begin{minipage}{0.4\textwidth}
-\begin{flushright} 
+\begin{flushright}
 \large \emph{Student Number:} \\
 STRBEN005 % Your Student Number
 \end{flushright}
-\end{minipage}\\[2 cm]
-{\large \thedate}\\[1cm]
+\end{minipage}\\[1.0 cm]
+{\large \thedate}\\[0.6cm]
 \large \emph{Supervisor:} \\
-Jonathan Shock\\[1cm]
+Associate Professor Jonathan Shock\\[0.5cm]
 \large \textit{A thesis submitted in fulfillment of the requirements\\for the degree of Master of Philosophy}
 \end{titlepage}
 
@@ -98,7 +99,7 @@ I empower the university to reproduce for the purpose of research either the who
 % Abstract
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
-In this work we provide an extensive analysis into the operations of a maze solving reinforcement learning agent trained in the Procgen Heist environment. We target this model because it provided a unique combination of complexity and procedural generation and had a clear sequence of goals that would need to be delineated. By focusing on an agent that has to target multiple similar entities we hope to answer questions about how each of these entities might be processed by the network. Our main finding is that the network enforces entity targeting primarily by the magnitude of the activation values of the channels in the convolutional layers of the network, and prove that with a simple constant offset to the values in the channels we are able to redirect the agent to target different entities while preserving navigational capabilities (94\% green key selection from a baseline 93\% blue key selection). We also demonstrate a clear 2 stage targeting pipeline where the model first establishes the target in early convolutional layers (99.3\% entity classification accuracy), and then shifts to processing direction and navigation in the fully-connected layers at the end of the network (67.3\% directional accuracy). These findings demonstrate that amplitude-based multiplexing is a fundamental strategy for encoding multiple goals in RL agents, and provide a novel approach for better understanding neural network operations.
+In this work we provide an extensive analysis into the operations of a maze-solving reinforcement learning agent trained to navigate procedurally generated environments with multiple sequential objectives. We investigate how neural networks represent and process distinct goals when an agent must target multiple similar entities in a prescribed sequence. Our main finding is that the network encodes entity targeting primarily through the magnitude of activation values in convolutional layer channels. We demonstrate that simple constant offsets to channel activations can redirect the agent to target different entities while preserving navigational capabilities. We also identify a clear two-stage processing pipeline where the model first establishes the target entity in early convolutional layers through high-accuracy entity classification, and then shifts to processing directional and navigational information in the fully-connected layers. These findings demonstrate that amplitude-based multiplexing is a fundamental strategy for encoding multiple goals in reinforcement learning agents operating in multi-objective environments, and provide a novel mechanistic approach for understanding goal representation in neural networks.
 
 
 \vspace{1em}
@@ -110,7 +111,7 @@ In this work we provide an extensive analysis into the operations of a maze solv
 
 \chapter*{Acknowledgments}
 \addcontentsline{toc}{chapter}{Acknowledgments}
-I would like to acknowledge my supervisor Professor Jonathan Shock for his enormous patience and quick feedback on the work, and for supporting me at every step along the way.
+I would like to acknowledge my supervisor Associate Professor Jonathan Shock for his enormous patience and quick feedback on the work, and for supporting me at every step along the way.
 
 Much acknowledgement is owed to the early efforts of Paul Colognese, Narmeen Oozeer, Mickey Beurskens, and Arun Jose at the beginning of this project, and for providing the initial ideas to explore this area. I must also thank the AI Safety Camp Team for organising that program, and for bringing us together. Without all of them this work would not have been possible.
 

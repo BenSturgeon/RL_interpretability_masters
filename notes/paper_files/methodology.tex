@@ -15,12 +15,12 @@
 
     \subsection{Model Architecture}
     \label{subsec:model_arch}
-    We train a compressed version of the Impala model that uses 5 convolutional layers instead of 15 as used in the original Impala paper. This architecture comes from~\citep{hilton_2020_understanding} where they find that this model was more interpretable with no discernible loss in performance. We include the model architecture in full in Appendix~\ref{app:model_architecture}.
+    We train a compressed version of the Impala model that uses 5 convolutional layers instead of 15 as used in the original Impala paper. This architecture choice reflects established principles for interpretability research: following the precedent set by~\citep{hilton_2020_understanding}, simpler architectures often yield more interpretable representations without significant performance loss. The models used are simplified versions of established architectures, chosen for their balance of performance and interpretability. We include the model architecture in full in Appendix~\ref{app:model_architecture}.
 
     When training our model we use a simple PPO implementation from an open source implementation designed to train Procgen models called Procgen-pfrl. We used the easy distribution of the environment due to compute limitations. We tested model training over a number of different batch sizes and distributions. The model checkpoints used to derive our main findings were trained with standard hyperparameters: learning rate 5e-4, 64 parallel environments collecting 256 steps each (16,384 total steps per update), processed in batches of 8 over 3 epochs for 800 million steps. The training dynamics were significantly impacted by changes to batch size often completely collapsing training performance, but over the course of 5 runs with separate seeds with the parameters above we were able to replicate similar model dynamics in each case. 
     \subsection{Model Training}
     \label{subsec:model_training}
-    The policy models were trained using Proximal Policy Optimization (PPO) with an open-source implementation based on PFRL, specifically designed for Procgen environments. We also made use of Envpool to accelerate the speed of our training while keeping the actual training dynamics unchanged~\citep{weng2022envpool}. Training was conducted until convergence, which in this case was when no statistical improvement was observed for 10000 update steps. The primary model was trained for approximately 800 million steps or 60000 steps. 
+    The policy models were trained using Proximal Policy Optimization (PPO) with an open-source implementation based on PFRL, specifically designed for Procgen environments. We also made use of Envpool to accelerate the speed of our training while keeping the actual training dynamics unchanged~\citep{weng2022envpool}. Training was conducted until convergence, which in this case was when no statistical improvement was observed for 10000 update steps. The primary model was trained for approximately 800 million environment steps (60,000 update steps). 
 
     To explore the effects of training dynamics on the final learned representations, experiments were run with different training configurations. These variations primarily involved altering the batch geometry through four main hyperparameters: the number of parallel environments, the number of steps per rollout, the mini-batch size, and the number of epochs.
 
@@ -73,7 +73,7 @@
 
     \begin{figure}[H]
         \centering
-        \includegraphics[width=0.7\textwidth]{figures/entity_trajectories_grid.pdf}
+        \includegraphics[width=0.7\textwidth, trim=0 290 0 0, clip]{figures/entity_trajectories_grid.pdf}
         \caption{This illustrates the parallel rollout of the agent, with each step taken by agent remaining exactly the same while we create an observation with each of the blue key, green key, red key, and gem.}
         \label{fig:parallel-rollout}
     \end{figure}
@@ -107,6 +107,8 @@
     SAEs are a type of unsupervised learning technique that can be used to break down the most critical functions of a model into a more interpretable set of sparse latents, often by training an overcomplete basis on the original activations of a given layer of the network~\citep{bricken2023monosemanticity}. In this study, we apply this approach to the convolutional neural network (CNN) layers to disentangle model functionality. The training of SAEs directly addresses RQ3 by applying pressure to split polysemantic neurons into interpretable features, if those features are indeed merely polysemantic. Our methodology for adapting SAEs to CNNs builds upon recent work by~\citep{gorton_2024_missing}, and we describe it in later sections.
 
     SAEs were trained on the CNN layers of the compressed IMPALA model. Each model followed the 1×1-conv recipe of~\citep{gorton_2024_missing} with an L1 warm-up schedule. Training ran for 6\,M steps, during which time variance-explained would rapidly exceed 0.99\% and policy reward recovered to within 99\% of baseline. A compressed variant, with conv4a reduced to 20 channels, was also trained to test robustness under capacity constraints. Table~\ref{tab:sae-params-methodology} lists the expansion factors and L1 coefficients for all layers. 5 SAEs were trained for each layer, as a means of verifying the robustness of our results.
+
+Hyperparameter selection followed conventions established in prior work on CNN SAEs~\citep{gorton_2024_missing}. Expansion factors were kept modest (2--4$\times$) because the base model's convolutional layers already have relatively few channels (16--64), and excessive expansion can lead to feature splitting without interpretability gains. The smaller expansion factor for conv1a reflects its role in learning low-level features that require less disentanglement. L1 coefficients were tuned per-layer to balance reconstruction fidelity against sparsity: early layers (conv1a) used smaller coefficients (1e-4) to preserve fine-grained spatial information, while deeper layers (conv4a) tolerated larger coefficients (5e-3) as their representations are more abstract and naturally sparser.
 
     \begin{table}[H] % Consider moving table definition to main.tex preamble or a separate style file
     \caption{Expansion factors and L1 Coefficients for the different SAEs}
@@ -156,7 +158,9 @@
     \]
     where \(V_{\text{max}}\) is the maximum activation observed for the layer. This allowed us to measure the success rate of steering as a function of activation strength and to identify whether channels influence navigation only within specific value ranges.
 
-    We test this approach across all layers in the environment. Because conv4a yielded the most promising layer due to its naturally fairly sparse representations we performed additional experiments across 28 model checkpoints over a single base model training run in increments of 3000 update steps from 3000 to 60000. We observe model convergence to maximum rewards at around 20000 steps, and thus many of the later checkpoints are variations of different equally high scoring policies. 
+    We test this approach across all layers in the environment. Because conv4a yielded the most promising layer due to its naturally fairly sparse representations we performed additional experiments across 28 model checkpoints over a single base model training run in increments of 3000 update steps from 3000 to 60000. We observe model convergence to maximum rewards at around 20000 steps, and thus many of the later checkpoints are variations of different equally high scoring policies.
+
+    To establish a baseline for normal activation ranges, we calculated the 99.9th percentile of activations for each channel over 50 rollouts in unmodified mazes. This threshold is used in later analysis to identify whether successful interventions operate within or outside the network's typical activation distribution. 
 
     \begin{figure}[t]
     \centering
