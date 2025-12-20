@@ -4,7 +4,7 @@
 \usepackage{url}
 \usepackage{csquotes}
 % Switched from natbib to biblatex for better date field handling
-\usepackage[style=authoryear-comp,natbib=true,backend=biber,maxbibnames=99]{biblatex}
+\usepackage[style=authoryear-comp,natbib=true,backend=biber,maxbibnames=99,maxcitenames=2]{biblatex}
 \addbibresource{references.bib}
 \usepackage{amsmath}
 \usepackage{amsfonts}
@@ -34,7 +34,7 @@
 
 \title{Disentangling Sequential Goal Representations in A Maze-solving Agent}
 \author{Benjamin Sturgeon}
-\date{May 2025}
+\date{December 2025}
 
 \makeatletter
 \let\thetitle\@title
@@ -49,9 +49,12 @@
 
 \begin{document}
 
+% Front matter uses roman numerals
+\pagenumbering{roman}
+
 % Title page
 \begin{titlepage}
-\vspace*{-6cm}
+\vspace*{-2cm}
 \centering
 \includegraphics[scale = 0.25]{figures/UCT logo circular blue large.png}\\[0.2 cm] % University Logo
 \textsc{\LARGE University of Cape Town}\\[0.4 cm] % University Name
@@ -99,7 +102,7 @@ I empower the university to reproduce for the purpose of research either the who
 % Abstract
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
-In this work we provide an extensive analysis into the operations of a maze-solving reinforcement learning agent trained to navigate procedurally generated environments with multiple sequential objectives. We investigate how neural networks represent and process distinct goals when an agent must target multiple similar entities in a prescribed sequence. Our main finding is that the network encodes entity targeting primarily through the magnitude of activation values in convolutional layer channels. We demonstrate that simple constant offsets to channel activations can redirect the agent to target different entities while preserving navigational capabilities. We also identify a clear two-stage processing pipeline where the model first establishes the target entity in early convolutional layers through high-accuracy entity classification, and then shifts to processing directional and navigational information in the fully-connected layers. These findings suggest that amplitude-based multiplexing may be a viable strategy for encoding multiple goals in reinforcement learning agents operating in multi-objective environments, and provide a novel mechanistic approach for understanding goal representation in neural networks. Further work is needed to determine whether these mechanisms generalise beyond this specific architecture and environment.
+In this work we provide an extensive analysis into the operations of a maze-solving reinforcement learning agent trained to navigate procedurally generated environments with multiple sequential objectives. We investigate how neural networks represent and process distinct goals when an agent must target multiple similar entities in a prescribed sequence. Our main finding is that the network uses a spatial gating mechanism where negative activations mark regions of interest, with these patterns shifting systematically as objectives are completed. We demonstrate that simple constant offsets to channel activations can redirect the agent to target different entities while preserving navigational capabilities, likely by mimicking the activation patterns characteristic of different game stages. Clamping experiments confirm this mechanism operates spatially rather than on entity representations: the agent avoids any clamped region regardless of which entity occupies it. We also identify a clear two-stage processing pipeline where the model first establishes the target entity in early convolutional layers through high-accuracy entity classification, and then shifts to processing directional and navigational information in the fully-connected layers. These findings suggest that spatial gating through activation polarity may be a viable strategy for tracking progress in reinforcement learning agents operating in multi-objective environments, and provide a novel mechanistic approach for understanding goal representation in neural networks. Further work is needed to determine whether these mechanisms generalise beyond this specific architecture and environment.
 
 
 \vspace{1em}
@@ -125,6 +128,9 @@ Much acknowledgement is owed to the early efforts of Paul Colognese, Narmeen Ooz
 \listoftables
 \clearpage
 
+% Main matter starts here with arabic page numbers
+\pagenumbering{arabic}
+
 \input{introduction.tex}
 
 \input{literature_review.tex}
@@ -141,14 +147,12 @@ Much acknowledgement is owed to the early efforts of Paul Colognese, Narmeen Ooz
 \printbibliography
 
 \appendix
-\chapter{Appendix Title}
+% Add separator in TOC, List of Figures and List of Tables for appendix
+\addtocontents{toc}{\protect\vspace{10pt}\protect\noindent\textbf{Appendices}\protect\par\vspace{5pt}}
+\addtocontents{lof}{\protect\vspace{10pt}\protect\noindent\textbf{Appendix Figures}\protect\par\vspace{5pt}}
+\addtocontents{lot}{\protect\vspace{10pt}\protect\noindent\textbf{Appendix Tables}\protect\par\vspace{5pt}}
 
-
-\appendix
-\section{Technical Appendices}
-
-\appendix
-\section{Model Architecture Details}
+\chapter{Model Architecture Details}
 \label{app:model_architecture}
 
 
@@ -156,58 +160,58 @@ ImpalaCNN architecture:
 \begin{figure}[H]
 \centering
     \includegraphics[width=0.98\textwidth]{figures/diagram (2).pdf}
-\caption{The convolutional neural network architecture used in our experiments. We use a modified version of the Impala CNN with 5 convolutional layers rather than the original 15 layers, which provides better interpretability without compromising performance.}
+\caption[Modified Impala CNN architecture]{The convolutional neural network architecture used in our experiments. We use a modified version of the Impala CNN with 5 convolutional layers rather than the original 15 layers, which provides better interpretability without compromising performance.}
 \label{fig:network-architecture}
 \end{figure}
 % Your appendix content goes here
 
 
 
-\section{Activation offset results}
+\chapter{Activation Offset Results}
 \label{app:additional_offset_results}
 
 
 \begin{figure}[H]
     \centering
         \includegraphics[width=0.98\textwidth]{figures/offset_sweep_conv3a_expanded_checkpoint_35001_full_range.pdf}
-    \caption{Full range activation offset sweep for conv3a layer at checkpoint 35001. Each subplot shows entity collection success rates across different activation offset values for a specific channel. This wide-range sweep reveals the broad activation ranges over which different channels can successfully steer the agent toward specific entities.}
+    \caption[Conv3a full range offset sweep]{Full range activation offset sweep for conv3a layer at checkpoint 35001. Each subplot shows entity collection success rates across different activation offset values for a specific channel. This wide-range sweep reveals the broad activation ranges over which different channels can successfully steer the agent toward specific entities.}
     \label{fig:offset_steering_conv3a_full}
     \end{figure}
 
     \begin{figure}[H]
         \centering
             \includegraphics[width=0.98\textwidth]{figures/offset_sweep_conv3a_expanded_checkpoint_35001_-3to3_step0.03.pdf}
-        \caption{Narrow range activation offset sweep for conv3a layer at checkpoint 35001, focusing on offset values from -3 to +3 with step size 0.03. This fine-grained sweep provides higher resolution detail of entity collection rates in the critical activation range where steering behavior transitions occur.}
+        \caption[Conv3a narrow range offset sweep (-3 to +3)]{Narrow range activation offset sweep for conv3a layer at checkpoint 35001, focusing on offset values from -3 to +3 with step size 0.03. This fine-grained sweep provides higher resolution detail of entity collection rates in the critical activation range where steering behavior transitions occur.}
         \label{fig:offset_steering_conv3a-3+3}
         \end{figure}
 \begin{figure}[H]
 \centering
     \includegraphics[width=0.98\textwidth]{figures/offset_sweep_conv2a_expanded_checkpoint_35001_-15to15_step0.1.pdf}
-\caption{Wide range activation offset sweep for conv2a layer at checkpoint 35001, testing offset values from -15 to +15 with step size 0.1. This broader sweep examines the extent to which earlier convolutional layers can be steered across a wide range of activation offsets.}
+\caption[Conv2a wide range offset sweep (-15 to +15)]{Wide range activation offset sweep for conv2a layer at checkpoint 35001, testing offset values from -15 to +15 with step size 0.1. This broader sweep examines the extent to which earlier convolutional layers can be steered across a wide range of activation offsets.}
 \label{fig:offset_steering_conv2a-15+15}
 \end{figure}
 
 \begin{figure}[H]
     \centering
         \includegraphics[width=0.98\textwidth]{figures/offset_sweep_conv2a_expanded_checkpoint_35001_-1to1_step0.01.pdf}
-    \caption{Narrow range activation offset sweep for conv2a layer at checkpoint 35001, focusing on offset values from -1 to +1 with step size 0.01. This high-resolution sweep examines fine-grained steering behavior in the conv2a layer's most sensitive activation range.}
+    \caption[Conv2a narrow range offset sweep (-1 to +1)]{Narrow range activation offset sweep for conv2a layer at checkpoint 35001, focusing on offset values from -1 to +1 with step size 0.01. This high-resolution sweep examines fine-grained steering behavior in the conv2a layer's most sensitive activation range.}
     \label{fig:offset_steering_conv2a-1+1}
     \end{figure}
 
 \begin{figure}[H]
     \centering
         \includegraphics[width=0.98\textwidth]{figures/offset_sweep_conv1a_expanded_checkpoint_35001_-3to3_step0.03.pdf}
-    \caption{Activation offset sweep for conv1a layer at checkpoint 35001, testing offset values from -3 to +3 with step size 0.03. This sweep examines steering capabilities in the earliest convolutional layer, which operates closest to the raw input observations.}
+    \caption[Conv1a offset sweep (-3 to +3)]{Activation offset sweep for conv1a layer at checkpoint 35001, testing offset values from -3 to +3 with step size 0.03. This sweep examines steering capabilities in the earliest convolutional layer, which operates closest to the raw input observations.}
     \label{fig:offset_steering_conv1a-3+3}
     \end{figure}
 
-\section{Mean Activation Per Channel During Rollout}
+\chapter{Mean Activation Per Channel During Rollout}
 \label{app:rollout_activation_analysis}
 
 \begin{figure}[H]
     \centering
         \includegraphics[width=0.98\textwidth]{figures/standard_all_channels_35k_no_locks.pdf}
-    \caption{Figure showing the mean activation per channel across all channels in the same rollout as presented in Figure~\ref{fig:activation_tracking}. We see that the pattern of increasing activation strength over the course of an episode with sharp jumps at the collection of different entities is shared across many but not all channels, with a few showing very consistent activation strengths from beginning to end. In general mean activations remain below 0 for all channels, indicating that a great deal of the neurons across channels are negative a majority of the time. }
+    \caption[Mean activation per channel during rollout (all channels)]{Figure showing the mean activation per channel across all channels in the same rollout as presented in Figure~\ref{fig:activation_tracking}. We see that the pattern of increasing activation strength over the course of an episode with sharp jumps at the collection of different entities is shared across many but not all channels, with a few showing very consistent activation strengths from beginning to end. In general mean activations remain below 0 for all channels, indicating that a great deal of the neurons across channels are negative a majority of the time.}
     \label{fig:activation_rollout_all_channels}
 \end{figure}
 
@@ -215,11 +219,11 @@ ImpalaCNN architecture:
 \begin{figure}[H]
     \centering
         \includegraphics[width=0.98\textwidth]{figures/simple_cross_maze_35k_no_locks_rollout_green_first_seed13.pdf}
-    \caption{ Plot showing the mean activation values captured across all timesteps in an unmodified rollout in the 6 channels that had the greatest variance over the course of the rollout. The shaded regions indicate the current `next target', the entity that it would logically pursue next in solving the maze. In this rollout in the cross maze environment, the agent targeted the green key first. A similar uptick in positive values can be observed at the moment of green key collection, though the larger uptick in mean activations typically associated with the blue key can be observed at the moment of blue key collection as well.}
+    \caption[Mean activation rollout with green key collected first]{Plot showing the mean activation values captured across all timesteps in an unmodified rollout in the 6 channels that had the greatest variance over the course of the rollout. The shaded regions indicate the current `next target', the entity that it would logically pursue next in solving the maze. In this rollout in the cross maze environment, the agent targeted the green key first. A similar uptick in positive values can be observed at the moment of green key collection, though the larger uptick in mean activations typically associated with the blue key can be observed at the moment of blue key collection as well.}
     \label{fig:activation_rollout_green_first}
 \end{figure}
 
-\section{Channel-Level Probe Results}
+\chapter{Channel-Level Probe Results}
 \label{app:channel_probe_results}
 
 This section presents detailed per-channel probe accuracies for multi-class entity classification across convolutional layers. All probes were trained using logistic regression on individual channel activations to predict the next entity the agent will navigate toward (7-way classification: blue key, green key, red key, blue lock, green lock, red lock, gem). Lock entities are omitted from these tables for brevity, though they were included in the overall accuracy calculations. Random baseline performance is 14.3\%.
@@ -230,7 +234,7 @@ Table~\ref{tab:conv1a_channels} shows probe results for all 16 channels in the C
 
 \begin{table}[H]
 \centering
-\caption{Conv1a layer per-channel probe accuracies. All 16 channels shown. Bold indicates highest accuracy in each column.}
+\caption[Conv1a per-channel probe accuracies]{Conv1a layer per-channel probe accuracies. All 16 channels shown. Bold indicates highest accuracy in each column.}
 \label{tab:conv1a_channels}
 \begin{tabular}{ccccccc}
 \toprule
@@ -262,7 +266,7 @@ Table~\ref{tab:conv2a_top10} presents the top 10 performing channels in Conv2a (
 
 \begin{table}[H]
 \centering
-\caption{Conv2a layer top 10 channels by overall accuracy (out of 32 total channels). Bold indicates highest accuracy in each column.}
+\caption[Conv2a top 10 channel probe accuracies]{Conv2a layer top 10 channels by overall accuracy (out of 32 total channels). Bold indicates highest accuracy in each column.}
 \label{tab:conv2a_top10}
 \begin{tabular}{ccccccc}
 \toprule
@@ -288,7 +292,7 @@ Table~\ref{tab:conv3a_top10} shows the top 10 channels in Conv3a (out of 32 tota
 
 \begin{table}[H]
 \centering
-\caption{Conv3a layer top 10 channels by overall accuracy (out of 32 total channels). Bold indicates highest accuracy in each column.}
+\caption[Conv3a top 10 channel probe accuracies]{Conv3a layer top 10 channels by overall accuracy (out of 32 total channels). Bold indicates highest accuracy in each column.}
 \label{tab:conv3a_top10}
 \begin{tabular}{ccccccc}
 \toprule
@@ -314,7 +318,7 @@ Table~\ref{tab:conv4a_top10} presents the top 10 channels in Conv4a (out of 32 t
 
 \begin{table}[H]
 \centering
-\caption{Conv4a layer top 10 channels by overall accuracy (out of 32 total channels). Bold indicates highest accuracy in each column.}
+\caption[Conv4a top 10 channel probe accuracies]{Conv4a layer top 10 channels by overall accuracy (out of 32 total channels). Bold indicates highest accuracy in each column.}
 \label{tab:conv4a_top10}
 \begin{tabular}{ccccccc}
 \toprule
@@ -347,7 +351,7 @@ Several patterns emerge from the channel-level probe analysis:
 \end{enumerate}
 
 
-\section{Intervention spans across checkpoints}
+\chapter{Intervention Spans Across Checkpoints}
 \label{app:evolution_of_interventions}
 
 Figures \ref{fig:intervention_40k}--\ref{fig:intervention_60k} illustrate the representational drift observed across checkpoints 40k-60k. Despite stable task performance, the specific channels exhibiting steering behavior and their associated activation ranges shift dramatically between checkpoints, demonstrating that the network continuously explores equivalent solutions within a broad basin of the loss landscape.
@@ -355,39 +359,39 @@ Figures \ref{fig:intervention_40k}--\ref{fig:intervention_60k} illustrate the re
 \begin{figure}[p]
 \centering
 \includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_7_ood_p99.9_step_40001.pdf}
-\caption{Steering intervention success rates for conv4a layer at checkpoint 40k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
+\caption[Conv4a steering interventions at checkpoint 40k]{Steering intervention success rates for conv4a layer at checkpoint 40k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
 \label{fig:intervention_40k}
 \end{figure}
 
 \begin{figure}[p]
 \centering
 \includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_11_ood_p99.9_step_45001.pdf}
-\caption{Steering intervention success rates for conv4a layer at checkpoint 45k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
+\caption[Conv4a steering interventions at checkpoint 45k]{Steering intervention success rates for conv4a layer at checkpoint 45k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
 \label{fig:intervention_45k}
 \end{figure}
 
 \begin{figure}[p]
 \centering
 \includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_21_ood_p99.9_step_50001.pdf}
-\caption{Steering intervention success rates for conv4a layer at checkpoint 50k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
+\caption[Conv4a steering interventions at checkpoint 50k]{Steering intervention success rates for conv4a layer at checkpoint 50k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
 \label{fig:intervention_50k}
 \end{figure}
 
 \begin{figure}[p]
 \centering
 \includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_29_ood_p99.9_step_55001.pdf}
-\caption{Steering intervention success rates for conv4a layer at checkpoint 55k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
+\caption[Conv4a steering interventions at checkpoint 55k]{Steering intervention success rates for conv4a layer at checkpoint 55k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
 \label{fig:intervention_55k}
 \end{figure}
 
 \begin{figure}[p]
 \centering
 \includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_11_ood_p99.9_step_60001.pdf}
-\caption{Steering intervention success rates for conv4a layer at checkpoint 60k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
+\caption[Conv4a steering interventions at checkpoint 60k]{Steering intervention success rates for conv4a layer at checkpoint 60k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
 \label{fig:intervention_60k}
 \end{figure}
 
-\section{SAE Intervention Results}
+\chapter{SAE Intervention Results}
 \label{app:sae_interventions}
 
 The following figures show steering intervention success rates for SAE latents both trained on the 35000 step checkpoint. Unlike the base model channels (which have 32 dimensions per layer), the SAE uses a 4x expansion factor, resulting in 128 latents per layer. These figures demonstrate that sparse autoencoder latents can also be successfully steered to influence agent behavior toward specific entities. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations during standard gameplay. Figures shown have a threshold for inclusion of $\geq 200$ successes for readability.
@@ -395,14 +399,14 @@ The following figures show steering intervention success rates for SAE latents b
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv3a_top_41_ood_p99.9.pdf}
-\caption{SAE latent steering intervention success rates for conv3a layer, showing the top 41 most successful latents with a cutoff threshold of $\geq 200$ successes. Of particular note is the large number of steering successes in general in conv3a and also the significant overlap between different sections, including within similar activation regions, displaying relatively less of the multiplexing phenomena relative to elsewhere.}
+\caption[SAE steering interventions for conv3a]{SAE latent steering intervention success rates for conv3a layer, showing the top 41 most successful latents with a cutoff threshold of $\geq 200$ successes. Of particular note is the large number of steering successes in general in conv3a and also the significant overlap between different sections, including within similar activation regions, displaying relatively less of the multiplexing phenomena relative to elsewhere.}
 \label{fig:sae_intervention_conv3a_41}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_37_ood_p99.9.pdf}
-\caption{SAE latent steering intervention success rates for conv4a layer, showing the top 37 most successful latents with a cutoff threshold $\geq 200$ successes. Conv4a SAE shows significantly sharper multiplexing than any other example, in particular latent 92 shows almost perfect delineation of entities. Latent 23 also contains an unusual capacity for steering the blue key in particular, indicating that some blue key specialisation may have been learned, though we caution against making strong conclusions from the steering alone due to the complex nature of the network.}
+\caption[SAE steering interventions for conv4a]{SAE latent steering intervention success rates for conv4a layer, showing the top 37 most successful latents with a cutoff threshold $\geq 200$ successes. Conv4a SAE shows significantly sharper multiplexing than any other example, in particular latent 92 shows almost perfect delineation of entities. Latent 23 also contains an unusual capacity for steering the blue key in particular, indicating that some blue key specialisation may have been learned, though we caution against making strong conclusions from the steering alone due to the complex nature of the network.}
 \label{fig:sae_intervention_conv4a_37}
 \end{figure}
 

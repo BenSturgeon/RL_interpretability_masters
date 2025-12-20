@@ -5,7 +5,7 @@
 \label{sec:env_model}
     \subsection{The Procgen Heist Environment}
     \label{subsec:heist_env}
-    The Procgen Heist environment, from the suite of procedurally generated environments by \citet{cobbe_2020_leveraging}, was chosen for this research. The agent's objective is to navigate a maze to collect a gem, which may require first collecting up to three keys (in the fixed order of blue, green, red) to open corresponding locks. The environment's procedural generation varies the maze layout and the number of key-lock pairs present in each episode, from zero to three.
+    The Procgen Heist environment, from the suite of procedurally generated environments by \citep{cobbe_2020_leveraging}, was chosen for this research. The agent's objective is to navigate a maze to collect a gem, which may require first collecting up to three keys (in the fixed order of blue, green, red) to open corresponding locks. The environment's procedural generation varies the maze layout and the number of key-lock pairs present in each episode, from zero to three.
 
     This environment provides a sparse reward signal, with a reward of +10 for reaching the gem and 0 otherwise. This design, coupled with the variable difficulty, establishes a natural curriculum that allows agents to succeed with random exploration in simpler levels before developing a more sophisticated policy.
 
@@ -15,7 +15,7 @@
 
     \subsection{Model Architecture}
     \label{subsec:model_arch}
-    We train a compressed version of the Impala model that uses 5 convolutional layers instead of 15 in the original. This architecture choice reflects established principles for interpretability research: following the precedent set by~\citet{hilton_2020_understanding}, simpler architectures often yield more interpretable representations without significant performance loss. We include the full model architecture in Appendix~\ref{app:model_architecture}.
+    We train a compressed version of the Impala model that uses 5 convolutional layers instead of 15 in the original. This architecture choice reflects established principles for interpretability research: following the precedent set by~\citep{hilton_2020_understanding}, simpler architectures often yield more interpretable representations without significant performance loss. We include the full model architecture in Appendix~\ref{app:model_architecture}.
 
     \subsection{Model Training}
     \label{subsec:model_training}
@@ -31,7 +31,7 @@
 \section{Interpretability Techniques Employed}
 \label{sec:interp_techniques}
 
-\subsection{Feature Visualization}
+\subsection{Activation Visualization}
     \label{subsec:feature_viz}
     A useful initial approach involved creating direct visualisations of the convolutional layers of the model by taking a given layer and applying a colour spectrum according to the strength of the activations within that region of the grid. This approach, following~\citep{mini_2023_understanding}, provided a direct view of which spatial regions triggered strong positive or negative responses in different channels. Figure~\ref{fig:filter_visualisations} shows an example of this visualisation technique applied to multiple layers.
 
@@ -53,27 +53,25 @@
         \includegraphics[width=0.25\linewidth]{figures/filter29_layer9_no_title.png}
         \end{tabular}
         
-        \caption{Visualization of the maze and neural network activations in different layers. Top row (left to right): 
-        observation input, layer 1 channel 10, layer 2 channel 10, and activation colorbar. 
-        Bottom row: layer 8 channel 29 and layer 9 channel 29. In the top row filters we observe a minimal activation around the regions of the blue key and lock and in the bottom row we see maximal activations around the blue key. This is a replication of the approach used by~\citep{mini_2023_understanding} in order to get an initial sense of the clarity with which entities could be seen in activations.}
+        \caption[Visualization of maze and neural network activations across layers]{Visualization of the maze and neural network activations in different layers. Top row (left to right):
+        observation input, conv1a channel 10, conv2a channel 10, and activation colorbar.
+        Bottom row: conv3a channel 29 and conv4a channel 29. In the top row filters we observe a minimal activation around the regions of the blue key and lock and in the bottom row we see maximal activations around the blue key. This is a replication of the approach used by~\citep{mini_2023_understanding} in order to get an initial sense of the clarity with which entities could be seen in activations.}
         \label{fig:filter_visualisations}
     \end{figure}
 
     \subsection{Comparative Activation Analysis}
     \subsubsection{Parallel rollout analysis}
     \label{subsubsec:parallel_rollout}
-    RQs 1, 2 and 4 aimed to tackle how the network determines which entity to target next, as there are many instances where multiple routes lead to different entities and the sequence of collection is critical to success. This experiment addresses these questions by isolating how the network encodes different goal entities and determining whether the model uses entity-specific channels or a general targeting mechanism.
+    To directly compare the model activations when targeting different entities, a simple toy maze environment was created that would test some basic capabilities in the model, specifically its ability to turn a corner and travel in a straight line towards a target. The maze took the shape of a T junction, with the agent started at the middle point, and with a blue key placed in the bottom right. A visual of the maze is provided in Figure~\ref{fig:parallel-rollout}. A rollout of the policy was then performed, but for each step of the rollout, the environmental state was modified to produce an observation with the gem, blue key, green key, and red key. By doing this at every step, 4 parallel rollouts with different entities were produced which allows for a perfectly controlled experiment from which we could observe the variations in activation patterns based only on the nature of the target entity.
 
-    The purpose of this experiment was to determine to what extent the network relies on the mere activation range of the values in the network as part of determining which stage of the maze it is in, and which entities to target.
-
-    To directly compare the model activations when targeting different entities, a simple toy maze environment was created that would test some basic capabilities in the model, specifically its ability to turn a corner and travel in a straight line towards a target. The maze took the shape of a T junction, with the agent started at the middle point, and with a blue key placed in the bottom right. A visual of the maze is provided in Figure~\ref{fig:parallel-rollout}. A rollout of the policy was then performed, but for each step of the rollout, the environmental state was modified to produce an observation with the gem, blue key, green key, and red key. By doing this at every step, 4 parallel rollouts with different entities were produced which allows for a perfectly controlled experiment from which we could observe the variations in activation patterns based only on the nature of the target entity. 
+    The purpose of this experiment was to determine to what extent the network relies on the activation range of values as part of determining which stage of the maze it is in and which entities to target. This addresses RQs 1, 2 and 4 by isolating how the network encodes different goal entities and determining whether the model uses entity-specific channels or a general targeting mechanism. 
     
-    With these rollouts we then tracked both the mean centered activation values for each entity, as well as the raw activation magnitudes across all channels in layers conv3a and conv4a. The mean-centering was performed by computing each channel's temporal mean across the entire trajectory and subtracting this mean from the activation at every timestep. This transformation centers each channel's activations around zero, removing baseline offsets between channels and making temporal dynamics comparable across channels with different baseline activation levels. Both raw and mean-centered activations were recorded to enable analysis of absolute activation strengths as well as relative temporal patterns. This design isolates the effect of entity type on the model's internal representations while holding agent position, maze geometry, and navigational requirements constant across all four parallel trajectories.
+    With these rollouts we tracked the raw activation magnitudes across all channels in layers conv3a and conv4a. This design isolates the effect of entity type on the model's internal representations while holding agent position, maze geometry, and navigational requirements constant across all four parallel trajectories.
 
     \begin{figure}[H]
         \centering
         \includegraphics[width=0.7\textwidth, trim=0 290 0 0, clip]{figures/entity_trajectories_grid.pdf}
-        \caption{This illustrates the parallel rollout of the agent, with each step taken by agent remaining exactly the same while we create an observation with each of the blue key, green key, red key, and gem.}
+        \caption[Parallel rollout methodology illustration]{This illustrates the parallel rollout of the agent, with each step taken by the agent remaining exactly the same while we create an observation with each of the blue key, green key, red key, and gem.}
         \label{fig:parallel-rollout}
     \end{figure}
 
@@ -84,7 +82,7 @@
         \centering
 
         \includegraphics[width=0.9\textwidth]{figures/expanded_cross_maze_single.png}
-        \caption{This illustrates the 4 directional maze used for analysing which entity would be collected first when different activation offsets were applied. Within a given maze, the positions of the entities within a given arm of the maze would be randomised so as to produce greater permutations to allow meaningful statistical testing.}
+        \caption[Four-directional cross maze for offset analysis]{This illustrates the 4 directional cross maze used for analysing which entity would be collected first when different activation offsets were applied. Within a given maze, the positions of the entities within a given arm of the maze would be randomised so as to produce greater permutations to allow meaningful statistical testing.}
         \label{fig:cross_maze}
     \end{figure}
 
@@ -103,14 +101,14 @@
 
     \subsection{Sparse Autoencoder (SAE) Training}
     \label{subsec:sae_training}
-    SAEs are a type of unsupervised learning technique that can be used to break down the most critical functions of a model into a more interpretable set of sparse latents, often by training an overcomplete basis on the original activations of a given layer of the network~\citep{bricken2023monosemanticity}. In this study, we apply this approach to the convolutional neural network (CNN) layers to disentangle model functionality. The training of SAEs directly addresses RQ3 by applying pressure to split polysemantic neurons into interpretable features, if those features are indeed merely polysemantic. Our methodology for adapting SAEs to CNNs builds upon recent work by~\citet{gorton_2024_missing}.
+    SAEs are a type of unsupervised learning technique that can be used to break down the most critical functions of a model into a more interpretable set of sparse latents, often by training an overcomplete basis on the original activations of a given layer of the network~\citep{bricken2023monosemanticity}. In this study, we apply this approach to the convolutional neural network (CNN) layers to disentangle model functionality. The training of SAEs directly addresses RQ3 by applying pressure to split polysemantic neurons into interpretable features, if those features are indeed merely polysemantic. Our methodology for adapting SAEs to CNNs builds upon recent work by~\citep{gorton_2024_missing}.
 
-    SAEs were trained on the CNN layers of the compressed IMPALA model. Each model followed the 1×1-conv recipe of~\citet{gorton_2024_missing} with an L1 warm-up schedule. Training ran for 6\,M steps, during which time variance-explained rapidly exceeded 99\% and policy reward recovered to within 99\% of baseline. A compressed variant, with conv4a reduced to 20 channels, was also trained to test robustness under capacity constraints. Table~\ref{tab:sae-params-methodology} lists the expansion factors and L1 coefficients for all layers. 5 SAEs were trained for each layer, as a means of verifying the robustness of our results.
+    SAEs were trained on the CNN layers of the compressed IMPALA model. Each model followed the 1×1-conv recipe of~\citep{gorton_2024_missing} with an L1 warm-up schedule. Training ran for 6\,M steps, during which time variance-explained rapidly exceeded 99\% and policy reward recovered to within 99\% of baseline. A compressed variant, with conv4a reduced to 20 channels, was also trained to test robustness under capacity constraints. Table~\ref{tab:sae-params-methodology} lists the expansion factors and L1 coefficients for all layers. 5 SAEs were trained for each layer, as a means of verifying the robustness of our results.
 
 Hyperparameter selection followed conventions established in prior work on CNN SAEs~\citep{gorton_2024_missing}, who used expansion factors of 2$\times$ for early convolutional layers and 4$\times$ for middle layers when applying SAEs to InceptionV1. We adopt similar values: a 2$\times$ expansion for conv1a (the earliest layer, which learns low-level features requiring less disentanglement) and 4$\times$ for deeper layers. This modest expansion avoids excessive feature splitting while still providing sufficient capacity to decompose polysemantic neurons. L1 coefficients were tuned per-layer to balance reconstruction fidelity against sparsity: early layers used smaller coefficients (1e-4) to preserve fine-grained spatial information, while deeper layers tolerated larger coefficients (5e-3) as their representations are more abstract and naturally sparser.
 
     \begin{table}[H] % Consider moving table definition to main.tex preamble or a separate style file
-    \caption{Expansion factors and L1 Coefficients for the different SAEs}
+    \caption[SAE hyperparameters by layer]{Expansion factors and L1 Coefficients for the different SAEs}
     \label{tab:sae-params-methodology} % Renamed label to avoid conflict
     \centering
     \begin{tabular}{@{}lcc@{}}
@@ -164,7 +162,7 @@ Hyperparameter selection followed conventions established in prior work on CNN S
     \begin{figure}[t]
     \centering
     \includegraphics[width=1\textwidth]{figures/intervention_illustration.png}
-    \caption{Example of the patching experiment. We test channels to determine the extent to which clamping a single activation can redirect the agent to another location given the presence of a single entity in the environment. We consider an intervention a success if the agent enters the modified region. The maze is a 9 by 9 grid, while the conv4a channels have dimensions of 8 by 8, leading to a slightly imperfect mapping.}
+    \caption[Activation patching experiment illustration]{Example of the patching experiment. We test channels to determine the extent to which clamping a single activation can redirect the agent to another location given the presence of a single entity in the environment. We consider an intervention a success if the agent enters the modified region. The maze is a 9 by 9 grid, while the conv4a channels have dimensions of 8 by 8, leading to a slightly imperfect mapping.}
     \label{fig:intervention-experiment}
     \end{figure}
 
@@ -188,7 +186,7 @@ Hyperparameter selection followed conventions established in prior work on CNN S
             \centering
             \includegraphics[width=\textwidth]{figures/empty_corners_maze_clean.png}
         \end{minipage}
-        \caption{Maze configurations for ablation studies. (a) Fork maze tests individual channel navigation capability by requiring explicit path choices towards different entities and providing sufficient complexity that navigational abilities must be preserved. We orient the stem toward the model's inherent bias direction to minimize false positives. (b) Open maze with entities in corners tests the effect of ablating intervention spans without navigational constraints, ensuring only preferences regarding entity collection are observed.}
+        \caption[Maze configurations for ablation studies]{Maze configurations for ablation studies. (a) Fork maze tests individual channel navigation capability by requiring explicit path choices towards different entities and providing sufficient complexity that navigational abilities must be preserved. We orient the stem toward the model's inherent bias direction to minimize false positives. (b) Open maze with entities in corners tests the effect of ablating intervention spans without navigational constraints, ensuring only preferences regarding entity collection are observed.}
         \label{fig:ablation-mazes}
     \end{figure}
 

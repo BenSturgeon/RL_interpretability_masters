@@ -1,82 +1,42 @@
 \chapter{Discussion}
 \label{ch:discussion}
 
-\section{Addressing Research Questions and Hypotheses}
-\label{sec:addressing_rq}
-
-Before interpreting our findings in detail, we first highlight the original research questions and hypotheses from Chapter~\ref{ch:introduction} and the extent to which they have been answered.
-
-\subsection{Hypothesis Testing}
-
-\begin{table}[h]
-\centering
-\caption{Hypothesis outcomes with key supporting evidence.}
-\label{tab:hypothesis_outcomes}
-\begin{tabular}{p{0.08\textwidth}p{0.35\textwidth}p{0.15\textwidth}p{0.45\textwidth}}
-\toprule
-\textbf{H\#} & \textbf{Hypothesis} & \textbf{Outcome} & \textbf{Key Evidence} \\
-\midrule
-H1 & Dedicated entity channels & \textbf{Partial} & Conv1a specialised, conv2-4a multiplex \\
-H2 & SAEs disentangle features & \textbf{Rejected} & SAEs preserve multiplexing structure \\
-H3 & Hierarchical preferences & \textbf{Confirmed} & 93\% blue key collection at baseline (cross maze)\\
-H4 & SAEs successfully recover performance & \textbf{Confirmed} & 99.6-102\% recovery \\
-H5 & Layer specialization & \textbf{Confirmed} & Entity $\rightarrow$ direction transition proven \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-While some of our initial hypotheses proved correct, we were surprised by the discovery of the activation magnitude mechanism as a means of encoding goals. We also found that SAEs did not work as expected in this case, but as a result were able to validate some of our new results. We were also able to better characterise some of our initial ideas about how the network might work.
-
-\subsection{Research Questions}
-
-\begin{table}[h]
-\centering
-\caption{Research questions and their answers based on experimental evidence.}
-\label{tab:rq_outcomes}
-\renewcommand{\arraystretch}{1.5} % Adds 50% more vertical space
-\begin{tabular}{p{0.08\textwidth}p{0.35\textwidth}p{0.55\textwidth}}
-\toprule
-\textbf{RQ} & \textbf{Question} & \textbf{Answer} \\
-\midrule
-RQ1 & How are goals encoded? & Via activation magnitude multiplexing across many channels (Section~\ref{sec:parallel_rollouts},~\ref{sec:offset_steering}) \\
-RQ2 & How is the current target determined? & Two-phase: detection at conv1a $\rightarrow$  integration at conv2a-conv4a (Table~\ref{tab:probe_whole_layer}) \\
-RQ3 & Can SAEs clarify feature roles? & Yes, but only providing validation (Section~\ref{subsec:sae_structure}) \\
-RQ4 & Dedicated vs general channels? & Conv1a specialised conv2a-conv4a generalised (Appendix~\ref{app:channel_probe_results}) \\
-RQ5 & Why different steering success rates across entities? & Gem spans in 31/32 channels vs 14 for keys may explain differential steering (Table~\ref{tab:ablation_results}) \\
-RQ6 & Do layers have specialised roles? & Yes: entity detection in conv layer, navigation in fc2 (Tables~\ref{tab:probe_whole_layer},~\ref{tab:probe_directional}) \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-
 \section{Interpretation of Results}
 \label{sec:interpretation}
 
-\subsection{Entity Encoding as A Core Mechanism}
-Our findings in Section~\ref{sec:parallel_rollouts} and~\ref{sec:offset_steering} show that rather than requiring separate channels for each entity type, the model has learned to use activation magnitude as an additional dimension for encoding information. 
+\subsection{Activation Patterns and Spatial Gating}
+Our findings in Section~\ref{sec:parallel_rollouts}, \ref{sec:offset_steering}, and \ref{sec:negative_activations} reveal that the network tracks game state through systematic changes in activation patterns. Rather than requiring separate channels for each entity type, the same channels are active throughout, but at different activation levels depending on game progress.
 
-The ability to completely redirect agent behaviour through uniform activation offsets (93\% blue key collection shifting to 94\% green key collection in conv4a) demonstrates this encoding is fundamental to the network's learned algorithm. This suggests that interventions on neural networks need to consider not just which channels to modify, but also to consider how activation strengths may flip conditions in the network, and in particular if different tasks might cause the network to shift into different regions of activation space by a constant offset in portions of the network.
+The ability to completely redirect agent behaviour through uniform activation offsets (93\% blue key collection shifting to 94\% green key collection in conv4a) demonstrates this is fundamental to the network's learned algorithm. However, the mechanism appears to be spatial gating rather than direct entity encoding: negative activations mark regions of interest, and early game stages have more negative activations overall. Shifting the offset thus mimics being at a different stage of the game, rather than directly specifying which entity to target. This suggests that interventions on neural networks need to consider not just which channels to modify, but how activation levels interact with spatial gating mechanisms.
 
-Due to the similarity of the task of tracking each key, it proves efficient to repurpose channels already capable of entity detection and allows the reuse of computational machinery with different `intensity settings', having them target each entity sequentially while indicating the specific entity through activation strength. This strategy likely emerges from efficiency pressures during training wherein the core navigation task is exactly the same, but can simply be repurposed to focus on different entities.
+This contrasts with \citep{mini_2023_understanding}, who found dedicated `cheese channels' that could be individually ablated. In our multi-objective setting, the network instead developed a spatial gating strategy, reusing the same channels across entities rather than dedicating separate channels to each. This suggests that representational strategies may differ substantially between single-goal and multi-goal environments.
 
-The activation jumps observed regardless of collection order, occurring even when the green key is collected first (12\% of cases), suggest that these jumps are tied to collection events rather than to which specific entity is collected. This indicates separate mechanisms for tracking collection progress and for detecting specific entities, as shown by the conv1a probe results presented in Appendix~\ref{app:channel_probe_results}.
+Standard activation steering approaches~\citep{turner_2024_activation,mini_2023_understanding} require computing steering vectors from contrastive activation pairs. Our results suggest a simpler mechanism: negative activations mark regions of interest, directing the agent's attention without requiring entity-specific steering vectors. This may reflect a general-purpose strategy where networks use activation polarity to gate spatial attention, clearing irrelevant regions by shifting them toward zero while maintaining focus on task-relevant areas through negative activation.
 
-One challenge in making this discovery was that many of the tools typically used in mechanistic interpretability were not designed to expose activation magnitude as an encoding dimension. SAEs and probes successfully identified which channels responded to which entities, but did not reveal that the magnitude of those responses carried additional information about the current goal stage. What initially appeared to be polysemanticity was instead a structured strategy for encoding goal state through activation levels.
+Due to the similarity of the task of tracking each key, it proves efficient to repurpose channels already capable of entity detection, allowing the reuse of computational machinery across different game stages. This strategy likely emerges from efficiency pressures during training wherein the core navigation task is exactly the same regardless of which entity is being targeted.
+
+One challenge in making this discovery was that many of the tools typically used in mechanistic interpretability were not designed to expose temporal patterns in activation levels. SAEs and probes successfully identified which channels responded to which entities, but did not reveal how activation levels shifted systematically over the course of a rollout. What initially appeared to be polysemanticity was instead a structured spatial gating strategy. This differs from the superposition described by \citep{elhage2022superposition}, where features are compressed into overlapping directions. In our case, the same channels serve multiple game states through systematic variation in activation levels that gates spatial attention.
+
+
 
 \subsection{Two-Phase Information Processing Architecture}
-The probe results reveal why CNN-FC hybrid architectures are well suited for goal-directed navigation. CNNs capture and classify spatial relationships necessary for identifying `what is where,' while fully-connected layers performed the task of integrating this information into coherent actions.
+The probe results reveal why CNN-FC hybrid architectures are well suited for goal-directed navigation. CNNs capture and classify spatial relationships necessary for identifying `what is where', while fully-connected layers performed the task of integrating this information into coherent actions. Following \citep{alain_2018_understanding}, we use linear probes to assess where information crystallises in the network. Our finding that entity information peaks at conv3a (99.3\%) before collapsing in FC layers aligns with their observation that intermediate layers often contain the most linearly separable representations.
+
+Prior work on RL interpretability has focused on saliency methods~\citep{greydanus_2018_visualizing} and feature visualisation~\citep{hilton_2020_understanding}. Our contribution extends this by revealing that activation polarity serves as a spatial gating mechanism, with negative activations marking regions of interest and this pattern shifting systematically as objectives are completed. While saliency methods identify where the network attends, they do not capture this temporal structure in how attention is released over the course of a rollout.
 
 The inverse relationship between entity and directional information across layers suggests the network may perform active transformation rather than passive feature extraction. Conv4a's role as a bridge between the spatial and fully-connected layers is illustrated by the non-monotonic increase in the linear separability of the direction in which to go from conv3a to fc2. This implies that the linear separability drops due to an active transformation taking place in the structure of the information in conv4a. Future work in understanding this transformation would be valuable in establishing how RL agents transform visual information into motor output.
 
 This crystallisation of goal commitment occurs at conv3a/conv4a. Our patching experiments target the precise point where the network commits to its goal, before that commitment disperses into the distributed representations necessary for action selection. Interventions earlier would affect raw perception; interventions later would fight against already-distributed action plans.
 
 \subsection{SAE Validation and Dead Channels}
-The majority of steerable SAE channels were `dead channels', channels that had zero activations during rollouts. Based on standard understanding of SAE training dynamics, we attribute this to the following mechanism: these encoder-decoder pairs initially encoded useful signal, but were subsequently suppressed as the L1 sparsity penalty forced lower activations. Crucially, while the encoder weights were driven toward near-zero values, the corresponding decoder weights would not change substantially during this process, retaining the directional structure learned when the latent was active. When we artificially activate these dead latents during intervention experiments, the preserved decoder weights still project meaningful directions into the activation space, enabling redirection of the agent despite these channels never activating during normal operation. More importantly, SAEs preserved the same magnitude-based encoding found in the base model rather than decomposing it into cleaner features, suggesting this encoding strategy is fundamental rather than an artifact of polysemanticity.
+The majority of steerable SAE channels were `dead channels', channels that had zero activations during rollouts. Based on standard understanding of SAE training dynamics, we attribute this to the following mechanism: these encoder-decoder pairs initially encoded useful signal, but were subsequently suppressed as the L1 sparsity penalty forced lower activations. Crucially, while the encoder weights were driven toward near-zero values, the corresponding decoder weights would not change substantially during this process, retaining the directional structure learned when the latent was active. When we artificially activate these dead latents during intervention experiments, the preserved decoder weights still project meaningful directions into the activation space, enabling redirection of the agent despite these channels never activating during normal operation. More importantly, SAEs preserved the same activation patterns found in the base model rather than decomposing them into cleaner features, suggesting this spatial gating strategy is fundamental rather than an artifact of polysemanticity.
+
+Unlike \citep{gorton_2024_missing}, who found SAEs successfully disentangled polysemantic features in InceptionV1, our SAEs preserved the same activation patterns rather than decomposing them into cleaner per-entity features. This may reflect fundamental differences between supervised classification, where features are stable across inputs, and RL, where the same visual features serve different behavioural roles depending on task state.
 
 \subsection{Solution Multiplicity and Representational Drift}
 A striking observation from our experiments was that intervention positions changed completely across different checkpoints even after convergence. Despite maintaining similar performance, the network continued exploring different encoding schemes within the solution space. This is largely due to the fact that we trained the model with an endless variety of maze variations rather than a fixed number, meaning it continued to adapt and change over time. This configuration was also the only one that led to successful training of our smaller model.
 
-This variety of solutions suggests that while amplitude-based multiplexing appears consistently, the specific channels used for this encoding are not fixed but drift across checkpoints. The continuous drift between encoding schemes post-convergence indicates the network exists on a `valley floor' of equally viable solutions, constantly reorganizing its internal representations while preserving behavioural performance. 
+This variety of solutions suggests that while the spatial gating pattern appears consistently, the specific channels used are not fixed but drift across checkpoints. The continuous drift between encoding schemes post-convergence indicates the network exists on a `valley floor' of equally viable solutions, constantly reorganizing its internal representations while preserving behavioural performance. 
 
 We find a notable checkpoint at update step 30001 where no steerable channels at all are found for any entity, though we only found 1 example of this in the 60 checkpoints we tested, suggesting it might be less optimal than those with the stronger intervention configuration. 
 
@@ -89,9 +49,9 @@ While highly speculative, a similar phenomenon could occur in other networks whe
 
 \subsection{How The Network Selects Targets}
 
-We were surprised by the extreme degree of redundancy of steering that could be found in this network, whereby modifying a single channel in a single layer was sufficient to completely alter behaviour. We speculate that a reason for this is due to the network being strongly biased towards targeting via negative activations rather than positive activations. Evidence of this is provided in the mean activations generally being slightly below 0 for all channels during a standard rollout, as seen in Figure~\ref{fig:activation_rollout_all_channels}. 
+We were surprised by the extreme degree of redundancy of steering that could be found in this network, whereby modifying a single channel in a single layer was sufficient to completely alter behaviour. Our analysis in Section~\ref{sec:negative_activations} reveals that spatial navigation relies on activation polarity: the network uses negative activations to mark regions of interest, while near-zero or positive activations indicate regions to avoid. Evidence of this is provided in the mean activations generally being well below 0 for most channels during a standard rollout, as seen in Figure~\ref{fig:activation_rollout_all_channels}.
 
-This would mean that positive signals are taken as very strong signals regarding where to go, and thus easily induce a change in actions. This would make sense given that much of the problem involves removing unhelpful noise regarding the positions of the other entities, and thus would require downweighting regions associated with the entities that are not the current targets. This would also explain why becoming more positive over time is effective, as there are less things to downweight as entities are collected and removed from the environment. Proving that the negative activations play this role would be a fruitful direction for future work.
+The clamping experiments confirm this spatial gating mechanism: setting activations to zero in specific regions completely prevents the agent from entering them. The spatial gating explains why artificially activating almost any region can redirect the agent: it introduces a signal that the navigation system interprets as a region of interest. As entities are collected and removed from the environment, fewer regions require suppression, explaining the systematic increase in mean activation values observed over the course of a rollout. The offset steering effect likely works by shifting the network into activation patterns characteristic of different game stages, which changes which regions are marked as regions of interest.
 
 It also seems to be the case that past conv1a, the network generally does not rely heavily on specialised channels for selecting the next target, but rather that many of the channels in conv2a, conv3a, and conv4a play critical roles for multiple or all entities, and that which entity they are currently attending to is largely determined by the overall activation range in the inputs from previous layers. We do see small amounts of specialisation in conv4a with certain channels being quite focused on one or two entities, such as channels 24, 25, and 26 in Figure~\ref{fig:steering-dot-plot} primarily being responsible for the red key and gem. 
 
@@ -100,49 +60,20 @@ It also seems to be the case that past conv1a, the network generally does not re
 \label{sec:theoretical}
 % How your results contribute to theory
 % New insights about RL interpretability
-The findings from this research contribute to the theoretical understanding of mechanistic interpretability in deep reinforcement learning in several ways. The demonstration of activation-level encoding suggests that neural networks may employ more nuanced information encoding strategies than simple feature presence/absence, utilizing the analog nature of activations as an additional information dimension. This challenges some simpler models of feature representation and highlights the potential for information multiplexing as a core principle of neural computation, especially when under pressure for representational efficiency.
+The findings from this research contribute to the theoretical understanding of mechanistic interpretability in deep reinforcement learning in several ways. The demonstration of spatial gating through activation polarity suggests that neural networks may employ more nuanced information encoding strategies than simple feature presence/absence, utilizing the analog nature of activations to gate attention across spatial regions. This challenges some simpler models of feature representation and highlights the potential for activation-based gating as a core principle of neural computation, especially when under pressure for representational efficiency.
 
 The dead channel phenomenon in SAEs, and its mechanistic explanation, provides a concrete example of how network components that appear non-functional during standard inference can retain latent capabilities and learned knowledge. This has implications for how we assess model capacity and robustness, and for understanding the learning dynamics that lead to such states.
 
-One observation from carrying out this work is that uncovering the role of activation magnitude across entire layers as a selection mechanism was difficult to uncover using typical mechanistic interpretability tools such as probes and SAEs. The most important discovery regarding how the network functioned (activation level entity encoding) turned out to be explicable purely by analysing the mean activations of different channels. It is possible that there may be further interesting discoveries to be made using similar approaches, particularly in networks that would likely benefit from shared functionality for similar tasks that require clear delineation.
+One observation from carrying out this work is that uncovering the spatial gating mechanism was difficult using typical mechanistic interpretability tools such as probes and SAEs. The most important discovery regarding how the network functioned (the role of negative activations in marking regions of interest) turned out to be explicable purely by analysing the mean activations of different channels over the course of a rollout. It is possible that there may be further interesting discoveries to be made using similar approaches, particularly in networks that would likely benefit from shared functionality for similar tasks that require clear delineation.
 
 For RL interpretability specifically, this work underscores that techniques successful in one domain (e.g., LLMs) or simpler environments may need adaptation or re-evaluation in more complex, interactive settings. The interplay between learned environmental structure (like sequential objectives in Heist) and emergent network representations is a key area for future theoretical development.
 
 \section{Practical Applications}\label{sec:applications}
-The discovery that this network uses activation magnitude for entity encoding may have implications if the effect is observed to generalise to other models. Given the level of steering that was possible through small offset adjustments (±0.5 at conv2a) the technique has the potential to offer a lightweight control mechanism that doesn't require architectural changes or retraining. While it remains to be seen to what extent other neural networks have similar encodings, the potential upside of the flexibility of the mechanism and ease of determining whether it is present means that determining if models do work in this way could have immediate practical benefits. It could even be worth structuring environments and training in such a way as to encourage the development of such a structure in order to allow for greater control via precise intervention, particularly if the mechanism is better understood.
+The discovery that this network uses spatial gating through activation polarity may have implications if the effect is observed to generalise to other models. Given the level of steering that was possible through small offset adjustments (±0.5 at conv2a), the technique has the potential to offer a lightweight control mechanism that does not require architectural changes or retraining. While it remains to be seen to what extent other neural networks have similar gating mechanisms, the potential upside of the flexibility and ease of determining whether it is present means that investigating models for this pattern could have immediate practical benefits. It could even be worth structuring environments and training in such a way as to encourage the development of such a structure in order to allow for greater control via precise intervention, particularly if the mechanism is better understood.
 
 As discussed in Section~\ref{sec:interpretation}, the two-phase processing architecture suggests that interventions should target specific layers depending on the desired effect: earlier convolutional layers for goal selection, FC layers for navigation and planning. This layer-specific approach could make it simpler to debug models by focusing attention on the relevant portion of the network. However, there are still significant challenges in understanding the mechanisms at play in the FC layers of this network.
 
 Most importantly, understanding that representations are most malleable early in the network where they first integrate low level information provides an optimal control point, rather than trying shift the course of the model after entity selection has already occurred.
-
-\section{Limitations of the Study}\label{sec:limitations}
-% Honest assessment of limitations
-% Factors that might affect validity or generalizability
-This research, while providing several insights, is subject to certain limitations:
-
-Our work is currently limited by the fact that we test only on a single environment, as there are not many environments that have similar qualities such as the extreme generalization encouraged by Procgen, and the staged multi-goal configuration in Heist. To address this, future work could attempt this with MiniGrid environments, though a custom configuration that can establish similar diversity may be needed.
-
-It is also unclear to what extent the intervention channel multiplexing phenomenon generalises to other architectures, and we plan to test this in future work.
-
-Our training methodology differs from standard practice in using unlimited procedurally generated environments rather than the typical 200-500 set of environments one would set. While this was necessary for successful training with our compressed architecture, it may affect the generalization of our findings to models trained under standard Procgen protocols. The unlimited environment diversity likely also contributes to the representational drift we observe, as the network continually trains on new environmental distributions.
-
-We also do not yet fully characterise the function of the intervention spans, or if they translate to an actual unique role within the network's natural functioning. We plan to address this directly through a thorough application of probes that are trained to detect which entity is currently the next entity in order of pursuit by the network. Early work shows that the later convolutional layers do this very successfully, as well as the first fully connected layer. However, to truly understand the role of the intervention spans and navigation channels, it may be necessary to train probes on every channel and every row in the fully connected layer to determine their function. 
-
-Intervention experiments, by their nature, can push the network into off-distribution activation states. While this is useful for causal testing, the agent's behaviour under such strong artificial interventions do not represent its typical behaviour. We do not yet have a clear picture of precise circuitry under normal operating conditions. Additionally, the patching interventions were typically only applied with positive activations, but the mean channel activation analysis shown in Figure~\ref{fig:activation_tracking} reveals that for many channels the activations of the network are mostly negative. This means that a large portion of their activity is not being captured accurately in the interventions. We believe future work in understanding the role of the negative activations in the convolutional channels would lead to fruitful insights.
-
-Our approach of simply intervening in every channel with 400 different activation strengths is also an approach that would need to be approached more carefully, due to cost constraints, in larger models.
-
-\section{Future Work}\label{sec:future_work}
-
-This research opens several promising avenues for future investigation. The discovery of activation-magnitude encoding suggests examining whether similar mechanisms exist in other architectures and domains, particularly in transformer-based models where activation magnitudes might encode different modes of operation.
-
-Testing this mechanism across different RL environments—especially those with hierarchical goal structures or mode-switching requirements—could reveal whether activation multiplexing is a general principle of efficient neural computation under resource constraints.
-
-The methodological insight that simple mean activation analysis revealed what sophisticated tools missed suggests revisiting other `well-understood' models with basic statistical approaches. This could uncover overlooked organizational principles, particularly in systems previously deemed too polysemantic for interpretation.
-
-The precise control achievable through small activation offsets ($\pm$0.5 at conv2a) warrants investigation into whether training procedures could be designed to encourage such structures, potentially yielding models that are interpretable and controllable by design rather than post-hoc analysis.
-
-Finally, the two-phase architecture's clear separation between `what to target' and `how to navigate' suggests applications in hybrid systems where interpretable goal selection could be combined with powerful but opaque execution modules, potentially offering a path toward more trustworthy autonomous systems.
 
 \section{Reflections on the Research Process}\label{sec:reflections}
 
