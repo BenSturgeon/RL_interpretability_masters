@@ -1,3 +1,4 @@
+% !TEX root = main.tex
 \chapter{Results}
 \label{ch:results}
 
@@ -6,11 +7,9 @@ All results presented are from checkpoint 35001 (35k update steps), past converg
 
 \section{Parallel Rollout Activation Analysis}
 \label{sec:parallel_rollouts}
-In performing parallel rollouts targeting the different entities, as shown in Figure~\ref{fig:parallel-rollout}, we observe that there are distinct parallel trajectories in the mean activations across different channels in the network for each entity.
+Parallel rollouts reveal distinct activation trajectories for each entity type (Figure~\ref{fig:parallel-rollout}). The same channels are active across all entities, but at systematically different levels depending on which entity is being targeted. This distinguishes between two possible encoding strategies: entity-specific channels that uniquely fire for particular entities, versus shared channels where activation levels shift systematically with game state.
 
-By observing which channels had the lowest and greatest offset between runs targeting different entities, we could construct clear visual comparisons to determine whether different entities activated different channels, or whether the same channels were active but at different levels. This distinguishes between two possible strategies: entity-specific channels that uniquely fire for particular entities, versus a shared set of channels where activation levels shift systematically depending on game state.
-
-We found that in most cases we could clearly observe clean parallel trajectories with significant gaps in the values between them, indicating strong value encoding for entity targeting. For the channels with the lowest offset, we see similar parallelism, though often certain entities will be very close in their values such as red key or blue key overlapping, meaning there is little distinguishing between the entities in these channels under this experimental setup. We note that given more natural environment setups with more entities present that the activation dynamics are likely to change significantly. 
+Clean parallel trajectories with significant gaps between entity types indicate strong value encoding for entity targeting. Channels with the lowest inter-entity offset show similar parallelism, though certain entities (e.g., red key and blue key) sometimes overlap, indicating less differentiation in those channels. 
 
 
 \begin{figure}[H]
@@ -35,7 +34,7 @@ We observe extremely high correlation between activation patterns in both conv3a
 \subsection{Activation patterns over rollouts}
 We carried out further experiments to observe how activation patterns evolved over the course of a rollout as different entities were collected. We captured activations over the course of rollouts in both the custom maze environments and unmodified mazes, taking the mean activation in each channel at every timestep. This revealed clear patterns where activations would typically jump upwards as each key was collected, with the size of the jump decreasing after each collection. These jumps were particularly obvious in the highest-variance channels, with the effect present but not ubiquitous amongst other channels. Results of a randomly selected rollout are shown in Figure~\ref{fig:activation_tracking}.
 
-Another recurring pattern in the activation trajectory was the pinching effect seen in Figure~\ref{fig:activation_tracking}, wherein the activations suddenly converge to a similar value across entities. This is likely because the network has learned that regardless of the entity involved, if the player is one step away from the entity then it always makes sense to go directly to that entity, as in the normal course of a rollout there is no scenario in which it can be directly beside an entity while it would be incorrect to collect that entity, except in the case of locks. 
+Figure~\ref{fig:activation_tracking} illustrates a recurring `pinching' effect, where activations converge to similar values across entities. This is likely because the network has learned that regardless of the entity involved, if the player is one step away from the entity then it always makes sense to go directly to that entity, as in the normal course of a rollout there is no scenario in which it can be directly beside an entity while it would be incorrect to collect that entity, except in the case of locks. 
 
 Interestingly, in the cross maze where it was possible to access all the keys from the beginning, the model would choose to target the green key first in about 12\% of cases (n=500 rollouts). In these instances we would still see the positive jump in activations as we saw in the case of the blue key, indicating that this phenomenon is primarily tied to the number of entities collected, rather than targeting a specific entity. 
 
@@ -57,7 +56,7 @@ Interestingly, in the cross maze where it was possible to access all the keys fr
 \end{figure}
 
 
-A surprising finding was that merely by adjusting the activation ranges within channels by a static offset we could reliably achieve coherent steering towards different entities than what the agent would target by default. Results of rates of initial pickup over different rollouts are presented in Figure~\ref{fig:activation_offset_results}. We also observe this result on different checkpoints, with different success rates for offset values but with similar patterns. 
+Surprisingly, a static offset to channel activations reliably steered the agent towards different entities than what the agent would target by default. Results of rates of initial pickup over different rollouts are presented in Figure~\ref{fig:activation_offset_results}. We also observe this result on different checkpoints, with different success rates for offset values but with similar patterns. 
 We find that steering towards different entities by adjusting mean offset works across all layers, suggesting that this is endemic to the structure of the network and not simply an isolated phenomenon.
 
 We observe complete shifts in entity targeting. Baseline rates show 93\% $\pm$ 5\% blue key targeting at offset 0.0. At positive offsets, the agent switches to targeting the green key, peaking at 94\% $\pm$ 5\% at offset $+4.8$. At negative offsets, we observe peak red key collection of 52\% $\pm$ 10\% at offset $-5.8$. Rates of not collecting any entity increase at the extremes, but overall collection remains fairly high, meaning important navigational functions continue to function.
@@ -93,7 +92,7 @@ A possible explanation for why the ranges have an upper limit beyond which they 
 \end{figure}
 
 
-The most striking aspect of our results is that particular value ranges worked for specific entities, illustrating how channels seemed to successfully redirect the agent when in the presence of a particular entity through the amplitude of the patched activation. The successful redirection may mean that a channel is particularly attuned to that entity, and having it activate elsewhere overwrites its typical normal function, but we believe that jumping to that conclusion may be pre-emptive.
+The fact that specific value ranges seemed to correspond with specific entities reinforces the idea that the magnitude of the activation plays a real role in specifying a particular entity.
 
 The primary value of this finding is in providing further support for the way in which individual channels seem to multiplex the targeting of specific entities with varying activation strengths. We trained SAEs on these layers and found they exhibit similar multiplexing structures, suggesting this is a robust encoding strategy rather than simply the result of polysemanticity.
 
@@ -101,7 +100,7 @@ The primary value of this finding is in providing further support for the way in
 \label{sec:sae_training}
     \subsection{SAE Performance}
     \label{subsec:sae_performance}
-    We found that the SAEs tended to be extremely effective at recovering performance on the original task, with the conv4a SAEs recovering 99.6\% of performance and the conv3a SAEs recovering 102\% of performance (likely due to random variance in the seeds and evaluations) as measured by average reward attained in Procgen heist mazes. This recovery would typically occur within 40000 steps of training. The SAEs were also able to rapidly achieve variance explained scores approaching 100\% (indicating near-perfect reconstruction of the original activations) within 120000 steps.  The SAEs were typically trained for 2 million steps to ensure convergence. This success provides good evidence that the SAEs worked as intended and could be relied upon to validate our other results.
+    SAEs recovered 99.6\% (conv4a) and 102\% (conv3a) of task performance as measured by average reward, with the slight over-recovery likely due to random variance. Recovery occurred within 40,000 training steps, with variance explained scores approaching 100\% within 120,000 steps. SAEs were trained for 2 million steps to ensure convergence. This strong recovery indicates the SAEs worked as intended and could reliably validate our other results.
 
 
     \subsection{SAEs Preserve Base Model Structure}
@@ -110,19 +109,17 @@ The primary value of this finding is in providing further support for the way in
 
     Our primary method for using SAEs to ensure that we hadn't simply found polysemanticity in the network was to use the same quantitative patching approach described in Section~\ref{subsec:quantitative_steering} applied to all of the latents in an SAE. If it were natural to encode different entities into separate channels, we would expect the SAE to learn distinct latents for each entity type. Instead, we observe broadly the same patterns: individual SAE latents successfully redirect the agent away from multiple entities, with similar activation patterns to the base model. Figures illustrating this can be observed for conv3a and conv4a SAEs in Appendix~\ref{app:sae_interventions}.
 
-
-
-\subsubsection{Patching with Dead Latents (SAE)}
+\subsubsection{Patching with Dead Latents}
 \label{subsec:dead_channel_steering}
-One of the most surprising findings from the SAE intervention experiments was that a large number of the latents effective for redirecting the agent were `dead latents': latents that exhibited no activation under normal operating conditions of the model. We confirmed these latents remained inactive across 100 rollouts of typical maze-solving behaviour.
+Many effective steering latents were `dead latents' that exhibited zero activation during normal operation. We confirmed these remained inactive across 100 rollouts of typical maze-solving behaviour.
 
-Based on standard understanding of SAE training dynamics, we attribute this to the following mechanism: these encoder-decoder pairs initially encoded useful signal during early training, but were subsequently suppressed as the L1 sparsity penalty forced lower activations. Crucially, while the encoder weights were driven toward near-zero values, the corresponding decoder weights would not change substantially during this process. The decoders thus retained the directional structure learned when the latent was active. When we artificially activate these dead latents during intervention experiments, the preserved decoder weights still project meaningful directions into the activation space, allowing them to influence agent behaviour despite never activating during normal operation.
+We attribute this to SAE training dynamics. These encoder-decoder pairs initially encoded useful signal during early training, but were subsequently suppressed as the L1 sparsity penalty forced lower activations. While encoder weights were driven toward near-zero values, decoder weights retained the directional structure learned when the latent was active. Artificially activating these dead latents during intervention experiments allows the preserved decoder weights to project meaningful directions into the activation space, influencing agent behaviour despite the latents never activating during normal operation.
 
 \section{Exploring The Role of Negative Activations}
 \label{sec:negative_activations}
 While the activation strength encoding mechanism above is clear and seems connected to increasingly negative activations over the course of an episode, it is unclear what the negative activations are doing in the network and why the activations become less negative over time. 
 
-To understand this, we analyzed how negative activations changed in the convolutional layers over the course of a rollout. We observed that negative regions follow a clear pattern: regions previously explored in the maze have their activation values shift to near zero upon the collection of an entity, as shown in Figure~\ref{fig:disinhibition_conv4a}. In this figure, channel 18 is chosen because it has the highest mean activation variance of all channels, clearly demonstrating the shifting effect. 
+To understand this, we analysed how negative activations changed in the convolutional layers over the course of a rollout. We observed that negative regions follow a clear pattern: regions previously explored in the maze have their activation values shift to near zero upon the collection of an entity, as shown in Figure~\ref{fig:disinhibition_conv4a}. In this figure, channel 18 is chosen because it has the highest mean activation variance of all channels, clearly demonstrating the shifting effect. 
 
 \begin{figure}[H]
     \centering
@@ -132,14 +129,14 @@ To understand this, we analyzed how negative activations changed in the convolut
 \end{figure}
 
 
-The moment of collection acts as phase shift, with the region containing the collected entity suddenly becoming marked as largely empty, and with regions of the maze still containing entities remaining largely negative. We observe this phenomenon across mazes and in layers conv2a, conv3a, and conv4a. This corresponds with the jumps in mean activation observed in~\ref{fig:activation_tracking}, providing a clearer picture of what causes this phenomenon.
+Collection triggers a phase shift: the entity's region becomes marked as empty, while regions of the maze still containing entities remaining largely negative. We observe this phenomenon across mazes and in layers conv2a, conv3a, and conv4a. This corresponds with the jumps in mean activation observed in~\ref{fig:activation_tracking}, providing a clearer picture of what causes this phenomenon.
 
 We test this mechanism by using patching in the convolutional layers to clamp activations in regions we do not want the agent to enter to a value of 0. This completely stops the agent from entering those regions. Tests in our cross maze environment (Figure~\ref{fig:spatial_steering}) reveal 100\% retargeting of the agent to regions that are not clamped.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.98\textwidth]{figures/steering_figure.pdf}
-    \caption[Spatial steering via conv4a channel clamping]{Top row: baseline behavior where the agent moves toward the blue key (left arm). Bottom row: after clamping activations to zero in three spatial regions (red dashed boxes), the agent instead moves toward the green key in the remaining unclamped region (green box).}
+    \caption[Spatial steering via conv4a channel clamping]{Top row: baseline behaviour where the agent moves toward the blue key (left arm). Bottom row: after clamping activations to zero in three spatial regions (red dashed boxes), the agent instead moves toward the green key in the remaining unclamped region (green box).}
     \label{fig:spatial_steering}
 \end{figure}
 
@@ -188,9 +185,9 @@ This shows that conv1a contains specialised entity detectors, but whole-layer en
 This marks the point at which the network transforms explicit entity representations into action-oriented features. This makes sense as in final layer it has to produce only the action distribution and value estimation, which would naturally be quite distant from the entity representations themselves.
 
 \subsection{Directional Navigation Probes}
-\label{subsec:directional_probes}
+\label{subsec:directional_probes_results}
 
-To understand which points of the network are most involved with navigation, we trained linear probes to predict the optimal movement direction (up, right, down, left) from layer activations. We gathered 8,000 samples (2,000 per direction) using Dijkstra's algorithm to compute optimal paths, filtering out examples where the agent was not centered in a grid cell to avoid ambiguity, and also removing examples where the agent was directly next to the target entity in order to enhance the difficulty of the problem. Results are shown in Table~\ref{tab:probe_directional}.
+To understand which points of the network are most involved with navigation, we trained linear probes to predict the optimal movement direction (up, right, down, left) from layer activations. We gathered 8,000 samples (2,000 per direction) using Dijkstra's algorithm to compute optimal paths, filtering out examples where the agent was not centred in a grid cell to avoid ambiguity, and also removing examples where the agent was directly next to the target entity in order to enhance the difficulty of the problem. Results are shown in Table~\ref{tab:probe_directional}.
 
 \begin{table}[h]
     \centering
@@ -222,98 +219,30 @@ The surprising conv4a performance drop (63.6\% $\rightarrow$ 51.7\%) diverges fr
 
 The contrasting progressions reveal a two-stage processing architecture. Entity information contains specialist detectors even at conv1a and peaks at conv3a (99.3\% $\pm$ 0.4\%), while directional information is entirely absent at conv1a (25.1\% $\pm$ 2.1\%, at random baseline) and peaks much later at fc2 (67.3\% $\pm$ 2.3\%). This indicates that the network implements a hierarchical processing strategy:
 
-\textbf{Stage 1 - Goal Identification (conv2a--conv4a):} Entity information emerges sharply from conv1a (which contains specialist entity detectors despite poor whole-layer performance) through conv2a (96.6\% $\pm$ 1.0\%) and peaks at conv3a (99.3\% $\pm$ 0.4\%), remaining extremely high at conv4a at 97.6\% $\pm$ 0.8\%. At this stage, directional information remains relatively weak (63.6\% $\pm$ 2.4\% at conv3a), suggesting the network prioritizes identifying the correct goal before planning how to reach it. Notably, conv1a contains no directional information whatsoever (25.1\% $\pm$ 2.1\%, at random baseline), contrasting with its entity specialist channels, indicating that directional processing emerges later in the network.
+\textbf{Stage 1 - Goal Identification (conv2a--conv4a):} Entity information emerges sharply from conv1a (which contains specialist entity detectors despite poor whole-layer performance) through conv2a (96.6\% $\pm$ 1.0\%) and peaks at conv3a (99.3\% $\pm$ 0.4\%), remaining extremely high at conv4a at 97.6\% $\pm$ 0.8\%. At this stage, directional information remains relatively weak (63.6\% $\pm$ 2.4\% at conv3a), suggesting the network prioritises identifying the correct goal before planning how to reach it. Notably, conv1a contains no directional information whatsoever (25.1\% $\pm$ 2.1\%, at random baseline), contrasting with its entity specialist channels, indicating that directional processing emerges later in the network.
 
 \textbf{Stage 2 - Navigation Planning (fc1--fc2):} As entity information compresses (99.3\% $\rightarrow$ 20.4\%), directional information strengthens (63.6\% $\rightarrow$ 67.3\%). The network transforms explicit entity representations into spatial navigation commands, with peak directional accuracy at fc2 (67.3\% $\pm$ 2.3\%) suggesting motion-oriented features directly relevant to action selection. Both types of information then collapse at fc3 (entity: 20.4\% $\pm$ 2.1\%, direction: 21.1\% $\pm$ 2.0\%), as they are compressed into the final action distribution and value estimates.
 
-This functional separation explains key findings from our intervention experiments. The near-perfect entity encoding at conv3a explains why patching and ablation interventions were most effective at this depth: we modified explicit goal representations before their transformation into motor commands. Conversely, the distributed nature of directional information across multiple layers explains why navigation remained largely functional even under heavy ablation, making it more robust to localized disruption than the concentrated entity representations.
+This functional separation explains key findings from our intervention experiments. The near-perfect entity encoding at conv3a explains why patching and ablation interventions were most effective at this depth: we modified explicit goal representations before their transformation into motor commands. Conversely, the distributed nature of directional information across multiple layers explains why navigation remained largely functional even under heavy ablation, making it more robust to localised disruption than the concentrated entity representations.
 
 
 
 
-\section{Expanded Ablation Studies}
+\section{Ablation Studies}
+\label{sec:ablation_results}
 
-\subsection{Channel Ablation Studies}
-
-\begin{figure}[t]
+\begin{figure}[H]
     \centering
     \includegraphics[width=1\textwidth]{figures/clean_heatmap_no_header.png}
-    \caption[Single-channel ablation heatmap]{Heatmap showing entity collection counts when only a single channel is active (all others ablated). The vertical axis shows different entity types (gem, blue key, green key, red key), while the horizontal axis shows channel indices. Brighter colors (yellow) indicate higher collection success rates.}
+    \caption[Single-channel ablation heatmap]{Heatmap showing entity collection counts when only a single channel is active (all others ablated). The vertical axis shows different entity types (gem, blue key, green key, red key), while the horizontal axis shows channel indices. Brighter colours (yellow) indicate higher collection success rates.}
     \label{fig:ablation-heatmap}
 \end{figure}
 
-Our ablation analysis reveals that the ability to navigate is surprisingly redundantly encoded throughout the network. The heatmap in Figure~\ref{fig:ablation-heatmap} shows the results in full. We observe that all channels have some success reaching entities, with the best performing channels achieving success rates greater than 40\% for certain entities, while others show lower than 10\% success rates. Some channels show similar performance across entities, while others are significantly better at particular entities. 
+Our ablation analysis reveals that the ability to navigate is surprisingly redundantly encoded throughout the network. The heatmap in Figure~\ref{fig:ablation-heatmap} shows the results in full. We observe that all channels have some success reaching entities, with the best performing channels achieving success rates greater than 40\% for certain entities, while others show lower than 10\% success rates. Some channels show similar performance across entities, while others are significantly better at particular entities.
 
-\subsection{Testing Ablation Impacts}
+We performed extensive targeted ablation experiments to better understand the functional roles of different channel groups, including ablating intervention spans (the activation ranges where patching successfully redirected the agent), navigation channels (those with highest independent collection rates), and infrastructure channels (those whose removal most impacted collection). However, these experiments yielded complex and often counterintuitive results that did not clearly illuminate the network's core mechanisms. Full results are provided in Appendix~\ref{app:ablation_studies}.
 
-Our ablation studies reveal two counterintuitive findings.
-
-First, ablating the gem's intervention spans improved collection rates from 74\% to 93.2\%, while ablating key-related spans reduced key collection by 47\% on average. This is likely a result of the distribution of intervention spans identified in Section~\ref{subsec:quantitative_steering}: gem-related spans appear across 31/32 channels, whereas key-related spans appear in only 14 channels.
-In addition, key intervention spans typically appear as regions within larger gem spans. When we ablate gem-associated regions, we remove most key intervention functionality along with the gem signals. The remaining channels, which still encode some weak gem targeting and are now free of interference from key signals, actually perform better, explaining the improved collection rate.
-
-Second, we discovered that the intervention signals actually interfere with the collection of keys. Ablating navigation channels alone devastated key collection (45\% average), but additionally ablating intervention spans partially restored performance (53\% average). This suggests that the intervention spans, when present alongside disabled navigation channels, actively interfere with key collection. Removing both eliminates this interference. Ablating intervention spans alone had minimal impact on keys (even causing a slight improvement), indicating that these spans are not necessary for key collection and, in fact, become actively harmful when navigation is impaired.
-
-\begin{table}[h]
-    \caption[Targeted ablation effects on entity collection]{Effect of targeted ablations on entity collection rates (n=400 trials per condition). Bold values indicate performance improvements or minimal degradation compared to baseline. Values shown with 95\% confidence intervals.}
-    \label{tab:ablation_results}
-    \centering
-    \small
-    \setlength{\tabcolsep}{4pt}
-    \makebox[\textwidth][c]{
-    \begin{tabular}{lcccc}
-    \toprule
-    Condition & Gem & Blue Key & Green Key & Red Key \\
-    \midrule
-    Baseline (No Ablation) & \textbf{74.5\% $\pm$ 4.3\%} & 98.5\% $\pm$ 1.2\% & 95.0\% $\pm$ 2.1\% & 80.0\% $\pm$ 3.9\% \\
-    Redundant Navigation Channels & 45.0\% $\pm$ 4.9\% & 69.6\% $\pm$ 4.5\% & 55.9\% $\pm$ 4.9\% & 43.1\% $\pm$ 4.9\% \\
-    Infrastructure Channels & 27.3\% $\pm$ 4.4\% & 70.2\% $\pm$ 4.5\% & 34.5\% $\pm$ 4.7\% & 26.5\% $\pm$ 4.3\% \\
-    Intervention Spans & 64.8\% $\pm$ 4.7\% & \textbf{99.8\% $\pm$ 0.4\%} & \textbf{97.8\% $\pm$ 1.4\%} & \textbf{83.2\% $\pm$ 3.7\%} \\
-    Navigation + Intervention Spans & 32.1\% $\pm$ 4.6\% & 71.9\% $\pm$ 4.4\% & 50.7\% $\pm$ 4.9\% & 37.1\% $\pm$ 4.7\% \\
-    Preserve Only Intervention Spans & 31.8\% $\pm$ 4.6\% & 61.8\% $\pm$ 4.8\% & 43.6\% $\pm$ 4.9\% & 32.5\% $\pm$ 4.6\% \\
-    Random Ablation (Control) & 44.1\% $\pm$ 4.9\% & 74.9\% $\pm$ 4.3\% & 63.1\% $\pm$ 4.7\% & 48.9\% $\pm$ 4.9\% \\
-    \bottomrule
-    \end{tabular}
-    }
-\end{table}
-
-
-To better understand the role of the intervention spans in explaining network performance, we performed inverse ablations where we preserved only the intervention spans for each entity. The inverse ablation results show performance of 31.8\% (gem), 61.8\% (blue), 43.6\% (green), and 32.5\% (red), all below the corresponding random-control rates of 44.1\%, 74.9\%, 63.1\%, and 48.9\%. Intervention spans alone are not sufficient to drive collection and do not outperform a random-control baseline. The intervention spans appear to encode some entity information but rely on other navigation circuitry to be effective.
-
-\subsection{Infrastructure Channels for Each Entity}
-\label{subsec:discovering_infrastructure_results}
-We additionally share our findings on the different collection rates in the empty environment used in the ablation study as a result of ablating single channels. We ablated the resulting top 10 infrastructure channels for each entity based on the results of the single channel intervention experiment described in Subsection~\ref{subsec:discovering_infrastructure} and found that certain important infrastructure channels were shared between entities, but also found some specialisation amongst them. 
-
-In particular, channel 25 was critical, with a significant impact on collection rates for all entities in the forked path maze experiments (described in Section~\ref{sec:forked_path_methodology}), reducing collection rates by 18\% on average.
-
-The results shown in Table~\ref{tab:infrastructure_ablation} demonstrate the results of ablating the top 10 infrastructure channels for each entity type in the empty maze environment. We observe that ablating the channels identified as critical for gem collection had a far greater impact on the collection rates of other entities than removing their respective critical top 10 infrastructure channels. 
-
-This may be the result of a greater share of the core navigational functionality being encoded in the gem infrastructure channels than in the key infrastructure channels. Interestingly, collection of the blue key was more greatly affected by the ablation of the red key's channels than by the ablation of its own infrastructure channels.
-
-\begin{table}[H]
-    \caption[Infrastructure channel ablation effects]{Effect of ablating top 10 infrastructure channels for each entity on collection rates (n=400 trials per condition). Bold values indicate the largest performance decreases for each entity type. Values shown with 95\% confidence intervals.}
-    \label{tab:infrastructure_ablation}
-    \centering
-    \small
-    \setlength{\tabcolsep}{4pt}
-    \makebox[\textwidth][c]{
-    \begin{tabular}{lcccc}
-    \toprule
-    Condition & Gem & Blue Key & Green Key & Red Key \\
-    \midrule
-    Baseline & 74.5\% $\pm$ 4.3\% & 98.5\% $\pm$ 1.2\% & 95.0\% $\pm$ 2.1\% & 80.0\% $\pm$ 3.9\% \\
-    \midrule
-    Single Channel (Gem) & \textbf{27.3\% $\pm$ 4.4\%} & 70.2\% $\pm$ 4.5\% & 34.5\% $\pm$ 4.7\% & 26.5\% $\pm$ 4.3\% \\
-    Single Channel (Blue Key) & 32.5\% $\pm$ 4.6\% & \textbf{80.2\% $\pm$ 3.9\%} & 52.8\% $\pm$ 4.9\% & 38.0\% $\pm$ 4.8\% \\
-    Single Channel (Green Key) & 23.2\% $\pm$ 4.1\% & 97.5\% $\pm$ 1.5\% & \textbf{90.5\% $\pm$ 2.9\%} & 51.7\% $\pm$ 4.9\% \\
-    Single Channel (Red Key) & 49.8\% $\pm$ 4.9\% & 55.2\% $\pm$ 4.9\% & 49.2\% $\pm$ 4.9\% & \textbf{46.0\% $\pm$ 4.9\%} \\
-    \bottomrule
-    \end{tabular}
-    }
-
-    \vspace{0.5em}
-    \small
-    \textit{Note: The diagonal shows on-target effects: Gem (-47.2\%), Blue Key (-18.3\%), Green Key (-4.5\%), Red Key (-34.0\%). Gem infrastructure channels affect all entities catastrophically, while key channels often have surprising and counter-intuitive impacts reducing their respective entities collection rates less than other entities.}
-\end{table}
+The most interpretable finding was that intervention spans alone are not sufficient to drive entity collection. When we preserved only the intervention spans for each entity while ablating everything else, performance fell below random-control baselines: 31.8\% for gem versus 44.1\% random, 61.8\% for blue key versus 74.9\% random, and similar patterns for other entities. This confirms that the intervention spans encode entity-relevant information but depend on other navigation circuitry to be effective; they represent one component of a distributed system rather than a self-contained targeting mechanism.
 
 
 
@@ -332,6 +261,6 @@ This pattern persists across layers and even through SAE decomposition, suggesti
 
 \textbf{3. Two-Phase Processing Architecture Separates Goal Selection from Navigation.} Probe experiments reveal distinct information processing stages: entity determination occurs in convolutional layers (peaking at 99.3\% accuracy in conv3a) while navigation planning happens in fully-connected layers (peaking at 67.3\% directional accuracy in fc2). Conv4a serves as a critical bridge, maintaining entity information while reformatting spatial representations. This separation explains why patching interventions succeed at conv3a/4a: we intervene precisely where goals crystallise, before transformation into distributed action plans.
 
-\textbf{4. Layer Depth Determines Intervention Character.} Despite minimal probe accuracy (20.0\%), conv1a shows strong but chaotic patching effects with discrete entity zones and uniquely achieves 50\% $\pm$ 5\% gem collection, far exceeding later layers. Conv2a offers the finest control with ±0.5 offset precision, representing the optimal intervention point where representations first integrate. Conv3a/4a provide stable but coarser manipulation of crystallized representations. This progression from raw detection through integration to crystallization defines both the network's computational strategy and our ability to control it.
+\textbf{4. Layer Depth Determines Intervention Character.} Despite minimal probe accuracy (20.0\%), conv1a shows strong but chaotic patching effects with discrete entity zones and uniquely achieves 50\% $\pm$ 5\% gem collection, far exceeding later layers. Conv2a offers the finest control with ±0.5 offset precision, representing the optimal intervention point where representations first integrate. Conv3a/4a provide stable but coarser manipulation of crystallised representations. This progression from raw detection through integration to crystallization defines both the network's computational strategy and our ability to control it.
 
 These findings demonstrate that understanding where and how information is encoded, not just what is encoded, is crucial for interpreting and controlling neural network behaviour.

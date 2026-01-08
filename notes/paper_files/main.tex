@@ -102,7 +102,7 @@ I empower the university to reproduce for the purpose of research either the who
 % Abstract
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
-In this work we provide an extensive analysis into the operations of a maze-solving reinforcement learning agent trained to navigate procedurally generated environments with multiple sequential objectives. We investigate how neural networks represent and process distinct goals when an agent must target multiple similar entities in a prescribed sequence. Our main finding is that the network uses a spatial gating mechanism where negative activations mark regions of interest, with these patterns shifting systematically as objectives are completed. We demonstrate that simple constant offsets to channel activations can redirect the agent to target different entities while preserving navigational capabilities, likely by mimicking the activation patterns characteristic of different game stages. Clamping experiments confirm this mechanism operates spatially rather than on entity representations: the agent avoids any clamped region regardless of which entity occupies it. We also identify a clear two-stage processing pipeline where the model first establishes the target entity in early convolutional layers through high-accuracy entity classification, and then shifts to processing directional and navigational information in the fully-connected layers. These findings suggest that spatial gating through activation polarity may be a viable strategy for tracking progress in reinforcement learning agents operating in multi-objective environments, and provide a novel mechanistic approach for understanding goal representation in neural networks. Further work is needed to determine whether these mechanisms generalise beyond this specific architecture and environment.
+Reinforcement learning agents trained on multi-objective tasks must track and switch between sequential goals to succeed. While such agents can learn complex goal-directed behaviour, how neural networks internally represent and select between multiple similar objectives remains poorly understood. In this work, we show that goal selection in a maze-solving RL agent is mediated by a spatial gating mechanism where negative activations mark regions of interest, with these patterns shifting systematically as objectives are completed. Specifically, simple constant offsets to channel activations redirect the agent to target different entities (from 93\% blue key collection to 94\% green key) while preserving navigational capabilities, likely by mimicking activation patterns characteristic of different game stages. Clamping experiments confirm this operates spatially: the agent avoids any clamped region regardless of which entity occupies it. We further identify a two-stage processing pipeline where early convolutional layers establish the target entity (99.3\% probe accuracy at conv3a) before fully-connected layers process directional information (67.3\% at fc2). Sparse autoencoders preserve rather than decompose these activation patterns, confirming spatial gating is fundamental to the network rather than an artifact of polysemanticity. This mechanism was discovered through simple mean activation analysis rather than sophisticated interpretability tools, suggesting temporal patterns in activation levels deserve greater attention. Our findings provide a concrete mechanistic account of goal representation in this RL agent. More broadly, spatial gating through activation polarity may be a general strategy for tracking progress in multi-objective environments, with implications for understanding and controlling goal-directed neural networks.
 
 
 \vspace{1em}
@@ -181,7 +181,7 @@ ImpalaCNN architecture:
     \begin{figure}[H]
         \centering
             \includegraphics[width=0.98\textwidth]{figures/offset_sweep_conv3a_expanded_checkpoint_35001_-3to3_step0.03.pdf}
-        \caption[Conv3a narrow range offset sweep (-3 to +3)]{Narrow range activation offset sweep for conv3a layer at checkpoint 35001, focusing on offset values from -3 to +3 with step size 0.03. This fine-grained sweep provides higher resolution detail of entity collection rates in the critical activation range where steering behavior transitions occur.}
+        \caption[Conv3a narrow range offset sweep (-3 to +3)]{Narrow range activation offset sweep for conv3a layer at checkpoint 35001, focusing on offset values from -3 to +3 with step size 0.03. This fine-grained sweep provides higher resolution detail of entity collection rates in the critical activation range where steering behaviour transitions occur.}
         \label{fig:offset_steering_conv3a-3+3}
         \end{figure}
 \begin{figure}[H]
@@ -194,7 +194,7 @@ ImpalaCNN architecture:
 \begin{figure}[H]
     \centering
         \includegraphics[width=0.98\textwidth]{figures/offset_sweep_conv2a_expanded_checkpoint_35001_-1to1_step0.01.pdf}
-    \caption[Conv2a narrow range offset sweep (-1 to +1)]{Narrow range activation offset sweep for conv2a layer at checkpoint 35001, focusing on offset values from -1 to +1 with step size 0.01. This high-resolution sweep examines fine-grained steering behavior in the conv2a layer's most sensitive activation range.}
+    \caption[Conv2a narrow range offset sweep (-1 to +1)]{Narrow range activation offset sweep for conv2a layer at checkpoint 35001, focusing on offset values from -1 to +1 with step size 0.01. This high-resolution sweep examines fine-grained steering behaviour in the conv2a layer's most sensitive activation range.}
     \label{fig:offset_steering_conv2a-1+1}
     \end{figure}
 
@@ -347,54 +347,54 @@ Several patterns emerge from the channel-level probe analysis:
 
 \item \textbf{Distributed vs sparse coding}: The gap between whole-layer and best single-channel performance grows substantially in deeper layers (Conv3a: 99.3\% whole vs 82.9\% best channel; Conv4a: 97.6\% whole vs 68.1\% best channel), indicating a shift from sparse coding in early layers to distributed coding in later layers.
 
-\item \textbf{Entity-specific patterns}: Some channels in Conv1a show extreme specialization (e.g., Ch9 and Ch14 achieve 100\% on red key but near 0\% on other entities), while Conv2a channels tend toward more balanced multi-entity performance.
+\item \textbf{Entity-specific patterns}: Some channels in Conv1a show extreme specialisation (e.g., Ch9 and Ch14 achieve 100\% on red key but near 0\% on other entities), while Conv2a channels tend toward more balanced multi-entity performance.
 \end{enumerate}
 
 
 \chapter{Intervention Spans Across Checkpoints}
 \label{app:evolution_of_interventions}
 
-Figures \ref{fig:intervention_40k}--\ref{fig:intervention_60k} illustrate the representational drift observed across checkpoints 40k-60k. Despite stable task performance, the specific channels exhibiting steering behavior and their associated activation ranges shift dramatically between checkpoints, demonstrating that the network continuously explores equivalent solutions within a broad basin of the loss landscape.
+Figures \ref{fig:intervention_40k}--\ref{fig:intervention_60k} illustrate the representational drift observed across checkpoints 40k--60k. Despite stable task performance, the specific channels exhibiting steering behaviour and their associated activation ranges shift dramatically between checkpoints, demonstrating that the network continuously explores equivalent solutions within a broad basin of the loss landscape.
 
 \begin{figure}[p]
 \centering
 \includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_7_ood_p99.9_step_40001.pdf}
-\caption[Conv4a steering interventions at checkpoint 40k]{Steering intervention success rates for conv4a layer at checkpoint 40k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
+\caption[Conv4a steering interventions at checkpoint 40k]{Steering intervention success rates for conv4a layer at checkpoint 40k. Coloured dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behaviour.}
 \label{fig:intervention_40k}
 \end{figure}
 
 \begin{figure}[p]
 \centering
 \includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_11_ood_p99.9_step_45001.pdf}
-\caption[Conv4a steering interventions at checkpoint 45k]{Steering intervention success rates for conv4a layer at checkpoint 45k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
+\caption[Conv4a steering interventions at checkpoint 45k]{Steering intervention success rates for conv4a layer at checkpoint 45k. Coloured dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behaviour.}
 \label{fig:intervention_45k}
 \end{figure}
 
 \begin{figure}[p]
 \centering
 \includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_21_ood_p99.9_step_50001.pdf}
-\caption[Conv4a steering interventions at checkpoint 50k]{Steering intervention success rates for conv4a layer at checkpoint 50k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
+\caption[Conv4a steering interventions at checkpoint 50k]{Steering intervention success rates for conv4a layer at checkpoint 50k. Coloured dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behaviour.}
 \label{fig:intervention_50k}
 \end{figure}
 
 \begin{figure}[p]
 \centering
 \includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_29_ood_p99.9_step_55001.pdf}
-\caption[Conv4a steering interventions at checkpoint 55k]{Steering intervention success rates for conv4a layer at checkpoint 55k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
+\caption[Conv4a steering interventions at checkpoint 55k]{Steering intervention success rates for conv4a layer at checkpoint 55k. Coloured dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behaviour.}
 \label{fig:intervention_55k}
 \end{figure}
 
 \begin{figure}[p]
 \centering
 \includegraphics[width=0.95\textwidth]{figures/entity_distribution_plot_focused_blue_key_gem_green_key_red_key_layer_conv4a_top_11_ood_p99.9_step_60001.pdf}
-\caption[Conv4a steering interventions at checkpoint 60k]{Steering intervention success rates for conv4a layer at checkpoint 60k. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behavior.}
+\caption[Conv4a steering interventions at checkpoint 60k]{Steering intervention success rates for conv4a layer at checkpoint 60k. Coloured dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations. Each panel shows a different channel exhibiting steering behaviour.}
 \label{fig:intervention_60k}
 \end{figure}
 
 \chapter{SAE Intervention Results}
 \label{app:sae_interventions}
 
-The following figures show steering intervention success rates for SAE latents both trained on the 35000 step checkpoint. Unlike the base model channels (which have 32 dimensions per layer), the SAE uses a 4x expansion factor, resulting in 128 latents per layer. These figures demonstrate that sparse autoencoder latents can also be successfully steered to influence agent behavior toward specific entities. Colored dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations during standard gameplay. Figures shown have a threshold for inclusion of $\geq 200$ successes for readability.
+The following figures show steering intervention success rates for SAE latents both trained on the 35000 step checkpoint. Unlike the base model channels (which have 32 dimensions per layer), the SAE uses a 4x expansion factor, resulting in 128 latents per layer. These figures demonstrate that sparse autoencoder latents can also be successfully steered to influence agent behaviour toward specific entities. Coloured dots represent successful steering interventions for different entities (blue key, green key, red key, gem), while black lines indicate the 99.9th percentile of normal activations during standard gameplay. Figures shown have a threshold for inclusion of $\geq 200$ successes for readability.
 
 \begin{figure}[H]
 \centering
@@ -410,5 +410,104 @@ The following figures show steering intervention success rates for SAE latents b
 \label{fig:sae_intervention_conv4a_37}
 \end{figure}
 
+\chapter{Expanded Ablation Studies}
+\label{app:ablation_studies}
+
+This appendix provides full methodology and results for the ablation experiments summarised in Section~\ref{sec:ablation_results}. While these experiments were extensive, the results were often counterintuitive and did not clearly illuminate the network's core mechanisms beyond confirming that navigation is redundantly encoded.
+
+\section{Ablation Methodology}
+
+\subsection{Independent Navigation Channels}
+To determine the role of certain channels in navigational capabilities, we developed a comprehensive ablation methodology. For each channel in the network, we ran episodes with only that channel active while masking all other channels to zero. This allowed us to measure the isolated capability of each channel to support navigation to different entities in the environment. We recorded successful entity collection counts for each channel across n=400 rollouts.
+
+Because the agent has a bias towards randomly walking in a given direction depending on the current policy, for every channel a test was carried out to determine the bias direction and rotate the maze stem in this direction to avoid contamination of the results.
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/fork_maze_for_paper.png}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/empty_corners_maze_clean.png}
+    \end{minipage}
+    \caption[Maze configurations for ablation studies]{Maze configurations for ablation studies. (a) Fork maze tests individual channel navigation capability by requiring explicit path choices. (b) Open maze with entities in corners tests the effect of ablating intervention spans without navigational constraints.}
+    \label{fig:ablation-mazes-appendix}
+\end{figure}
+
+\subsection{Infrastructure Channels}
+To establish which channels were critical to overall network function, we performed the inverse experiment: ablating only one channel at a time to observe the impact on collection rates. We repeated this for every channel in conv4a for n=400 rollouts. Channels whose removal most reduced collection rates were designated as ``infrastructure channels.''
+
+\subsection{Targeted Ablation Conditions}
+We performed six targeted ablations:
+
+\textbf{Ablation 1 (Intervention spans):} We zero out activations falling within the ranges where patching successfully redirected the agent.
+
+\textbf{Ablation 2 (Navigation channels):} We ablate the top 10 channels with highest independent collection rates.
+
+\textbf{Ablation 3 (Infrastructure channels):} We ablate the top 10 channels whose removal most reduced collection rates.
+
+\textbf{Ablation 4 (Combined):} We ablate both navigation channels and intervention spans simultaneously.
+
+\textbf{Ablation 5 (Inverse):} We preserve only the intervention spans, ablating everything else.
+
+\textbf{Ablation 6 (Random):} We randomly ablate 10 channels as a baseline.
+
+\section{Full Ablation Results}
+
+\begin{table}[H]
+    \caption[Targeted ablation effects on entity collection]{Effect of targeted ablations on entity collection rates (n=400 trials per condition). Values shown with 95\% confidence intervals.}
+    \label{tab:ablation_results_appendix}
+    \centering
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \makebox[\textwidth][c]{
+    \begin{tabular}{lcccc}
+    \toprule
+    Condition & Gem & Blue Key & Green Key & Red Key \\
+    \midrule
+    Baseline (No Ablation) & 74.5\% $\pm$ 4.3\% & 98.5\% $\pm$ 1.2\% & 95.0\% $\pm$ 2.1\% & 80.0\% $\pm$ 3.9\% \\
+    Navigation Channels & 45.0\% $\pm$ 4.9\% & 69.6\% $\pm$ 4.5\% & 55.9\% $\pm$ 4.9\% & 43.1\% $\pm$ 4.9\% \\
+    Infrastructure Channels & 27.3\% $\pm$ 4.4\% & 70.2\% $\pm$ 4.5\% & 34.5\% $\pm$ 4.7\% & 26.5\% $\pm$ 4.3\% \\
+    Intervention Spans & 64.8\% $\pm$ 4.7\% & 99.8\% $\pm$ 0.4\% & 97.8\% $\pm$ 1.4\% & 83.2\% $\pm$ 3.7\% \\
+    Navigation + Intervention & 32.1\% $\pm$ 4.6\% & 71.9\% $\pm$ 4.4\% & 50.7\% $\pm$ 4.9\% & 37.1\% $\pm$ 4.7\% \\
+    Preserve Only Intervention & 31.8\% $\pm$ 4.6\% & 61.8\% $\pm$ 4.8\% & 43.6\% $\pm$ 4.9\% & 32.5\% $\pm$ 4.6\% \\
+    Random Ablation (Control) & 44.1\% $\pm$ 4.9\% & 74.9\% $\pm$ 4.3\% & 63.1\% $\pm$ 4.7\% & 48.9\% $\pm$ 4.9\% \\
+    \bottomrule
+    \end{tabular}
+    }
+\end{table}
+
+\begin{table}[H]
+    \caption[Infrastructure channel ablation effects]{Effect of ablating top 10 infrastructure channels for each entity on collection rates (n=400 trials per condition). Values shown with 95\% confidence intervals.}
+    \label{tab:infrastructure_ablation_appendix}
+    \centering
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \makebox[\textwidth][c]{
+    \begin{tabular}{lcccc}
+    \toprule
+    Condition & Gem & Blue Key & Green Key & Red Key \\
+    \midrule
+    Baseline & 74.5\% $\pm$ 4.3\% & 98.5\% $\pm$ 1.2\% & 95.0\% $\pm$ 2.1\% & 80.0\% $\pm$ 3.9\% \\
+    \midrule
+    Ablate Gem Infrastructure & 27.3\% $\pm$ 4.4\% & 70.2\% $\pm$ 4.5\% & 34.5\% $\pm$ 4.7\% & 26.5\% $\pm$ 4.3\% \\
+    Ablate Blue Key Infrastructure & 32.5\% $\pm$ 4.6\% & 80.2\% $\pm$ 3.9\% & 52.8\% $\pm$ 4.9\% & 38.0\% $\pm$ 4.8\% \\
+    Ablate Green Key Infrastructure & 23.2\% $\pm$ 4.1\% & 97.5\% $\pm$ 1.5\% & 90.5\% $\pm$ 2.9\% & 51.7\% $\pm$ 4.9\% \\
+    Ablate Red Key Infrastructure & 49.8\% $\pm$ 4.9\% & 55.2\% $\pm$ 4.9\% & 49.2\% $\pm$ 4.9\% & 46.0\% $\pm$ 4.9\% \\
+    \bottomrule
+    \end{tabular}
+    }
+\end{table}
+
+\section{Observations}
+
+The results reveal complex interactions that resist simple interpretation. Ablating gem intervention spans paradoxically \textit{improved} collection rates (from 74\% to 93.2\%), likely because gem-related spans appear across 31/32 channels while key spans appear in only 14. Key intervention spans are nested within gem spans, so ablating gem regions removes key functionality along with gem signals.
+
+Additionally, intervention signals interfere with key collection when navigation channels are disabled. Ablating navigation channels alone reduced key collection to 45\% average, but additionally ablating intervention spans partially restored performance to 53\%. This suggests that intervention spans become actively harmful when navigation circuitry is impaired.
+
+These counterintuitive results highlight the distributed and interdependent nature of the network's representations, where individual components cannot be cleanly isolated without affecting the function of others.
 
 \end{document}

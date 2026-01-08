@@ -1,20 +1,17 @@
+% !TEX root = main.tex
 \chapter{Literature Review}\label{ch:literature}
 
 \section{Introduction}\label{sec:lit_intro}
-The previous chapter established the motivation for this research, highlighting the need to better understand the internal workings of Reinforcement Learning (RL) agents, particularly in multi-objective environments. This chapter provides a review of the foundational literature that underpins this thesis.
-
-This review will cover the fundamentals of RL relevant concepts in mechanistic interpretability (MI). It will then delve into the specific challenges and recent advancements in making RL agents more understandable. In particular, we examine the foundational works upon which this research rests from the fundamental RL concepts to the algorithms used to train the models. The rest of this section will situate the present research within the research landscape and seek to demonstrate how it builds upon prior work in the field of MI to address unsolved problems in RL interpretability.
-
-Chapter~\ref{ch:methodology} builds on this review, translating the concepts reviewed here into approaches that were employed in the remainder of the thesis.
+This chapter reviews the foundational literature underpinning this thesis, covering reinforcement learning fundamentals, mechanistic interpretability techniques, and their intersection in RL agent analysis. We examine how prior work has approached understanding goal representations in neural networks, and identify the gaps this thesis addresses.
 
 \subsection{Reinforcement Learning Fundamentals}\label{subsec:rl_fundamentals}
 
 This section provides a brief overview of the fundamental concepts in RL that are relevant to the research discussed. While a baseline understanding of RL and AI concepts is assumed, key elements of the environments and training paradigms employed from the literature are reviewed.
 
-At its core, the problem that RL solves can be formalized as a Markov Decision Process (MDP), or Partially Observable Markov Decision Process (POMDP). An MDP is a mathematical framework for modelling decision-making in situations where the outcomes of actions may not be predictable to the agent. Environments can be both entirely deterministic or stochastic in nature. MDPs are defined by a tuple (\(S, A, P, R, \gamma\)), representing the set of states \(S\), the set of actions \(A\), the state transition probability function \(P(s'|s,a)\), the reward function \(R(s,a,s')\), and a discount factor \(\gamma \in [0, 1]\) that balances immediate and future rewards. The transition function \(P(s'|s,a)\) gives the probability of transitioning to next state \(s'\) given current state \(s\) and action \(a\), where the notation \(s'|s\) denotes the conditional probability of the next state given the current state. The agent's goal is to learn a strategy that maximizes the cumulative discounted reward over time. 
+At its core, the problem that RL solves can be formalised as a Markov Decision Process (MDP), or Partially Observable Markov Decision Process (POMDP). An MDP is a mathematical framework for modelling decision-making in situations where the outcomes of actions may not be predictable to the agent. Environments can be both entirely deterministic or stochastic in nature. MDPs are defined by a tuple (\(S, A, P, R, \gamma\)), representing the set of states \(S\), the set of actions \(A\), the state transition probability function \(P(s'|s,a)\), the reward function \(R(s,a,s')\), and a discount factor \(\gamma \in [0, 1]\) that balances immediate and future rewards. The transition function \(P(s'|s,a)\) gives the probability of transitioning to next state \(s'\) given current state \(s\) and action \(a\), where the notation \(s'|s\) denotes the conditional probability of the next state given the current state. The agent's goal is to learn a strategy that maximises the cumulative discounted reward over time. 
 \subsubsection{Markov Decision Processes}\label{subsec:mdp}
 
-The objective of the training process is formalized as an optimisation process maximizing expected discounted return:
+The objective of the training process is formalised as an optimisation process maximising expected discounted return:
 \[
 J(\pi) = \mathbb{E}_{\tau \sim \pi}\left[\sum_{t=0}^{\infty} \gamma^t r_t\right]
 \]
@@ -71,11 +68,11 @@ Experience replay buffers that store state transitions $(s, a, r, s')$ and are s
 
 The use of target networks $Q_{\theta^-}$ that are periodically copied from the main network $Q_\theta$ that provide stable targets for TD learning. While the main network $Q_\theta$ updates every gradient step, the target $Q_{\theta^-}$ is overwritten by the main network periodically (typically every 10,000 steps). This avoids the problem of constantly chasing a moving target, by freezing the optimisation target allowing the opportunity to make steady progress towards a stable optimisation target, until that target is updated again.
 
-These contributions provided sufficient stability for RL training to meet and surpass human performance on challenging Atari games, proving that convolutional neural networks (CNNs),which use filters trained to process information in grid structures, allow Deep RL networks to learn meaningful features from pixels. However, value-based methods struggle in continuous action spaces, where computing the argmax over an infinite number of possible actions becomes intractable. This limitation led to increased focus on policy gradient methods, which can naturally handle continuous actions by directly parameterising a policy distribution.
+These contributions provided sufficient stability for RL training to meet and surpass human performance on challenging Atari games, proving that convolutional neural networks (CNNs), which use filters trained to process information in grid structures, allow Deep RL networks to learn meaningful features from pixels. However, value-based methods struggle in continuous action spaces, where computing the argmax over an infinite number of possible actions becomes intractable. This limitation led to increased focus on policy gradient methods, which can naturally handle continuous actions by directly parameterising a policy distribution.
 
 \subsubsection{Policy Gradient Methods}\label{subsubsec:policy_gradient_methods}
 
-Policy gradient methods arise from the natural challenges introduced by trying to learn optimal policies within continuous action spaces and with non-deterministic policies. Rather than learning state values using these to indirectly develop a policy, policy gradients directly optimise parameterized policy $\pi_\theta(a|s)$ by gradient ascent on expected returns.
+Policy gradient methods arise from the natural challenges introduced by trying to learn optimal policies within continuous action spaces and with non-deterministic policies. Rather than learning state values using these to indirectly develop a policy, policy gradients directly optimise parameterised policy $\pi_\theta(a|s)$ by gradient ascent on expected returns.
 
 The policy gradient theorem~\citep{sutton_1999_policy} provides the insight required for this approach. For an objective $J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}[R(\tau)]$, the gradient can be computed without requiring pre-existing knowledge of the environment:
 \[
@@ -99,7 +96,7 @@ The actor updates using:
 \nabla_\theta J(\theta) = \mathbb{E}_{\pi_\theta}[\nabla_\theta \log \pi_\theta(a_t|s_t) \cdot \delta_t]
 \]
 
-While the critic updates to minimize:
+While the critic updates to minimise:
 \[
 L_V = \mathbb{E}_{\pi_\theta}[(r_t + \gamma V(s_{t+1}) - V(s_t))^2]
 \]
@@ -109,8 +106,8 @@ The actor-critic approach addresses critical limitations in policy gradient meth
 Modern implementations such as A3C and A2C~\citep{mnih_2016_asynchronous} typically share convolutional encoders between actor and critic for computational efficiency, though this creates potential entanglements in model representations that can provide challenges for interpretability.
 
 
-\subsubsection{Generalized Advantage Estimation}\label{subsubsec:gae}
-Generalized Advantage Estimation (GAE)~\citep{schulman_2018_highdimensional} addresses a key trade-off between having high variances or low bias updates in actor-critic training updates. It acts as a method to interpolate between high variance and low bias (Monte Carlo methods), or methods that are low variance but high bias (single-step TD error). GAE allows for trading off along this spectrum using exponentially-weighted averaging of n-step advantage estimates.
+\subsubsection{Generalised Advantage Estimation}\label{subsubsec:gae}
+Generalised Advantage Estimation (GAE)~\citep{schulman_2018_highdimensional} addresses a key trade-off between having high variances or low bias updates in actor-critic training updates. It acts as a method to interpolate between high variance and low bias (Monte Carlo methods), or methods that are low variance but high bias (single-step TD error). GAE allows for trading off along this spectrum using exponentially-weighted averaging of n-step advantage estimates.
 
 A mathematical formulation of the GAE estimator:
 \[
@@ -216,9 +213,7 @@ Among the various architectures developed for visual RL, the IMPALA encoder has 
 \end{figure}
 
 \section{An Overview of Modern ML Interpretability}\label{sec:interpretability}
-% Definition and importance of interpretability
-% Different approaches to interpretability
-Interpretability in machine learning refers to the extent to which a human can understand the cause and effect of a model's decisions. It is crucial for debugging, ensuring fairness, building trust, and verifying reliability, especially in high-stakes applications.
+Mechanistic interpretability (MI) aims to understand neural network behaviour by analysing internal structure and intermediate computations, rather than treating models as black boxes. This section reviews the key techniques and challenges in the field.
 
 \subsection{Interpretability as a Safety Solution}\label{subsec:interp_for_safety}
 MI as a field aims to provide a precise, granular, and above all mechanistic explanation of the external behaviour of neural networks by analysing their internal structure and intermediate computations. This enables us to understand why a model produced a certain output, using tools applied to the model itself, and not simply to its inputs and outputs. Within the risk framework discussed in Section~\ref{subsec:ai_safety_motivation}, MI is useful primarily in the scope of vulnerability, in that it gives us tools that make it less likely for a disaster to occur. We generally use MI as a post hoc intervention, once the model has already been trained, though recent work also uses MI tools to shape training in ways that give us greater control~\citep{casademunt_2025_steering}. These interventions improve our ability to monitor what the model is doing beyond simply observing its outputs, such as by using probes (linear classifiers trained on internal activations to detect specific features; see Section~\ref{subsubsec:probing}) to identify potentially harmful or deceptive outputs before they are generated.
@@ -269,7 +264,7 @@ Classical algorithms such as K-SVD~\citep{aharon_2006_ksvd} and FISTA~\citep{doi
 
 SAEs utilise neural networks to perform unsupervised discovery of the dictionary. This provides a sparse encoding of the original features of the model (which we refer to as latents in the SAE), which arise due to the enforcement of a sparsity penalty applied during the training of the SAE. SAEs aim to faithfully reconstruct the activations of a given layer in a network while keeping their own internal activations sparse. The training objective is therefore to find encoder and decoder weights that minimise a loss function combining a reconstruction term and a sparsity term, which typically takes the form:
 \[L(x) = \|x - \text{Dec}(\text{Enc}(x))\|_2^2 + \lambda \|\text{Enc}(x)\|_1\]
-Here, \(x\) represents the original activation from the base model, the L2 norm penalizes poor reconstruction, and sparsity is enforced by minimising the product of the L1 norm of the SAE's internal activations, and a coefficient \(\lambda\)\citep{bricken2023monosemanticity}.
+Here, \(x\) represents the original activation from the base model, the L2 norm penalises poor reconstruction, and sparsity is enforced by minimising the product of the L1 norm of the SAE's internal activations, and a coefficient \(\lambda\)\citep{bricken2023monosemanticity}.
 
 SAEs typically learn an overcomplete basis, where the hidden layer of the SAE is much larger than the original layer it is reproducing, typically chosen by multiplying the original hidden dimension size by some expansion factor. This high dimensionality allows the SAE to represent the input activations using a small number of highly specific, disentangled features. This addresses the problem of polysemantic `units' in a model, which can make the task of accurate interpretability much more challenging~\citep{elhage2022superposition}.
 
@@ -288,7 +283,7 @@ Early work in understanding the functioning of neural networks focused on techni
 
 
 
-While synthetic visualizations can be noisy, maximally activating patches, especially from within the environment, can yield interpretable results, confirming findings in~\citep{hilton_2020_understanding}. Work done on exploring SAEs trained on CNNS such as~\citep{gorton_2024_missing} makes effective use of visualisation to illustrate the improvement in interpretability of the SAE latents.
+While synthetic visualisations can be noisy, maximally activating patches, especially from within the environment, can yield interpretable results, confirming findings in~\citep{hilton_2020_understanding}. Work done on exploring SAEs trained on CNNS such as~\citep{gorton_2024_missing} makes effective use of visualisation to illustrate the improvement in interpretability of the SAE latents.
 
 
 \subsection{Post-hoc Explanations}\label{subsec:post_hoc}
@@ -297,33 +292,18 @@ While synthetic visualizations can be noisy, maximally activating patches, espec
 
 \subsubsection{Attribution and saliency methods} Post-hoc explanation methods aim to provide insights into already trained models without altering their architecture or training process. Examples include probing, SAEs, feature attribution methods (like LIME~\citep{ribeiro_2016_why}, SHAP~\citep{lundberg_2017_unified}), saliency maps~\citep{Simonyan14a,selvaraju_2017_gradcam}, and activation steering~\citep{turner_2024_steering,zou_2025_representation}.
 
-LIME focuses on creating explainable functions by approximating a model's local behaviour around a specific input, and observing which changes create the greatest difference in the final outputs, weighting inputs by their proximity to the original input (with closer inputs being weighted more heavily). They then create a modified linear approximation that is explainable and train it on this weighted dataset which can then be more easily interpreted~\citep{ribeiro_2016_why}.
+LIME approximates a model's local behaviour around specific inputs using interpretable linear functions~\citep{ribeiro_2016_why}, while SHAP assigns feature importance values based on Shapley values from cooperative game theory, calculating each feature's average marginal contribution across all possible combinations~\citep{lundberg_2017_unified}. Both methods provide feature-level explanations but are computationally expensive and do not enable direct behavioural manipulation.
 
-SHAP provides consistent estimations of feature importance based on Shapley values from cooperative game theory. It assigns each feature an importance value by calculating its average marginal contribution across all possible feature combinations, ensuring properties like local accuracy and consistency that other methods lack~\citep{lundberg_2017_unified}. It is quite costly to calculate however, as it requires calculating contributions over all possible feature subsets.
-
-Saliency-based feature-attribution techniques, while originally developed for image classification, have been applied to RL policies, though their reliability has been questioned~\citep{adebayo_2018_sanity}. These methods typically operate by computing the gradient of a relevant policy output (such as the value of a state or the probability of a specific action, $f(s)$) with respect to the input observation, $s$. The resulting saliency map is then defined as the magnitude of this gradient:
-\[
-    M(s) = |\nabla_s f(s)|,
-\]
-which highlights pixels that most strongly influence the agent's decision. Using this approach, \citep{greydanus_2018_visualizing} applied gradient saliency maps to Atari DQN agents, showing that agents frequently track critical entities like the ball in Breakout or enemy ships in Space Invaders (Figure~\ref{fig:breakout_saliency}).
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.9\textwidth]{figures/breakout_saliency.png}
-    \caption[Breakout DQN saliency maps]{Saliency maps for a DQN agent learning to play Breakout, showing the evolution of attention patterns during training. Blue regions indicate areas most salient to the actor (policy), while red indicates areas salient to the critic (value function). Early in training, attention is diffuse; as learning progresses, the agent focuses on strategically relevant features such as the ball and the tunnel through the brick wall. Figure reproduced from~\citep{greydanus_2018_visualizing}.}
-    \label{fig:breakout_saliency}
-\end{figure}
-
-To address the shortcomings of simple gradients, Sundararajan's integrated-gradients method\,\citep{sundararajan_2017_axiomatic}, which accumulates gradients along a path from a baseline input, was later extended to policy networks by~\citep{atrey_2020_exploratory}, who introduced `policy saliency' maps that operate over distributions of outputs from policy models. These approaches provide an easily computable and highly informative result without requiring additional training. However, unlike SAEs or steering vectors, these methods do not provide a mechanism for manipulating behaviour.
+Saliency-based feature-attribution techniques compute the gradient of a policy output with respect to the input observation, highlighting pixels that most strongly influence the agent's decision~\citep{greydanus_2018_visualizing}. Extensions such as integrated gradients~\citep{sundararajan_2017_axiomatic} and policy saliency maps~\citep{atrey_2020_exploratory} have been applied to RL. However, these methods have significant limitations: they provide only correlational evidence of feature importance, do not enable behavioural manipulation, and critically, have been shown to fail basic sanity checks, producing visually similar outputs even when model weights are randomised, calling into question whether they truly reflect learned representations~\citep{adebayo_2020_sanity}. This highlights a common pitfall in MI research, that it is very easy to convince oneself of a narrative when presented with partial data from the model, but these can widely diverge from reality.
 
 \subsubsection{Probing}\label{subsubsec:probing}
 Perhaps the most famous and enduring of post-hoc techniques is probing, particularly the linear probe~\citep{alain_2018_understanding}. This is simply a linear classifier trained on activation data from a given layer on target labels that are provided based on a pre-registered target of interest. The degree of accuracy that the probe can achieve represents the degree to which a given layer can be said to contain a representation of the given target feature within the layer~\citep{alain_2018_understanding}. Deeper probes consisting of multiple layers are also a useful tool, but these can obfuscate the degree to which the target feature is actually present due to the additional computation being performed.
 
 Probing is a core tool in mechanistic interpretability due to the wide array of situations where it can be applied and the low cost of implementation. It also reveals a great deal of information about where in the network a certain operation is being performed such as object detection, spatial reasoning, or feature composition. 
 
-Probes have been able to provide powerful insight when applied creatively to neural networks. An excellent example of the explanatory power of probes can be found in~\citep{li_2024_emergent} which demonstrated that a model trained to produce legal moves in the game of Othello after being provided a preceding sequence of moves had a rich encoding of the board state embedded within the weights, as opposed to having learned complex heuristics to predict likely next moves. They demonstrated using non-linear probes (2 layer MLPs), that they could extract the state of the board by which types of piece occupied each square on the grid. They did this by training 64 probes in parallel, each probe being trained exclusively on the underlying ground truth data for a specific grid position across the training datasets. The ground truth data consisted of `black', `white', or `neutral' states for each position. They tried linear probes and the 2 layer probes, and found that the linear probes were able to achieve only around 20\% performance while the 2 layer probes achieved up to 98.7\% accuracy.~\citep{nanda_2023_emergent} expanded on this work by showing that in fact it was possible to achieve extremely high accuracy with linear probes, but that the ground truth data needed to be altered to represent `yours', `mine', or `neutral', and that it would swap depending on whose turn in the game it was. This demonstrated that the additional computation performed by the 2 layer probes was obfuscating the underlying representation that the model had learned.
+An instructive example comes from Othello-GPT~\citep{li_2024_emergent}, where a model trained to predict legal moves was shown to encode board state internally. Initially, 2-layer MLP probes achieved 98.7\% accuracy extracting piece positions while linear probes achieved only 20\%. However,~\citep{nanda_2023_emergent} showed that linear probes could match this performance when labels were changed from `black/white' to `mine/yours', revealing that the MLP probes had been performing additional computation rather than simply reading off representations.
 
-However, probes do have significant limitations as well. They provide only correlational evidence of the purpose of what the network is doing. They may show that some activation contains the relevant information but not what it is doing with it or whether it is acting upon it. There is also a risk that probes are in fact doing computational work to construct features rather than simply revealing them, if the probes have multiple layers and many neurons. For example, an MLP probe trained to detect the presence of a cat in activation space could infer the cat from isolated features in the network that would normally only be combined later in the network. The Othello GPT example illustrates how the MLP probes were performing additional computation to adjust to the non-native representation of the board state within the activations.
+However, probes do have significant limitations as well. They provide only correlational evidence of the purpose of what the network is doing. They may show that some activation contains the relevant information but not what it is doing with it or whether it is acting upon it. There is also a risk that probes are in fact doing computational work to construct features rather than simply revealing them, if the probes have multiple layers and many neurons. For example, an MLP probe trained to detect the presence of a cat in activation space could infer the cat from isolated features in the network that would normally only be combined later in the network. The Othello-GPT example illustrates how the MLP probes were performing additional computation to adjust to the non-native representation of the board state within the activations.
 
 
 \subsubsection{Sparse Probing}
@@ -331,17 +311,7 @@ However, probes do have significant limitations as well. They provide only corre
 Sparse probing addresses polysemanticity by training linear classifiers that use only a subset of $k$ neurons to predict target features~\citep{gurnee_2023_finding}. When $k=1$, this isolates individual feature-detecting neurons, with some achieving over 75\% accuracy on high-level semantic features. However, sparse probing requires significant human effort to interpret detected features, and unsupervised dictionary learning approaches such as SAEs have become the preferred method for isolating features in neural networks.
 
 \subsubsection{Concept Activation Vectors}
-Concept Activation Vectors (CAV) provide a way to bridge the gap between the high dimensional vector space of neural network activations and human-understandable concepts. To construct a CAV for a concept (`striped'), one collects a small set of images that exhibit the concept and a set of random counter-examples, records the activations from a chosen layer, and trains a linear classifier to separate the two groups. The normal vector to the resulting decision boundary is the CAV. This can then be manipulated in one direction or the other to produce more or less of the effect you desire~\citep{kim_2018_interpretability}. This can be used to test how much a particular concept is relied upon when the network is making a prediction.
-
-To formalise CAVs, let $a^{l}(x)\in\mathbb{R}^{d}$ be the activations of layer $l$ for input $x$, and let $w\in\mathbb{R}^{d}$ be the extracted weight vector of the linear classifier trained to distinguish positive concept examples from counter-examples. The concept activation vector is then:
-\[
-    v^{l}_{C}= \frac{w}{\lVert w \rVert_{2}}.
-\]
-Following~\citep{gorton_2024_missing}, the extent to which concept $C$ influences the logit $f_{k}(x)$ for class $k$ is measured by the directional derivative
-\[
-    S_{C,k,l}(x)= \nabla_{a^{l}(x)} f_{k}(x) \cdot v^{l}_{C},
-\]
-whose sign indicates whether amplifying the concept increases ($S_{C,k,l}>0$) or decreases ($S_{C,k,l}<0$) the likelihood of a particular prediction. Because CAVs can be learned with a lightweight linear probe and then used to intervene on neural network activations, this technique has become fundamental as a tool in alignment~\citep{meng_2023_locatinga}, and lays a conceptual foundation for steering vectors~\citep{turner_2024_steering}.
+Concept Activation Vectors (CAVs) bridge the gap between neural network activations and human-understandable concepts~\citep{kim_2018_interpretability}. To construct a CAV, one collects examples exhibiting a concept (e.g., `striped') alongside counter-examples, records activations from a chosen layer, and trains a linear classifier to separate them. The normal vector to the decision boundary becomes the CAV, which can be used to test how much the network relies on that concept for its predictions, or to amplify/suppress the concept during inference. This technique laid the conceptual foundation for steering vectors~\citep{turner_2024_steering}.
 
 \subsubsection{Activation Steering}\label{subsubsec:activation_steering}
 Activation steering, as demonstrated in~\citep{mini_2023_understanding,turner_2024_activation} discussed further in Section~\ref{sec:Understanding}, is another post-hoc technique. Steering typically makes use of CAVs, captured by using the difference in activations between states with and without a particular characteristic, can be used to influence a policy model's behaviour by acting as a superstimulus for particular environmental aspects. This is achieved through the transformation $h^{l'} = h^l + \alpha \cdot v^l$, where the steering vector $v^l$ is added to the original activations $h^l$, with $\alpha$ modulating the intervention strength. The steering vector itself is computed as $v^l = \mathbb{E}[h^l|\text{with target}] - \mathbb{E}[h^l|\text{without target}]$, capturing the difference in activations when the target is present versus absent.
@@ -362,18 +332,13 @@ The ROME (Rank-One Model Editing) framework~\citep{meng_2023_locating} introduce
 
 In RL contexts, \citep{mini_2023_understanding} demonstrated that clamping a single activation to a fixed value at a specific spatial location within a convolutional channel could reliably redirect a maze-solving agent's navigation. By setting one activation out of tens of thousands to a target value, the agent would navigate toward the corresponding maze location as if a goal were present there. This spatial patching approach exploits the correspondence between activation positions in convolutional layers and locations in the environment, providing direct causal evidence that specific channels encode navigational targets.
 
-\subsection{Intrinsically Interpretable Models}\label{subsec:intrinsic}
-Intrinsically interpretable models are designed from the outset to be understandable, often by constraining their complexity (e.g., linear models, decision trees) or by building in mechanisms that are inherently transparent. Training SAEs can be seen as an effort to transform parts of a complex model into a more intrinsically interpretable representation by disentangling features.
-
-Many existing interpretability techniques were developed for supervised settings with i.i.d.~data. Reinforcement learning violates many of these assumptions. For example, observations are generated by an agent acting in, and affecting, a dynamic environment, and credit must be assigned across time. As a result, many tools require adaptation to work within this paradigm. The next section explores some techniques that have been developed explicitly to overcome this gap.
+Many of the interpretability techniques discussed above were developed for supervised settings with i.i.d.~data. Reinforcement learning violates these assumptions: observations are generated by an agent acting in a dynamic environment, and credit must be assigned across time. As a result, many tools require adaptation to work within this paradigm.
 
 \subsection{Causal Methods in Interpretability}\label{subsec:causal}
 
 Many of the techniques discussed in the methodology, such as activation steering (Section~\ref{subsubsec:activation_steering}), can serve dual roles as both post-hoc explanation tools and causal testing methods when applied systematically. This section focuses on additional causal techniques and frameworks for rigorous causal claims in interpretability research. These techniques actively modify the operations of the network, testing whether specific components are genuinely responsible for behaviours of interest~\citep{10.5555/1642718}.
 
 Modern systematic ablation has evolved through several generations. Zero ablation, the simplest approach, sets components to zero but can lead to out-of-distribution behaviours since networks rarely encounter zero values during training. Mean ablation, which replaces components with their average values across a sample dataset, better preserves activation statistics but may incompletely remove information if the mean itself carries useful information. Recent work~\citep{li_2024_optimal} introduces optimal ablation constants that are computationally determined to minimise the expected loss on the task, reducing the amount of distributional shift in the final outcome.
-
-Work on finding induction heads in neural networks~\citep{olsson_2022_incontext} is a prime example of rigorous systematic ablation. In this work they thoroughly demonstrated causality via targeted removal. Their task setup involved identifying how LMs were able to successfully complete simple A-B pattern matching, meaning that when a pattern of B following from A was observed the model should repeat this pattern when a later example of A was shown. When induction heads were ablated in small models, in-context learning collapsed from near-perfect to near-random on the task of A-B pattern matching. This showed that induction heads were essential for this task.
 
 For agents with spatial convolutional representations, targeted synthetic interventions can directly test the functions of parts of the network by intervening on their values directly.~\citep{mini_2023_understanding} demonstrated that clamping a single activation in a channel that typically identified the location of the cheese (channel 55) to a large positive value at a specific location in the maze could steer the agent to that location, as if that was the final goal of the maze. This provided direct causal evidence that this channel had an unusual ability to steer the direction of the agent.
 
@@ -406,7 +371,7 @@ This is achieved by applying non-negative matrix factorisation (NMF) to the resu
 
 
 \section{AI Safety}\label{sec:ai_safety}
-This section discusses many of the key areas of interest and core problems relating to AI safety, as well as some history on the development of the field and key figures, and provides a characterisation of risk as a framework for identifying safety interventions. Our focus then shifts to key safety issues arising from reinforcement learning, and ends with a discussion on how MI can be of use in making AI safer.
+AI safety research aims to ensure that AI systems reliably produce intended outcomes. This section reviews the key failure modes relevant to RL agents and how mechanistic interpretability can help address them.
 
 \subsection{Motivation and scope}\label{subsec:ai_safety_motivation}
 AI Safety can primarily be framed as a question of how to reliably obtain the outcomes that we intended from the deployment of AI and ways that this could go wrong, both on a technical and social level. Because AI systems are complex and powerful, this is a challenging and moving target. In practice this means that the work of ensuring good outcomes from AI requires a multi-pronged approach and a high degree of involvement in order to prevent failure and effectively intervene when models fail in unexpected ways~\citep{hendrycks_2023_overview}.
@@ -447,7 +412,7 @@ This shows a surprising contradiction in the agent because Euclidean distance sh
 
 They further demonstrate that neural networks can develop interpretable mechanisms to track goals. The authors identified specific channels that tracked the location of objectives in a maze environment and showed that these could be manipulated to control the agent's behaviour. They found that steering vectors, the difference in activations between otherwise identical states with and without an entity, could be used to influence the model's behaviour in predictable ways. This work serves as the foundation for our research, though we extend it to a multi-objective setting.
 
-Recent concurrent work by~\citep{trim_2024_mechanistic} extends the work done by~\citep{mini_2023_understanding} to analyze goal misgeneralization. Their layer-by-layer analysis reveals a hierarchy of representations: early convolutional layers detect basic features such as walls, paths, and the cheese goal; middle layers develop more abstract concepts including patterns that propagate outward from objects (similar to a flood fill algorithm); while deeper layers create highly abstracted representations where identifying the goal becomes challenging. They further confirm the positional bias exists regardless of the final goal's position within the maze, indicating a deeply learned tendency towards this direction rather than a perceptual error.
+Recent concurrent work by~\citep{trim_2024_mechanistic} extends the work done by~\citep{mini_2023_understanding} to analyse goal misgeneralisation. Their layer-by-layer analysis reveals a hierarchy of representations: early convolutional layers detect basic features such as walls, paths, and the cheese goal; middle layers develop more abstract concepts including patterns that propagate outward from objects (similar to a flood fill algorithm); while deeper layers create highly abstracted representations where identifying the goal becomes challenging. They further confirm the positional bias exists regardless of the final goal's position within the maze, indicating a deeply learned tendency towards this direction rather than a perceptual error.
 
 \subsection{Discovering and Controlling Goal Representations}
 \citep{mini_2023_understanding} successfully isolated the network's representation of the `cheese' goal and demonstrated causal control over the agent's behaviour. First, they defined a `cheese vector' by taking the difference in mean activations at a specific layer between trajectories where cheese was present and those where it was not:
@@ -458,30 +423,22 @@ Adding this vector back into the network's forward pass, scaled by a coefficient
 
 Their most significant contribution was demonstrating this control causally through \emph{activation patching}. They intervened on the final convolutional layer of the policy network by copying the activation pattern from a small spatial region of a channel corresponding to a real cheese location and `pasting' it into the same channel at a different, empty location. By doing this they could reliably steer the agent to the empty location as if the cheese were there.
 
-This effect was highly localized. They identified that out of 16 channels in the layer, just 11 were responsible for this behaviour. Ablating these "cheese channels" destroyed the agent's ability to find the cheese, while leaving other navigational capabilities intact. This proves that goal representations can be sufficiently modular and concentrated to allow for targeted manipulation, motivating the use of more advanced techniques like SAEs to further dissect these representations in a more complex, multi-objective setting.
+This effect was highly localised. They identified that out of 16 channels in the layer, just 11 were responsible for this behaviour. Ablating these "cheese channels" destroyed the agent's ability to find the cheese, while leaving other navigational capabilities intact. This proves that goal representations can be sufficiently modular and concentrated to allow for targeted manipulation, motivating the use of more advanced techniques like SAEs to further dissect these representations in a more complex, multi-objective setting.
 
 
 \section{Gaps in the Literature}\label{sec:gaps}
-Prior to the research detailed in the accompanying papers, several areas in RL interpretability remained open for exploration:
+Several areas in RL interpretability remain underexplored:
 
 \begin{itemize}
-    \item Understanding how RL agents track and switch between multiple objectives, especially when those objectives are not the immediate next target.
-    \item The application and efficacy of techniques like SAEs for disentangling representations specifically within RL agent architectures, particularly CNNs.
-    \item Investigating how different aspects of neural network activation encode useful information, such as whether activation strength within a channel encodes entity identity.
-    \item The role and potential utility of `dead' channels in SAEs for interpretability, which cease to activate during normal operation but might retain learned decoder weights.
-    \item The generalisation of interpretability findings from simpler RL agents to more complex architectures like decision transformers or RNN-based agents, especially for tasks requiring memory.
+    \item How RL agents track and switch between multiple sequential objectives
+    \item Whether SAEs can disentangle representations in RL agent CNNs as effectively as in supervised classifiers
+    \item Whether activation magnitude (not just activation presence) encodes goal identity
+    \item How interpretability findings generalise from simple maze agents to more complex architectures
 \end{itemize}
+
+This thesis addresses the first three gaps directly, investigating goal representation in a multi-objective maze-solving agent.
 
 \section{Summary}\label{sec:lit_summary}
-Prior work shows huge potential in the applications of RL agents due to their ability to achieve superhuman performance and generalise broadly. However, the opacity of how this is achieved represents a persistent problem. A resurgence of interest in this area due to its application in frontier AI models adds urgency to better understand these models and how they operate on a mechanistic level~\citep{mini_2023_understanding,hilton_2020_understanding}. Techniques such as activation analysis, steering vectors, and feature visualization have provided initial windows into these systems. However, challenges like polysemanticity~\citep{olah_2020_zoom,elhage2022superposition} and the distributed nature of representations often make it challenging to draw strong conclusions about the operation of the neural network.
+Prior work has established foundational techniques for understanding neural network internals, from activation visualisation and steering vectors to SAEs for resolving polysemanticity~\citep{olah_2020_zoom,elhage2022superposition,bricken2023monosemanticity}. Work on maze-solving agents~\citep{mini_2023_understanding,hilton_2020_understanding} has demonstrated that goal representations can be isolated and manipulated, providing a template for mechanistic analysis of RL agents.
 
-The application of tools like Sparse Autoencoders offers a potential solution for making confident statements about how models truly learn to encode concepts~\citep{elhage2022superposition,bricken2023monosemanticity}, potentially making the functional roles of different network components clearer. While much of the early MI work focused on LLMs, applying and adapting these techniques to RL, with its emphasis on clear goals and environments with fewer components and potentially broadly generalisable solutions offers the ability to make unique insights that may apply to ML models more broadly.
-
-The research presented in the accompanying papers (forming the basis of this thesis) builds directly on this existing work by:
-\begin{itemize}
-    \item Extending activation steering and intervention techniques to more complex, multi-objective RL environments like Procgen Heist.
-    \item Applying Sparse Autoencoders to the convolutional layers of an RL agent to disentangle features and investigate how multiple entities are captured within a single layer. 
-    \item Systematically analyzing the role of individual channels in navigation and goal pursuit through methods like ablation studies and retargeting interventions.
-    \item Exploring novel mechanisms of information encoding, such as multiplexing entity information within a single channel through varying activation strengths.
-\end{itemize}
-These contributions aim to deepen our understanding of how RL agents represent and pursue goals, and to refine the tools available for mechanistic interpretability for use in this domain.
+This thesis extends these techniques to multi-objective settings, investigating how agents track and switch between sequential goals. We apply SAEs to RL agent CNNs, systematically analyse channel roles through ablation and intervention, and explore whether activation magnitude encodes goal identity. The following chapters detail our methodology and findings.
