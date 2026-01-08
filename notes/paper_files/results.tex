@@ -129,7 +129,7 @@ To understand this, we analysed how negative activations changed in the convolut
 \end{figure}
 
 
-Collection triggers a phase shift: the entity's region becomes marked as empty, while regions of the maze still containing entities remaining largely negative. We observe this phenomenon across mazes and in layers conv2a, conv3a, and conv4a. This corresponds with the jumps in mean activation observed in~\ref{fig:activation_tracking}, providing a clearer picture of what causes this phenomenon.
+Collection triggers a phase shift: the entity's region becomes marked as empty, while regions of the maze still containing entities remaining largely negative. We observe this phenomenon across mazes and in layers conv2a, conv3a, and conv4a. This corresponds with the jumps in mean activation observed in Figure~\ref{fig:activation_tracking}, providing a clearer picture of what causes this phenomenon.
 
 We test this mechanism by using patching in the convolutional layers to clamp activations in regions we do not want the agent to enter to a value of 0. This completely stops the agent from entering those regions. Tests in our cross maze environment (Figure~\ref{fig:spatial_steering}) reveal 100\% retargeting of the agent to regions that are not clamped.
 

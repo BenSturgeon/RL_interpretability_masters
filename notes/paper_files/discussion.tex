@@ -5,6 +5,8 @@
 \section{Interpretation of Results}
 \label{sec:interpretation}
 
+The literature review identified three gaps in RL interpretability research (Section~\ref{sec:gaps}): how agents represent and switch between multiple sequential objectives, whether SAEs disentangle representations in RL CNNs as effectively as in supervised vision models, and whether activation patterns beyond simple feature presence carry goal-relevant information. Our findings address these gaps through the discovery of a spatial gating mechanism where negative activations mark regions of current interest, with systematic shifts tracking task progress.
+
 \subsection{Activation Patterns and Spatial Gating}
 Our findings in Section~\ref{sec:parallel_rollouts}, \ref{sec:offset_steering}, and \ref{sec:negative_activations} reveal that the network tracks game state through systematic changes in activation patterns. Rather than requiring separate channels for each entity type, the same channels are active throughout, but at different activation levels depending on game progress.
 
@@ -16,7 +18,7 @@ Standard activation steering approaches~\citep{turner_2024_activation,mini_2023_
 
 Given the task similarity, repurposing entity-detection channels is efficient, allowing computational reuse. This strategy likely emerges from efficiency pressures during training wherein the core navigation task is exactly the same regardless of which entity is being targeted.
 
-One challenge in making this discovery was that many of the tools typically used in mechanistic interpretability were not designed to expose temporal patterns in activation levels. SAEs and probes successfully identified which channels responded to which entities, but did not reveal how activation levels shifted systematically over the course of a rollout. What initially appeared to be polysemanticity was instead a structured spatial gating strategy. This differs from the superposition described by \citep{elhage2022superposition}, where features are compressed into overlapping directions. In our case, the same channels serve multiple game states through systematic variation in activation levels that gates spatial attention.
+One challenge in making this discovery was that many of the tools typically used in mechanistic interpretability were not designed to expose temporal patterns in activation levels. SAEs and probes successfully identified which channels responded to which entities, but did not reveal how activation levels shifted systematically over the course of a rollout. What initially appeared to be polysemanticity was instead a structured spatial gating strategy. This differs from the superposition described by \citep{elhage2022superposition} (Section~\ref{subsec:superposition}), where features are compressed into overlapping directions because they rarely co-occur in training data. In our case, all entities are simultaneously visible in the maze; the network is not compressing features that don't co-occur, but tracking which of several co-occurring features is currently behaviourally relevant through systematic variation in activation levels.
 
 
 
@@ -32,7 +34,7 @@ This crystallisation of goal commitment occurs at conv3a/conv4a. Our patching ex
 \subsection{SAE Validation and Dead Channels}
 The majority of steerable SAE channels were `dead channels': channels that had zero activations during rollouts. Based on standard understanding of SAE training dynamics, we attribute this to the following mechanism: these encoder-decoder pairs initially encoded useful signal, but were subsequently suppressed as the L1 sparsity penalty forced lower activations. Crucially, while the encoder weights were driven toward near-zero values, the corresponding decoder weights would not change substantially during this process, retaining the directional structure learned when the latent was active. When we artificially activate these dead latents during intervention experiments, the preserved decoder weights still project meaningful directions into the activation space, enabling redirection of the agent despite these channels never activating during normal operation. More importantly, SAEs preserved the same activation patterns found in the base model rather than decomposing them into cleaner features, suggesting this spatial gating strategy is fundamental rather than an artifact of polysemanticity.
 
-Unlike \citep{gorton_2024_missing}, who found SAEs successfully disentangled polysemantic features in InceptionV1, our SAEs preserved the same activation patterns rather than decomposing them into cleaner per-entity features. This may reflect fundamental differences between supervised classification, where features are stable across inputs, and RL, where the same visual features serve different behavioural roles depending on task state.
+Unlike \citep{gorton_2024_missing} (Section~\ref{subsec:SAEs}), who found SAEs successfully disentangled polysemantic features in InceptionV1, our SAEs preserved the same activation patterns rather than decomposing them into cleaner per-entity features. This may reflect a difference between supervised classification and RL with sequential objectives. In classification, a curve is a curve regardless of context. In Heist, the green key's visual features are stable, but its behavioural relevance flips from "irrelevant" to "current target" after blue key collection.
 
 \subsection{Solution Multiplicity and Representational Drift}
 Intervention positions changed completely across checkpoints even after convergence. Despite stable performance, the network continuously explored different encoding schemes, likely driven by training on infinite maze variations. The spatial gating pattern appears consistently, but which specific channels implement it drifts across checkpoints.
@@ -52,8 +54,11 @@ Modifying a single channel in a single layer is sufficient to completely alter b
 
 Clamping experiments confirm this mechanism: setting activations to zero in specific regions completely prevents the agent from entering them, regardless of which entity occupies that region. This explains why artificially activating almost any region can redirect the agent; it introduces a signal the navigation system interprets as a region of interest. As entities are collected, fewer regions require suppression, explaining the systematic increase in mean activation values over the course of a rollout. Offset steering likely works by shifting the network into activation patterns characteristic of different game stages, changing which regions are marked as targets.
 
-Past conv1a, the network does not rely on specialised channels for target selection. Channels in conv2a, conv3a, and conv4a play critical roles for multiple entities, with target selection determined by overall activation range rather than channel identity. Some specialisation exists in conv4a (channels 24, 25, 26 focus on red key and gem in Figure~\ref{fig:steering-dot-plot}), but this is the exception rather than the rule. 
+Past conv1a, the network does not rely on specialised channels for target selection. Channels in conv2a, conv3a, and conv4a play critical roles for multiple entities, with target selection determined by overall activation range rather than channel identity. Some specialisation exists in conv4a (channels 24, 25, 26 focus on red key and gem in Figure~\ref{fig:steering-dot-plot}), but this is the exception rather than the rule.
 
+\subsection{Ablation Studies}
+
+The ablation results (Section~\ref{sec:ablation_results}) show navigation is redundantly encoded: many channels retain some ability to reach entities when all others are masked (Figure~\ref{fig:ablation-heatmap}). Results were often counterintuitive, with targeted ablations sometimes improving performance on non-targeted entities. This complexity likely reflects the shared circuitry serving multiple goals in this environment.
 
 \section{Theoretical Implications}
 \label{sec:theoretical}
