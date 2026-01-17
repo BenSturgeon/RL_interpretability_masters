@@ -59,7 +59,7 @@ The network uses spatial gating to track game state: negative activations mark r
 
 We identify a two-phase processing architecture. Entity information crystallises to 99.3\% probe accuracy in conv3a before collapsing to 20.4\% in fc3, while directional information strengthens to 67.3\% in fc2. Convolutional layers determine what to target; fully-connected layers determine how to reach it. This explains why interventions in convolutional layers succeed: they modify goal selection before it disperses into navigational planning.
 
-SAEs preserved rather than decomposed the spatial gating patterns, validating that this mechanism is fundamental to the network rather than an artifact of polysemanticity. However, SAEs provided limited additional insight beyond what simpler methods revealed. This mechanism was discovered through mean activation analysis, not sophisticated interpretability tools, highlighting a gap in current MI approaches that focus on feature identification rather than temporal patterns in activation levels.
+SAEs preserved rather than decomposed the spatial gating patterns, validating that this mechanism is fundamental to the network rather than an artefact of polysemanticity. However, SAEs provided limited additional insight beyond what simpler methods revealed. This mechanism was discovered through mean activation analysis, not sophisticated interpretability tools, highlighting a gap in current MI approaches that focus on feature identification rather than temporal patterns in activation levels.
 
 \section{Limitations of the Study}\label{sec:limitations}
 

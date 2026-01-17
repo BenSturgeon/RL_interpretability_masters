@@ -105,7 +105,7 @@ The primary value of this finding is in providing further support for the way in
 
     \subsection{SAEs Preserve Base Model Structure}
     \label{subsec:sae_structure}
-    Training SAEs on conv3a and conv4a did not reveal additional interpretable structure beyond what we observed in the base model. SAE latents exhibited the same patterns of systematic activation level differences between game states, with variations in the intervention spans. This preservation across radically different representation schemes suggests the activation patterns we observe are fundamental to the operations of the network and not simply an artifact of compression.
+    Training SAEs on conv3a and conv4a did not reveal additional interpretable structure beyond what we observed in the base model. SAE latents exhibited the same patterns of systematic activation level differences between game states, with variations in the intervention spans. This preservation across radically different representation schemes suggests the activation patterns we observe are fundamental to the operations of the network and not simply an artefact of compression.
 
     Our primary method for using SAEs to ensure that we hadn't simply found polysemanticity in the network was to use the same quantitative patching approach described in Section~\ref{subsec:quantitative_steering} applied to all of the latents in an SAE. If it were natural to encode different entities into separate channels, we would expect the SAE to learn distinct latents for each entity type. Instead, we observe broadly the same patterns: individual SAE latents successfully redirect the agent away from multiple entities, with similar activation patterns to the base model. Figures illustrating this can be observed for conv3a and conv4a SAEs in Appendix~\ref{app:sae_interventions}.
 
@@ -252,10 +252,10 @@ The most interpretable finding was that intervention spans alone are not suffici
 \section{Summary of Key Findings}
 \label{sec:results_summary_key_findings}
 
-Our investigation reveals four fundamental insights into how neural networks implement goal-directed behaviour in complex environments:
+Our investigation reveals four key insights into how this network implements goal-directed behaviour:
 
 \textbf{1. Activation Patterns Track Game State.} Our heist network exhibits systematic changes in activation patterns over the course of a rollout, with mean activations shifting from strongly negative to near-zero as entities are collected. Parallel rollouts show consistent activation offsets between runs targeting different entities (correlation 0.931 in conv4a), and complete behavioural redirection is achievable through uniform offset adjustments, shifting from 93\% blue key collection at baseline to 94\% green key at +4.8 offset. This offset steering likely works by mimicking the activation patterns characteristic of different game stages rather than directly encoding entity identity. The network's strong baseline preference for the blue key, with occasional deviations to the green key, supports our hypothesis regarding a learned hierarchical structure.
-This pattern persists across layers and even through SAE decomposition, suggesting it represents a fundamental computational strategy rather than an architectural artifact.
+This pattern persists across layers and even through SAE decomposition, suggesting it represents a fundamental computational strategy rather than an architectural artefact.
 
 \textbf{2. Negative Activations Provide Spatial Gating.} The network uses negative activations to mark regions of interest, with near-zero activations indicating regions to avoid. As entities are collected, their associated regions shift from negative to near-zero, progressively disinhibiting the spatial representation (Figure~\ref{fig:disinhibition_conv4a}). Clamping activations to zero in any region completely prevents the agent from entering it, confirming the causal role of this gating mechanism. This spatial gating provides the foundation for the offset steering effect: early game stages have more negative activations overall, so shifting the offset mimics being at a different stage of the game.
 
