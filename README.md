@@ -2,9 +2,15 @@
 
 Mechanistic interpretability of a maze-solving RL agent that pursues multiple sequential goals. The thesis investigates how the agent internally represents, switches between, and executes those goals.
 
-📄 **Thesis PDF:** [main.pdf](main.pdf)
-📝 **Public write-up:** [How Does an Agent with Multiple Goals Choose a Target? (LessWrong)](https://www.lesswrong.com/posts/XWmqSTX89rgqeqyfv/how-does-an-agent-with-multiple-goals-choose-a-target)
-💻 **Code:** [BenSturgeon/ai-safety-camp-2024-model-agents](https://github.com/BenSturgeon/ai-safety-camp-2024-model-agents) — most of the experimental work lives here. 
+## 📄 Read the thesis
+
+**[View thesis.pdf in browser](https://github.com/BenSturgeon/RL_interpretability_masters/blob/main/thesis.pdf)** — GitHub renders the PDF inline.
+**[Download the PDF directly](https://github.com/BenSturgeon/RL_interpretability_masters/raw/main/thesis.pdf)** — saves to disk.
+
+## Other ways to engage
+
+- 📝 [Public write-up on LessWrong](https://www.lesswrong.com/posts/XWmqSTX89rgqeqyfv/how-does-an-agent-with-multiple-goals-choose-a-target) — accessible summary of the findings.
+- 💻 [Experimental code](https://github.com/BenSturgeon/ai-safety-camp-2024-model-agents) — most of the code lives in this companion repo.
 
 ## Setting
 
@@ -22,5 +28,5 @@ Mechanistic interpretability of a maze-solving RL agent that pursues multiple se
 
 ## Layout
 
-- `main.pdf` — the full thesis.
+- `thesis.pdf` — the full thesis.
 - `notes/` — working notes and supporting material.
